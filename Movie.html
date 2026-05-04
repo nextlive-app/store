@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>สำนักเทพเซียน - ภิภพแดนเซี่ยนวังวนต้องห้สม</title>
+    <title>สำนักเทพเซียน - ภิภพแดนเซี่ยนตำหนักวังต้องห้าม</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Maitree:wght@300;400;600;700&family=Prompt:wght@300;400;500&display=swap" rel="stylesheet">
@@ -191,17 +191,21 @@
 
     <!-- Bottom Navigation -->
     <nav class="fixed bottom-0 w-full glass-panel flex justify-around items-center p-3 z-40 border-t border-accent rounded-t-2xl">
-        <button onclick="navigate('home')" class="flex flex-col items-center gap-1 w-1/3 text-gray-400 hover:text-white transition-colors" id="nav-home">
+        <button onclick="navigate('home')" class="flex flex-col items-center gap-1 w-1/4 text-gray-400 hover:text-white transition-colors" id="nav-home">
             <i class="fa-solid fa-home text-xl"></i>
             <span class="text-xs">หน้าหลัก</span>
         </button>
-        <button onclick="navigate('history')" class="flex flex-col items-center gap-1 w-1/3 text-gray-400 hover:text-white transition-colors" id="nav-history">
-            <i class="fa-solid fa-history text-xl"></i>
-            <span class="text-xs">ประวัติเข้าชม</span>
+        <button onclick="navigate('all')" class="flex flex-col items-center gap-1 w-1/4 text-gray-400 hover:text-white transition-colors" id="nav-all">
+            <i class="fa-solid fa-border-all text-xl"></i>
+            <span class="text-xs">ทั้งหมด</span>
         </button>
-        <button onclick="navigate('downloads')" class="flex flex-col items-center gap-1 w-1/3 text-gray-400 hover:text-white transition-colors" id="nav-downloads">
+        <button onclick="navigate('history')" class="flex flex-col items-center gap-1 w-1/4 text-gray-400 hover:text-white transition-colors" id="nav-history">
+            <i class="fa-solid fa-history text-xl"></i>
+            <span class="text-xs">ดูต่อ</span>
+        </button>
+        <button onclick="navigate('downloads')" class="flex flex-col items-center gap-1 w-1/4 text-gray-400 hover:text-white transition-colors" id="nav-downloads">
             <i class="fa-solid fa-bookmark text-xl"></i>
-            <span class="text-xs">หอเก็บคัมภีร์</span>
+            <span class="text-xs">หอคัมภีร์</span>
         </button>
     </nav>
 
@@ -299,8 +303,12 @@
             // 6. M3U8 Stream
             if (url.includes('.m3u8')) return { type: 'm3u8', url: url };
             
-            // 7. MP4 or any direct media
-            return { type: 'mp4', url: url };
+            // 7. MP4
+            if (url.includes('.mp4')) return { type: 'mp4', url: url };
+
+            // 8. Custom iFrame/Embed fallbacks (e.g., player.imovie99.com, ok-hd.com)
+            // ถ้าลิงก์ไม่ใช่ไฟล์ตรงๆ ให้พยายามเล่นเป็น iFrame อัตโนมัติ
+            return { type: 'iframe', url: url };
         }
 
         // --- 4. PLAYER GENERATOR ---
@@ -321,6 +329,10 @@
                 case 'instagram':
                     return `<iframe src="https://www.instagram.com/p/${url}/embed/" frameborder="0" scrolling="no" allowtransparency="true" class="w-full h-full absolute top-0 left-0 bg-white"></iframe>`;
                 
+                case 'iframe':
+                    // ตัวเล่นสำหรับเว็บฝากไฟล์วิดีโอทั่วไป (เช่น player.imovie99.com)
+                    return `<iframe src="${url}" frameborder="0" allowfullscreen allow="autoplay; fullscreen" class="w-full h-full absolute top-0 left-0 bg-black"></iframe>`;
+
                 case 'm3u8':
                     return `<video id="video-player-stream" controls autoplay playsinline class="w-full h-full absolute top-0 left-0 object-contain bg-black"></video>`;
                 
@@ -427,10 +439,13 @@
         }
 
         function updateNavState() {
-            ['home', 'history', 'downloads'].forEach(nav => {
-                document.getElementById(`nav-${nav}`).classList.remove('nav-active', 'text-white');
-                if (state.view === nav) {
-                    document.getElementById(`nav-${nav}`).classList.add('nav-active', 'text-white');
+            ['home', 'all', 'history', 'downloads'].forEach(nav => {
+                const el = document.getElementById(`nav-${nav}`);
+                if (el) {
+                    el.classList.remove('nav-active', 'text-white');
+                    if (state.view === nav) {
+                        el.classList.add('nav-active', 'text-white');
+                    }
                 }
             });
         }
@@ -445,6 +460,9 @@
             if (view === 'home') {
                 body.className = 'theme-heaven';
                 renderHome();
+            } else if (view === 'all') {
+                body.className = 'theme-heaven';
+                renderAllMovies();
             } else if (view === 'movie') {
                 body.className = 'theme-mortal';
                 state.currentMovieId = data;
@@ -462,58 +480,94 @@
         function renderHome() {
             if(movies.length === 0) return;
 
-            let html = `<div class="mb-6">
+            let html = `<div class="mb-6 animate-fade-in">
                 <h2 class="text-3xl font-bold mb-2 text-accent font-serif-thai text-shadow-glow">ดินแดนเทพเซียน</h2>
                 <p class="text-sm opacity-80">ค้นพบคัมภีร์ซีรีส์และภาพยนตร์ล้ำค่า</p>
             </div>`;
 
             const categories = [...new Set(movies.map(m => m.category))];
+            const isDesktop = window.innerWidth >= 768;
 
             categories.forEach((cat, index) => {
                 const catMovies = movies.filter(m => m.category === cat);
                 if(catMovies.length === 0) return;
                 
-                const isDesktop = window.innerWidth >= 768;
-                let rowWrapperClass = "movie-row";
-                let contentClass = "";
-                
-                if(isDesktop && index === 0) {
-                     rowWrapperClass = "auto-scroll-container";
-                     contentClass = "auto-scroll-content";
+                // เลื่อนอัตโนมัติทุกหมวดหมู่ (เมื่ออยู่หน้าจอคอมพิวเตอร์)
+                let rowWrapperClass = isDesktop ? "auto-scroll-container" : "movie-row";
+                let contentClass = isDesktop ? "auto-scroll-content" : "";
+
+                let movieCardsHTML = catMovies.map(movie => `
+                    <div class="movie-card glass-panel flex-shrink-0" onclick="navigate('movie', '${movie.id}')">
+                        <div class="movie-poster-container">
+                            <img src="${movie.cover}" class="movie-poster" alt="${movie.title}">
+                            <div class="mystic-overlay flex items-end p-2 pb-3">
+                                <span class="text-xs font-bold bg-blue-900/90 px-2 py-1 rounded text-white border border-blue-400 shadow-lg">
+                                    ${movie.episodes} คัมภีร์
+                                </span>
+                            </div>
+                            <div class="absolute top-2 right-2 bg-black/70 px-2 py-1 rounded text-xs text-yellow-400 border border-yellow-600/50 shadow-md">
+                                <i class="fa-solid fa-star"></i> ${movie.rating}
+                            </div>
+                        </div>
+                        <div class="p-3 text-center h-[3.5rem] flex items-center justify-center bg-black/20">
+                            <h4 class="font-bold text-sm line-clamp-2 font-serif-thai text-blue-100">${movie.title}</h4>
+                        </div>
+                    </div>
+                `).join('');
+
+                let finalContentHTML = movieCardsHTML;
+                // หากหน้าจอใหญ่ จะทำการ Copy การ์ดเพื่อใช้สำหรับ CSS Infinite Loop Scrolling
+                if (isDesktop) {
+                    finalContentHTML = movieCardsHTML.repeat(4);
                 }
 
                 html += `
-                    <div class="mb-8">
+                    <div class="mb-8 animate-fade-in">
                         <div class="flex items-center gap-2 mb-4">
                             <i class="fa-solid fa-scroll text-accent"></i>
                             <h3 class="text-xl font-bold font-serif-thai">${cat}</h3>
                         </div>
                         <div class="${rowWrapperClass}">
                             <div class="${contentClass} flex gap-4 w-full">
-                                ${catMovies.map(movie => `
-                                    <div class="movie-card glass-panel flex-shrink-0" onclick="navigate('movie', '${movie.id}')">
-                                        <div class="movie-poster-container">
-                                            <img src="${movie.cover}" class="movie-poster" alt="${movie.title}">
-                                            <div class="mystic-overlay flex items-end p-2 pb-3">
-                                                <span class="text-xs font-bold bg-blue-900/90 px-2 py-1 rounded text-white border border-blue-400 shadow-lg">
-                                                    ${movie.episodes} คัมภีร์
-                                                </span>
-                                            </div>
-                                            <div class="absolute top-2 right-2 bg-black/70 px-2 py-1 rounded text-xs text-yellow-400 border border-yellow-600/50 shadow-md">
-                                                <i class="fa-solid fa-star"></i> ${movie.rating}
-                                            </div>
-                                        </div>
-                                        <div class="p-3 text-center h-[3.5rem] flex items-center justify-center bg-black/20">
-                                            <h4 class="font-bold text-sm line-clamp-2 font-serif-thai text-blue-100">${movie.title}</h4>
-                                        </div>
-                                    </div>
-                                `).join('')}
+                                ${finalContentHTML}
                             </div>
                         </div>
                     </div>
                 `;
             });
 
+            mainContent.innerHTML = html;
+        }
+
+        function renderAllMovies() {
+            let html = `
+                <div class="mb-6 animate-fade-in">
+                    <h2 class="text-3xl font-bold mb-2 text-accent font-serif-thai text-shadow-glow">คัมภีร์ทั้งหมด</h2>
+                    <p class="text-sm opacity-80">รวบรวมคัมภีร์ทุกหมวดหมู่ไว้ในที่เดียว</p>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 pb-8 animate-fade-in">
+            `;
+            movies.forEach(movie => {
+                html += `
+                    <div class="movie-card glass-panel" style="flex: unset; height: auto;" onclick="navigate('movie', '${movie.id}')">
+                        <div class="movie-poster-container">
+                            <img src="${movie.cover}" class="movie-poster" alt="${movie.title}">
+                            <div class="mystic-overlay flex items-end p-2 pb-3">
+                                <span class="text-xs font-bold bg-blue-900/90 px-2 py-1 rounded text-white border border-blue-400 shadow-lg">
+                                    ${movie.episodes} คัมภีร์
+                                </span>
+                            </div>
+                            <div class="absolute top-2 right-2 bg-black/70 px-2 py-1 rounded text-xs text-yellow-400 border border-yellow-600/50 shadow-md">
+                                <i class="fa-solid fa-star"></i> ${movie.rating}
+                            </div>
+                        </div>
+                        <div class="p-3 text-center h-[3.5rem] flex items-center justify-center bg-black/20">
+                            <h4 class="font-bold text-sm line-clamp-2 font-serif-thai text-blue-100">${movie.title}</h4>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
             mainContent.innerHTML = html;
         }
 
@@ -591,32 +645,32 @@
 
         function renderHistory() {
             let html = `
-                <div class="mb-6">
-                    <h2 class="text-3xl font-bold mb-2 text-accent font-serif-thai">ประวัติการเข้าชม</h2>
+                <div class="mb-6 animate-fade-in">
+                    <h2 class="text-3xl font-bold mb-2 text-accent font-serif-thai text-shadow-glow">ประวัติการเข้าชม</h2>
                     <p class="text-sm opacity-80">เรื่องที่ท่านเคยเปิดอ่านคัมภีร์</p>
                 </div>
             `;
 
             if (state.history.length === 0) {
-                html += `<div class="text-center py-10 text-gray-500 font-serif-thai"><i class="fa-solid fa-eye-slash text-4xl mb-3 opacity-50"></i><br>ท่านยังไม่เคยเปิดอ่านคัมภีร์เล่มใดเลย</div>`;
+                html += `<div class="text-center py-10 text-gray-500 font-serif-thai animate-fade-in"><i class="fa-solid fa-eye-slash text-4xl mb-3 opacity-50"></i><br>ท่านยังไม่เคยเปิดอ่านคัมภีร์เล่มใดเลย</div>`;
             } else {
-                html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-4">`;
+                html += `<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 pb-8 animate-fade-in">`;
                 // แสดงเรื่องล่าสุดก่อน (reverse order ของการบันทึก)
                 state.history.slice().reverse().forEach(id => {
                     const movie = movies.find(m => m.id === String(id));
                     if(movie) {
                         html += `
-                            <div class="movie-card glass-panel" onclick="navigate('movie', '${movie.id}')">
+                            <div class="movie-card glass-panel" style="flex: unset; height: auto;" onclick="navigate('movie', '${movie.id}')">
                                 <div class="movie-poster-container">
                                     <img src="${movie.cover}" class="movie-poster" alt="${movie.title}">
                                     <div class="mystic-overlay flex items-end p-2 pb-3">
-                                        <span class="text-xs font-bold bg-blue-900/90 px-2 py-1 rounded text-white border border-blue-400">
+                                        <span class="text-xs font-bold bg-blue-900/90 px-2 py-1 rounded text-white border border-blue-400 shadow-lg">
                                             ${movie.episodes} คัมภีร์
                                         </span>
                                     </div>
                                 </div>
                                 <div class="p-3 text-center h-[3.5rem] flex items-center justify-center bg-black/20">
-                                    <h4 class="font-bold text-sm line-clamp-2 font-serif-thai">${movie.title}</h4>
+                                    <h4 class="font-bold text-sm line-clamp-2 font-serif-thai text-blue-100">${movie.title}</h4>
                                 </div>
                             </div>
                         `;
@@ -629,21 +683,21 @@
 
         function renderDownloads() {
              let html = `
-                <div class="mb-6">
-                    <h2 class="text-3xl font-bold mb-2 text-accent font-serif-thai">หอเก็บคัมภีร์</h2>
+                <div class="mb-6 animate-fade-in">
+                    <h2 class="text-3xl font-bold mb-2 text-accent font-serif-thai text-shadow-glow">หอเก็บคัมภีร์</h2>
                     <p class="text-sm opacity-80">เรื่องที่ท่านเก็บไว้ (Bookmarks / Downloads)</p>
                 </div>
             `;
 
             if (state.downloads.length === 0) {
-                html += `<div class="text-center py-10 text-gray-500 font-serif-thai"><i class="fa-solid fa-box-open text-4xl mb-3 opacity-50"></i><br>หอเก็บคัมภีร์ยังว่างเปล่า</div>`;
+                html += `<div class="text-center py-10 text-gray-500 font-serif-thai animate-fade-in"><i class="fa-solid fa-box-open text-4xl mb-3 opacity-50"></i><br>หอเก็บคัมภีร์ยังว่างเปล่า</div>`;
             } else {
-                html += `<div class="space-y-3">`;
+                html += `<div class="space-y-3 animate-fade-in pb-8">`;
                 state.downloads.slice().reverse().forEach(id => {
                     const movie = movies.find(m => m.id === String(id));
                     if(movie) {
                         html += `
-                            <div class="glass-panel p-3 flex gap-4 items-center rounded-xl cursor-pointer hover:bg-blue-900/30" onclick="navigate('movie', '${movie.id}')">
+                            <div class="glass-panel p-3 flex gap-4 items-center rounded-xl cursor-pointer hover:bg-blue-900/30 transition-colors border-accent" onclick="navigate('movie', '${movie.id}')">
                                 <div class="w-16 h-24 flex-shrink-0">
                                     <img src="${movie.cover}" class="w-full h-full object-cover rounded border border-blue-500/50">
                                 </div>
@@ -651,7 +705,7 @@
                                     <h4 class="font-bold font-serif-thai text-blue-100 line-clamp-2">${movie.title}</h4>
                                     <p class="text-xs text-gray-400 mt-1">${movie.episodes} คัมภีร์ • เก็บบันทึกแล้ว</p>
                                 </div>
-                                <div class="w-8 h-8 rounded-full bg-green-900/50 text-green-400 border border-green-500/50 flex items-center justify-center flex-shrink-0">
+                                <div class="w-8 h-8 rounded-full bg-green-900/50 text-green-400 border border-green-500/50 flex items-center justify-center flex-shrink-0 shadow-md">
                                     <i class="fa-solid fa-check"></i>
                                 </div>
                             </div>
