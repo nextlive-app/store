@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title id="page-title">Processing | E-Commerce Shop</title>
+    <title id="page-title">NextLive | E-Commerce Shop</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -104,9 +104,6 @@
         .popup-box p { color: #555; margin: 12px 0 20px; font-size: 14px; }
         .dark .popup-box p { color: #aaa; }
         .popup-box .close-btn { width: 100%; height: 45px; background: #e43a3d; border-radius: 6px; border: none; outline: none; box-shadow: 0 4px 10px rgba(228, 58, 61, .3); cursor: pointer; font-size: 16px; color: #f2f2f2; font-weight: 600; }
-
-        #maintenance-screen { position: fixed; inset: 0; background: #fff; z-index: 100000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
-        .dark #maintenance-screen { background: #121212; color: white; }
         
         .custom-radio:checked + div { border-color: #e43a3d; background-color: #fef2f2; }
         .custom-radio:checked + div .radio-inner-circle { transform: scale(1); }
@@ -145,18 +142,7 @@
 </head>
 <body class="antialiased flex flex-col min-h-screen">
 
-    <div id="global-loader" class="fixed inset-0 bg-white dark:bg-[#121212] z-[100001] flex flex-col items-center justify-center">
-        <div class="lds-spinner mb-4"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-        <p class="text-gray-500 font-kanit" id="loader-text">Processing  API . . .</p>
-    </div>
-
-    <div id="maintenance-screen" class="hidden">
-        <i data-lucide="settings" class="w-20 h-20 text-gray-400 mb-6 animate-spin-slow"></i>
-        <h1 class="text-3xl font-bold mb-2">ขณะนี้ระบบปิดปรับปรุง</h1>
-        <p class="text-gray-500">ขออภัยในความไม่สะดวก และจะพร้อมเปิดให้บริการในเร็วๆนี้</p>
-    </div>
-
-    <div id="app-wrapper" class="hidden flex-col min-h-screen">
+    <div id="app-wrapper" class="flex-col min-h-screen">
         <div class="bg-[#333333] dark:bg-[#000000] text-gray-300 text-xs py-2 hidden md:block transition-colors">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
                 <div>Sale special too good to miss in every gear category</div>
@@ -249,8 +235,20 @@
         <div id="user-toast-container"></div>
 
         <main id="main-content" class="flex-grow">
+            <!-- Skeleton Loader (แสดงตอนโหลดข้อมูล) -->
+            <div id="skeleton-loader" class="block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-hidden w-full">
+                <div class="w-full h-[180px] sm:h-[300px] md:h-[400px] animate-pulse bg-gray-200 dark:bg-gray-800 rounded-sm mb-8"></div>
+                <div class="h-8 w-48 animate-pulse bg-gray-200 dark:bg-gray-800 rounded-sm mb-6"></div>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4 sm:gap-6">
+                    <div class="border border-gray-200 dark:border-gray-800 rounded-sm p-4 flex flex-col items-center"><div class="w-full h-32 animate-pulse bg-gray-200 dark:bg-gray-700 rounded-sm mb-4"></div><div class="w-3/4 h-4 animate-pulse bg-gray-200 dark:bg-gray-700 rounded-sm mb-2"></div><div class="w-1/2 h-4 animate-pulse bg-gray-200 dark:bg-gray-700 rounded-sm"></div></div>
+                    <div class="border border-gray-200 dark:border-gray-800 rounded-sm p-4 flex flex-col items-center"><div class="w-full h-32 animate-pulse bg-gray-200 dark:bg-gray-700 rounded-sm mb-4"></div><div class="w-3/4 h-4 animate-pulse bg-gray-200 dark:bg-gray-700 rounded-sm mb-2"></div><div class="w-1/2 h-4 animate-pulse bg-gray-200 dark:bg-gray-700 rounded-sm"></div></div>
+                    <div class="border border-gray-200 dark:border-gray-800 rounded-sm p-4 flex flex-col items-center"><div class="w-full h-32 animate-pulse bg-gray-200 dark:bg-gray-700 rounded-sm mb-4"></div><div class="w-3/4 h-4 animate-pulse bg-gray-200 dark:bg-gray-700 rounded-sm mb-2"></div><div class="w-1/2 h-4 animate-pulse bg-gray-200 dark:bg-gray-700 rounded-sm"></div></div>
+                    <div class="border border-gray-200 dark:border-gray-800 rounded-sm p-4 flex flex-col items-center"><div class="w-full h-32 animate-pulse bg-gray-200 dark:bg-gray-700 rounded-sm mb-4"></div><div class="w-3/4 h-4 animate-pulse bg-gray-200 dark:bg-gray-700 rounded-sm mb-2"></div><div class="w-1/2 h-4 animate-pulse bg-gray-200 dark:bg-gray-700 rounded-sm"></div></div>
+                </div>
+            </div>
+
             <!-- View: Home -->
-            <div id="view-home" class="block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-hidden">
+            <div id="view-home" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-hidden">
                 <div class="relative w-full h-[180px] sm:h-[300px] md:h-[400px] overflow-hidden rounded-sm mb-8 group bg-gray-200 dark:bg-gray-800 shadow-sm" id="banner-slider">
                     <div class="flex h-full w-full transition-transform duration-700 ease-in-out" id="slider-track"></div>
                 </div>
@@ -275,7 +273,6 @@
                 <!-- Tab Content: Check Queue (To-Do List Style) -->
                 <div id="booking-tab-check" class="block animate-fade-in">
                     <div id="booking-list-container" class="space-y-3">
-                        <!-- Cards will be injected here via JS -->
                         <div class="text-center p-6 text-gray-400 border border-dashed rounded-md">กำลังโหลดข้อมูล...</div>
                     </div>
                 </div>
@@ -372,7 +369,6 @@
                         <i data-lucide="info" class="w-5 h-5 mr-2 flex-shrink-0"></i> * หมายเหตุ: ผู้ใช้จะต้องทำการยกเลิกก่อนถึงคิวอย่างน้อย 3 ชั่วโมง
                     </div>
                     <div id="booking-cancel-container" class="space-y-3">
-                        <!-- Cards will be injected here via JS -->
                         <div class="text-center p-6 text-gray-400 border border-dashed rounded-md">ไม่มีคิวที่สามารถยกเลิกได้</div>
                     </div>
                 </div>
@@ -1165,7 +1161,7 @@
         </div>
     </div>
 
-    <!-- Draggable Contact Admin Widget (Telegram Only) -->
+    <!-- Draggable Contact Admin Widget -->
     <div id="draggable-contact" class="fixed z-[100] transition-transform duration-300 flex items-center" style="top: 50%; right: 0;">
         <div id="contact-tab" class="bg-primary text-white text-xs font-bold py-3 px-1 cursor-pointer rounded-l-md shadow-md writing-vertical transform select-none" onclick="toggleContactWidget()">
             ติดต่อแอดมิน
@@ -1181,10 +1177,32 @@
             </a>
         </div>
     </div>
-    <!-- Application Logic -->
-    <script>
+
+    <!-- Application Logic (Firebase Firestore Version) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, getDocs, getDoc, doc, setDoc, addDoc, updateDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // ==========================================
+        // 1. FIREBASE CONFIGURATION
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAelVQfnSAlc6ixNiUk0K3cfu96qLDPQ-w",
+            authDomain: "next-live-app.firebaseapp.com",
+            projectId: "next-live-app",
+            storageBucket: "next-live-app.firebasestorage.app",
+            messagingSenderId: "644606375165",
+            appId: "1:644606375165:web:7b41c58d2363bab68b7a94"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // ⚠️ โค้ดส่งเมล์ & เช็คสลิป (ใส่ URL ของ Apps Script ตัวใหม่ลงไป)
         const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx8Zw7yc9QlPrU9PeaJ6koVbk9UqAZhRIDUSxKvqhQnyc5sp27V0rkxb5FbNKivIfhi/exec";
-        
+
+        // ==========================================
+        // 2. GLOBAL VARIABLES
+        // ==========================================
         let isDarkMode = false;
         let cart = [];
         let activeCategory = 'all';
@@ -1200,9 +1218,10 @@
         let currentFlow = 'order'; 
         let globalHistoryData = null; 
         
-        // Polling state for User Notifications
-        let userPollingInterval = null;
         let userUnreadCount = 0;
+        let unsubscribeUser = null;
+        let unsubscribeOrders = null;
+        let unsubscribeTx = null;
 
         const bannerData = [
             { img: "https://img1.pic.in.th/images/IMG_1083.png" },
@@ -1215,25 +1234,13 @@
             { id: 'bank-ktb', name: 'Krungthai Bank', thName: 'ธนาคารกรุงไทย' },
             { id: 'bank-tmb', name: 'TMB Bank', thName: 'ธนาคารทหารไทย' },
             { id: 'bank-scb', name: 'Siam Commercial Bank', thName: 'ธนาคารไทยพาณิชย์' },
-            { id: 'bank-citi', name: 'Citibank', thName: 'ธนาคารซิตี้แบงก์' },
-            { id: 'bank-sc', name: 'Standard Chartered', thName: 'ธนาคารสแตนดาร์ดชาร์เตอร์ด (ไทย)' },
-            { id: 'bank-cimb', name: 'CIMB Thai Bank', thName: 'ธนาคารซีไอเอ็มบี ไทย' },
-            { id: 'bank-uob', name: 'United Overseas Bank', thName: 'ธนาคารยูโอบี' },
-            { id: 'bank-bay', name: 'Bank of Ayudhya (Krungsri)', thName: 'ธนาคารกรุงศรีอยุธยา' },
-            { id: 'bank-gsb', name: 'Government Savings Bank', thName: 'ธนาคารออมสิน' },
-            { id: 'bank-ghb', name: 'Government Housing Bank', thName: 'ธนาคารอาคารสงเคราะห์' },
-            { id: 'bank-baac', name: 'BAAC', thName: 'ธนาคารเพื่อการเกษตรและสหกรณ์การเกษตร (ธ.ก.ส.)' },
-            { id: 'bank-tbank', name: 'Thanachart Bank', thName: 'ธนาคารธนชาต' },
-            { id: 'bank-ibank', name: 'Islamic Bank of Thailand', thName: 'ธนาคารอิสลามแห่งประเทศไทย' },
-            { id: 'bank-tisco', name: 'Tisco Bank', thName: 'ธนาคารทิสโก้' },
-            { id: 'bank-kk', name: 'Kiatnakin Bank', thName: 'ธนาคารเกียรตินาคิน' },
-            { id: 'bank-icbc', name: 'ICBC (Thai)', thName: 'ธนาคารไอซีบีซี (ไทย)' },
-            { id: 'bank-tcrb', name: 'Thai Credit Retail Bank', thName: 'ธนาคารไทยเครดิต' },
-            { id: 'bank-lhb', name: 'Land and Houses Bank', thName: 'ธนาคารแลนด์ แอนด์ เฮ้าส์' },
             { id: 'bank-tmn', name: 'TrueMoney Wallet', thName: 'ทรูมันนี่ วอลเล็ท' },
             { id: 'bank-pp', name: 'PromptPay', thName: 'พร้อมเพย์' }
         ];
 
+        // ==========================================
+        // 3. UTILITY FUNCTIONS
+        // ==========================================
         function getStatusBadgeClass(status) {
             if (!status) return "bg-gray-100 text-gray-700";
             if (status.includes("รอเรียกคิว")) return "bg-blue-100 text-blue-700";
@@ -1246,318 +1253,87 @@
         function safeSetText(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
         function safeSetHTML(id, htmlString) { const el = document.getElementById(id); if (el) el.innerHTML = htmlString; }
         function safeSetValue(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
+        
+        function formatThaiDateTime(dateObj) {
+            if(!dateObj) return "-";
+            if(typeof dateObj === 'string') return dateObj; // if already string format
+            const d = dateObj.toDate ? dateObj.toDate() : new Date(dateObj);
+            let y = d.getFullYear(); if(y < 2500) y += 543;
+            let m = ("0" + (d.getMonth() + 1)).slice(-2);
+            let day = ("0" + d.getDate()).slice(-2);
+            let h = ("0" + d.getHours()).slice(-2);
+            let min = ("0" + d.getMinutes()).slice(-2);
+            return `${day}-${m}-${y} | ${h}:${min} น.`;
+        }
 
-        // ============================================================================
-        // 1. ดักจับ Affiliate ID จาก URL
-        // ============================================================================
+        function generateId(prefix) { return prefix + Date.now().toString().slice(-6) + Math.floor(Math.random() * 1000); }
+
+        // ==========================================
+        // 4. INIT & LOAD DATA FROM FIRESTORE
+        // ==========================================
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const affId = urlParams.get('Affiliate');
-            if (affId) {
-                localStorage.setItem('saved_affiliate_id', affId);
-                console.log("จับลิงก์แนะนำเพื่อนสำเร็จ ไอดีคือ:", affId);
-            }
+            if (affId) { localStorage.setItem('saved_affiliate_id', affId); }
+            
+            // โชว์แอป และแสดง Skeleton ก่อนดึงข้อมูล
+            document.getElementById('app-wrapper').style.display = 'flex';
+            document.getElementById('skeleton-loader').style.display = 'block';
+            
+            initApp();
         });
 
-        // ============================================================================
-        // 2. ฟังก์ชันส่งข้อมูลไปหลังบ้าน
-        // ============================================================================
-        async function callBackend(payload) {
-            try {
-                let savedAffId = localStorage.getItem('saved_affiliate_id');
-                if (savedAffId) {
-                    if (payload.action === 'register') {
-                        payload.inviterUID = savedAffId;
-                    }
-                    if (payload.action === 'deposit' || payload.action === 'submitOrder') {
-                        payload.guestInviterUID = savedAffId;
-                    }
-                }
-
-                const response = await fetch(GAS_WEBAPP_URL, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                    body: JSON.stringify(payload) 
-                });
-                
-                const text = await response.text();
-                try { 
-                    return JSON.parse(text); 
-                } catch (err) { 
-                    throw new Error("ไม่สามารถอ่านข้อมูลจากเซิร์ฟเวอร์ได้"); 
-                }
-            } catch (err) { 
-                throw new Error(err.message || "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้"); 
-            }
-        }
-
-        // Popup System
-        function showCustomPopup(title, text) {
-            safeSetText('popup-title', title); safeSetText('popup-desc', text);
-            const popup = document.getElementById('custom-popup'); if(popup) popup.classList.add('active');
-        }
-        function closeCustomPopup() {
-            const popup = document.getElementById('custom-popup'); if(popup) popup.classList.remove('active');
-        }
-
-        // Confirm Popup System
-        let confirmActionCallback = null;
-        function showConfirmPopup(title, desc, callback) {
-            safeSetText('confirm-title', title); safeSetText('confirm-desc', desc);
-            confirmActionCallback = callback;
-            document.getElementById('confirm-popup').classList.add('active');
-        }
-        function closeConfirmPopup() {
-            document.getElementById('confirm-popup').classList.remove('active');
-            confirmActionCallback = null;
-        }
-        document.getElementById('confirm-yes-btn').addEventListener('click', function() {
-            if(confirmActionCallback) confirmActionCallback();
-            closeConfirmPopup();
-        });
-
-        // Draggable Horizontal Scroll function
-        function initDraggableScroll(elementId) {
-            const slider = document.getElementById(elementId);
-            if(!slider) return;
-            let isDown = false; let startX; let scrollLeft;
-
-            slider.addEventListener('mousedown', (e) => {
-                isDown = true;
-                slider.classList.add('cursor-grabbing'); slider.classList.remove('cursor-pointer');
-                startX = e.pageX - slider.offsetLeft;
-                scrollLeft = slider.scrollLeft;
-            });
-            slider.addEventListener('mouseleave', () => { isDown = false; slider.classList.remove('cursor-grabbing'); });
-            slider.addEventListener('mouseup', () => { isDown = false; slider.classList.remove('cursor-grabbing'); slider.classList.add('cursor-pointer'); });
-            slider.addEventListener('mousemove', (e) => {
-                if (!isDown) return;
-                e.preventDefault();
-                const x = e.pageX - slider.offsetLeft;
-                const walk = (x - startX) * 2; 
-                slider.scrollLeft = scrollLeft - walk;
-            });
-        }
-
-        // --- Draggable Contact Admin Widget ---
-        function initDraggableContact() {
-            const widget = document.getElementById('draggable-contact');
-            const tab = document.getElementById('contact-tab');
-            let isDragging = false;
-            let startY, startTop;
-            let moved = false;
-
-            function dragStart(e) {
-                isDragging = true;
-                moved = false;
-                startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-                startTop = widget.offsetTop;
-                document.addEventListener('mousemove', dragging);
-                document.addEventListener('touchmove', dragging, {passive: false});
-                document.addEventListener('mouseup', dragEnd);
-                document.addEventListener('touchend', dragEnd);
-            }
-
-            function dragging(e) {
-                if(!isDragging) return;
-                let currentY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-                let dy = currentY - startY;
-                if(Math.abs(dy) > 5) moved = true;
-                if(moved) {
-                    e.preventDefault();
-                    let newTop = startTop + dy;
-                    newTop = Math.max(0, Math.min(window.innerHeight - widget.offsetHeight, newTop));
-                    widget.style.top = newTop + 'px';
-                }
-            }
-
-            function dragEnd() {
-                isDragging = false;
-                document.removeEventListener('mousemove', dragging);
-                document.removeEventListener('touchmove', dragging);
-                document.removeEventListener('mouseup', dragEnd);
-                document.removeEventListener('touchend', dragEnd);
-            }
-
-            tab.addEventListener('mousedown', dragStart);
-            tab.addEventListener('touchstart', dragStart, {passive: false});
-        }
-
-        function toggleContactWidget() {
-            const content = document.getElementById('contact-content');
-            if(content.classList.contains('hidden')) {
-                content.classList.remove('hidden');
-                content.classList.add('flex');
-            } else {
-                content.classList.add('hidden');
-                content.classList.remove('flex');
-            }
-        }
-
-        // --- User Real-time Notifications ---
-        function startUserPolling() {
-            if(userPollingInterval) clearInterval(userPollingInterval);
-            if(!globalHistoryData && currentUser) {
-                callBackend({ action: 'getHistory', phone: currentUser.phone }).then(res => {
-                    if(res.status === 'success') globalHistoryData = res;
-                });
-            }
-            userPollingInterval = setInterval(fetchUserHistorySilent, 15000);
-            document.getElementById('user-bell-container').style.display = 'block';
-        }
-
-        function stopUserPolling() {
-            if(userPollingInterval) clearInterval(userPollingInterval);
-            document.getElementById('user-bell-container').style.display = 'none';
-            userUnreadCount = 0;
-            updateUserBell();
-        }
-
-        function fetchUserHistorySilent() {
-            if(!currentUser) return;
-            callBackend({ action: 'getHistory', phone: currentUser.phone }).then(res => {
-                if(res.status === 'success') {
-                    if(globalHistoryData) {
-                        checkHistoryDifferences(globalHistoryData.orders, res.orders, "ออเดอร์");
-                        checkHistoryDifferences(globalHistoryData.deposits, res.deposits, "การฝากเงิน");
-                        checkHistoryDifferences(globalHistoryData.withdraws, res.withdraws, "การถอนเงิน");
-                    }
-                    globalHistoryData = res; 
-                    updateBalanceUI(res.balance);
-                }
-            }).catch(e => {});
-        }
-
-        function checkHistoryDifferences(oldArr, newArr, typeName) {
-            if(newArr.length > oldArr.length) {
-                let diff = newArr.length - oldArr.length;
-                showUserToast(`มี ${typeName} ใหม่เข้าสู่ระบบ (${diff} รายการ)`);
-                userUnreadCount += diff;
-                updateUserBell();
-            }
-            for(let i=0; i<Math.min(oldArr.length, newArr.length); i++) {
-                if(oldArr[i].ref === newArr[i].ref || oldArr[i].date === newArr[i].date) {
-                    if(oldArr[i].status !== newArr[i].status) {
-                        showUserToast(`${typeName} อัปเดตสถานะเป็น: ${newArr[i].status}`);
-                        userUnreadCount++;
-                        updateUserBell();
-                    }
-                }
-            }
-        }
-
-        function showUserToast(msg) {
-            const container = document.getElementById('user-toast-container');
-            const toast = document.createElement('div');
-            toast.className = 'user-toast';
-            toast.innerHTML = `<i data-lucide="bell-ring" class="w-5 h-5 text-primary"></i> <span>${msg}</span>`;
-            container.appendChild(toast);
-            lucide.createIcons();
-            setTimeout(() => {
-                toast.classList.add('hide');
-                setTimeout(() => toast.remove(), 400);
-            }, 5000);
-        }
-
-        function updateUserBell() {
-            const badge = document.getElementById('user-notif-badge');
-            const icon = document.getElementById('user-bell-icon');
-            if(userUnreadCount > 0) {
-                badge.innerText = userUnreadCount > 9 ? '9+' : userUnreadCount;
-                badge.classList.remove('hidden');
-                icon.classList.add('text-primary', 'animate-ring');
-                setTimeout(() => icon.classList.remove('animate-ring'), 1000);
-            } else {
-                badge.classList.add('hidden');
-                icon.classList.remove('text-primary');
-            }
-        }
-
-        function clearUserNotifications() {
-            userUnreadCount = 0;
-            updateUserBell();
-            navigate('history'); 
-        }
-
-        function togglePasswordVisibility(inputId, iconEl) {
-            const input = document.getElementById(inputId);
-            if(input.type === 'password') {
-                input.type = 'text'; iconEl.setAttribute('data-lucide', 'eye-off');
-            } else {
-                input.type = 'password'; iconEl.setAttribute('data-lucide', 'eye');
-            }
-            lucide.createIcons();
-        }
-
-        function saveCart() { localStorage.setItem('nextLiveCart', JSON.stringify(cart)); }
-        function loadCart() { 
-            const c = localStorage.getItem('nextLiveCart'); 
-            if(c) { cart = JSON.parse(c); updateCartBadge(); } 
-        }
-        function getSelectedCart() { return cart.filter(item => item.selected !== false); }
-
-        function init() {
+        async function initApp() {
             try { lucide.createIcons(); } catch(e) {}
             initSlider(); populateBankOptions(); loadCart(); 
             initDraggableContact();
-            
-            const startTime = Date.now();
-            callBackend({action: 'init'}).then(res => {
-                const elapsed = Date.now() - startTime;
-                const delay = Math.max(0, 1000 - elapsed);
-                setTimeout(() => {
-                    const loader = document.getElementById('global-loader'); if(loader) loader.style.display = 'none'; 
-                    if(res.status === 'success') {
-                        siteSettings = res.settings;
-                        let isActive = String(siteSettings.SiteActive).trim().toUpperCase() === "TRUE";
-                        if(!isActive) {
-                            const mScreen = document.getElementById('maintenance-screen'); const appWrapper = document.getElementById('app-wrapper');
-                            if(mScreen) mScreen.style.display = 'flex'; if(appWrapper) appWrapper.style.display = 'none'; return; 
-                        } else {
-                            const mScreen = document.getElementById('maintenance-screen'); const appWrapper = document.getElementById('app-wrapper');
-                            if(mScreen) mScreen.style.display = 'none'; if(appWrapper) appWrapper.style.display = 'flex';
-                        }
-                        applySettingsToUI();
-                        categories = [{ id: 'all', name: 'สินค้าทั้งหมด' }]; res.categories.forEach(c => categories.push({id: c, name: c}));
-                        products = res.products; optionsDB = res.options;
 
-                        renderCategoryMenu(); renderProducts(); checkLoginState();
-                        if (currentUser) { refreshUserData(); startUserPolling(); }
-                        
-                        const searchBox = document.getElementById('product-search-desktop');
-                        if(searchBox) { searchBox.addEventListener('input', (e) => { searchQuery = e.target.value.toLowerCase(); renderProducts(); }); }
-                        const searchBoxMobile = document.getElementById('product-search-mobile');
-                        if(searchBoxMobile) { searchBoxMobile.addEventListener('input', (e) => { searchQuery = e.target.value.toLowerCase(); renderProducts(); }); }
-                    } else { showCustomPopup("ข้อผิดพลาด", "โหลดข้อมูลไม่สำเร็จ: " + res.message); }
-                }, delay);
-            }).catch(e => {
-                const elapsed = Date.now() - startTime;
-                const delay = Math.max(0, 1000 - elapsed);
-                setTimeout(() => {
-                    const loader = document.getElementById('global-loader'); if(loader) loader.style.display = 'none';
-                    showCustomPopup("ข้อผิดพลาดระบบ", e.message);
-                }, delay);
-            });
-        }
-
-        function populateBankOptions() {
-            const select = document.getElementById('wd-bank-name'); if(!select) return;
-            bankList.forEach(bank => {
-                const opt = document.createElement('option'); opt.value = bank.id; opt.textContent = bank.thName || bank.name; select.appendChild(opt);
-            });
-            select.addEventListener('change', function() {
-                const iconPreview = document.getElementById('wd-bank-icon-preview');
-                if(iconPreview) iconPreview.innerHTML = `<i class="bank ${this.value} m shadow"></i>`;
-            });
-        }
-
-        function refreshUserData() {
-            if(!currentUser) return;
-            callBackend({action: 'getUserData', email: currentUser.email, phone: currentUser.phone}).then(res => {
-                if(res.status === 'success') {
-                    currentUser = res.user; localStorage.setItem('nextLiveUser', JSON.stringify(currentUser)); checkLoginState(); 
+            try {
+                // Fetch Settings
+                const configSnap = await getDoc(doc(db, "Settings", "config"));
+                if(configSnap.exists()) {
+                    siteSettings = configSnap.data();
+                } else {
+                    siteSettings = { SiteName: "NextLive Shop" };
                 }
-            }).catch(e => console.error("Refresh User Error:", e));
+
+                // Fetch Products
+                const prodSnap = await getDocs(collection(db, "ProductList"));
+                const catSet = new Set();
+                prodSnap.forEach(doc => {
+                    let p = doc.data();
+                    if(p.category) catSet.add(p.category);
+                    products.push({ id: p.productId, category: p.category, name: p.name, desc: p.description, price: p.price, image: p.imageUrl, stock: p.stock, dlLink: p.downloadLink, manualLink: p.manualLink });
+                });
+
+                // Fetch Options
+                const optSnap = await getDocs(collection(db, "OptionsList"));
+                optSnap.forEach(doc => {
+                    let o = doc.data();
+                    optionsDB.push({ id: doc.id, productId: o.productId, name: o.optionName, price: o.extraPrice, dlLink: o.downloadLink, manualLink: o.manualLink });
+                });
+
+                // ปิดการแสดง Skeleton และแสดงหน้า Home หลังดึงข้อมูลเสร็จ
+                document.getElementById('skeleton-loader').style.display = 'none';
+                document.getElementById('view-home').classList.remove('hidden');
+
+                applySettingsToUI();
+                categories = [{ id: 'all', name: 'สินค้าทั้งหมด' }]; 
+                catSet.forEach(c => categories.push({id: c, name: c}));
+
+                renderCategoryMenu(); renderProducts(); checkLoginState();
+                
+                const searchBox = document.getElementById('product-search-desktop');
+                if(searchBox) searchBox.addEventListener('input', (e) => { searchQuery = e.target.value.toLowerCase(); renderProducts(); });
+                const searchBoxMobile = document.getElementById('product-search-mobile');
+                if(searchBoxMobile) searchBoxMobile.addEventListener('input', (e) => { searchQuery = e.target.value.toLowerCase(); renderProducts(); });
+
+            } catch(e) {
+                console.error("Init Error:", e);
+                // เปลี่ยนหน้าถ้าโหลดล้มเหลว
+                document.getElementById('skeleton-loader').style.display = 'none';
+                showCustomPopup("ข้อผิดพลาดระบบ", "ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาลองใหม่อีกครั้ง");
+            }
         }
 
         function applySettingsToUI() {
@@ -1569,14 +1345,15 @@
             const fb = document.getElementById('f-fb'); if(fb) fb.href = siteSettings.FacebookLink || "#";
             const ln = document.getElementById('f-line'); if(ln) ln.href = siteSettings.LineLink || "#";
 
-            let acc = String(siteSettings.BankAccount || "000-0-00000-0"); let cleanAcc = acc.replace(/[\s-]/g, ''); 
+            let acc = String(siteSettings.BankAccount || "000-0-00000-0"); let cleanAcc = acc.replace(/[\s-']/g, ''); 
             if(cleanAcc.length >= 10) { let masked = cleanAcc.substring(0,3) + "-XXX-" + cleanAcc.substring(cleanAcc.length - 4); safeSetText('slip-admin-acc', masked); } 
             else { safeSetText('slip-admin-acc', acc); }
         }
 
-        function toggleTheme() { isDarkMode = !isDarkMode; document.documentElement.classList.toggle('dark', isDarkMode); }
-
-        function checkLoginState() {
+        // ==========================================
+        // 5. AUTHENTICATION & USER STATE (FIRESTORE)
+        // ==========================================
+        window.checkLoginState = function() {
             const savedUser = localStorage.getItem('nextLiveUser');
             const authWrapper = document.getElementById('auth-buttons-wrapper'); const profMenu = document.getElementById('user-profile-menu');
             const mobileAuth = document.getElementById('mobile-auth-section'); const mobileProf = document.getElementById('mobile-profile-section'); const mobileLogout = document.getElementById('mobile-logout-section');
@@ -1587,176 +1364,542 @@
                 if(mobileAuth) mobileAuth.style.display = 'none'; if(mobileProf) mobileProf.style.display = 'block'; if(mobileLogout) mobileLogout.style.display = 'block';
                 
                 safeSetText('profile-icon', currentUser.fname.charAt(0).toUpperCase()); safeSetText('profile-name', currentUser.fname);
-                let balText = `฿${(currentUser.balance || 0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
-                safeSetText('nav-balance', balText); safeSetText('sidebar-balance', balText); safeSetText('deposit-current-balance', balText);
+                updateBalanceUI(currentUser.balance);
                 
                 safeSetValue('chk-fname', currentUser.fname); safeSetValue('chk-lname', currentUser.lname);
                 safeSetValue('chk-email', currentUser.email); safeSetValue('chk-phone', currentUser.phone);
-                
                 safeSetValue('bk-fname', currentUser.fname); safeSetValue('bk-lname', currentUser.lname);
                 safeSetValue('bk-email', currentUser.email); safeSetValue('bk-phone', currentUser.phone);
 
                 renderProfileView(); updateCheckoutTotals(); checkWithdrawalState(); 
-                if(!userPollingInterval) startUserPolling();
+                setupRealtimeListeners();
             } else {
                 currentUser = null;
                 if(authWrapper) authWrapper.style.display = 'block'; if(profMenu) profMenu.classList.add('hidden');
                 if(mobileAuth) mobileAuth.style.display = 'block'; if(mobileProf) mobileProf.style.display = 'none'; if(mobileLogout) mobileLogout.style.display = 'none';
-                
                 const creditWrapper = document.getElementById('method-credit-wrapper'); if(creditWrapper) creditWrapper.style.display = 'none';
                 const qrRadio = document.querySelector('input[name="payment_method"][value="qr"]'); if(qrRadio) qrRadio.checked = true;
-                toggleCreditInput();
-                stopUserPolling();
+                window.toggleCreditInput();
+                clearRealtimeListeners();
             }
         }
 
-        function logout() {
-            if(currentUser) { callBackend({action: 'logout', email: currentUser.email, phone: currentUser.phone}); }
-            localStorage.removeItem('nextLiveUser'); checkLoginState(); showCustomPopup("สำเร็จ", "ออกจากระบบเรียบร้อยแล้ว"); navigate('home');
+        function updateBalanceUI(bal) {
+            let balText = `฿${parseFloat(bal || 0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+            safeSetText('nav-balance', balText); safeSetText('sidebar-balance', balText); safeSetText('deposit-current-balance', balText);
         }
 
-        function updateBalanceUI(newBal) {
-            if(currentUser) { currentUser.balance = newBal; localStorage.setItem('nextLiveUser', JSON.stringify(currentUser)); checkLoginState(); }
-        }
-
-        // Auth Logic...
-        function sendOtp() {
-            const email = document.getElementById('fp-email').value;
-            if(!email) { showCustomPopup("แจ้งเตือน", "กรุณาระบุอีเมล"); return; }
-            const btn = document.getElementById('btn-send-otp');
-            btn.innerText = "..."; btn.disabled = true;
-            callBackend({action: 'sendOtp', email: email}).then(res => {
-                btn.innerText = "ส่งรหัส"; btn.disabled = false;
-                if(res.status === 'success') showCustomPopup("สำเร็จ", res.message);
-                else showCustomPopup("ข้อผิดพลาด", res.message);
-            }).catch(e => { btn.innerText = "ส่งรหัส"; btn.disabled = false; showCustomPopup("ข้อผิดพลาด", "ไม่สามารถส่ง OTP ได้"); });
-        }
-
-        function submitResetPassword() {
-            const email = document.getElementById('fp-email').value;
-            const otp = document.getElementById('fp-otp').value;
-            const newPass = document.getElementById('fp-new-pass').value;
-            const confirmPass = document.getElementById('fp-confirm-pass').value;
-
-            if(!email || !otp || !newPass || !confirmPass) { showCustomPopup("แจ้งเตือน", "กรุณากรอกข้อมูลให้ครบถ้วน"); return; }
-            if(newPass !== confirmPass) { showCustomPopup("แจ้งเตือน", "รหัสผ่านไม่ตรงกัน"); return; }
-
-            const btn = document.getElementById('btn-reset-pass'); btn.innerText = "กำลังเปลี่ยน..."; btn.disabled = true;
-            callBackend({action: 'resetPassword', email: email, otp: otp, newPass: newPass}).then(res => {
-                btn.innerText = "เปลี่ยนรหัสผ่าน"; btn.disabled = false;
-                if(res.status === 'success') { showCustomPopup("สำเร็จ", res.message); navigate('auth'); switchAuthTab('login'); } 
-                else { showCustomPopup("ข้อผิดพลาด", res.message); }
-            }).catch(e => { btn.innerText = "เปลี่ยนรหัสผ่าน"; btn.disabled = false; showCustomPopup("ข้อผิดพลาด", "การเชื่อมต่อล้มเหลว"); });
-        }
-
-        function submitChangePassword() {
-            if(!currentUser) return;
-            const oldPass = document.getElementById('cp-old').value;
-            const newPass = document.getElementById('cp-new').value;
-            const confirmPass = document.getElementById('cp-confirm').value;
-
-            if(!oldPass || !newPass || !confirmPass) { showCustomPopup("แจ้งเตือน", "กรุณากรอกข้อมูลให้ครบถ้วน"); return; }
-            if(newPass !== confirmPass) { showCustomPopup("แจ้งเตือน", "รหัสผ่านใหม่ไม่ตรงกัน"); return; }
-
-            const btn = document.getElementById('btn-submit-cp'); btn.innerText = "กำลังเปลี่ยน..."; btn.disabled = true;
-            callBackend({action: 'changePassword', email: currentUser.email, oldPass: oldPass, newPass: newPass}).then(res => {
-                btn.innerText = "เปลี่ยนรหัสผ่าน"; btn.disabled = false;
-                if(res.status === 'success') { showCustomPopup("สำเร็จ", res.message); document.getElementById('change-pass-form').reset(); } 
-                else { showCustomPopup("ข้อผิดพลาด", res.message); }
-            }).catch(e => { btn.innerText = "เปลี่ยนรหัสผ่าน"; btn.disabled = false; showCustomPopup("ข้อผิดพลาด", "การเชื่อมต่อล้มเหลว"); });
-        }
-
-        function submitRegister() {
-            const form1 = document.getElementById('reg-form-1');
-            if(form1 && !form1.checkValidity()) { showCustomPopup("แจ้งเตือน", "กรุณากรอกข้อมูลให้ครบถ้วน"); return; }
-            if(document.getElementById('reg-pass').value !== document.getElementById('reg-pass-confirm').value) {
-                showCustomPopup("แจ้งเตือน", "รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน"); return;
-            }
-
-            const btn = document.getElementById('btn-submit-register'); if(btn) { btn.innerText = "กำลังสร้างบัญชี..."; btn.disabled = true; }
-
-            const payload = {
-                action: 'register', fname: document.getElementById('reg-fname').value, lname: document.getElementById('reg-lname').value,
-                email: document.getElementById('reg-email').value, phone: document.getElementById('reg-phone').value,
-                password: document.getElementById('reg-pass').value
-            };
-
-            callBackend(payload).then(res => {
-                if(btn) { btn.innerText = "สร้างบัญชี"; btn.disabled = false; }
-                if(res.status === 'success') {
-                    showCustomPopup("สำเร็จ!", "สมัครสมาชิกและเข้าสู่ระบบเรียบร้อย ระบบได้ส่งอีเมลยืนยันแล้ว");
-                    localStorage.setItem('nextLiveUser', JSON.stringify(res.user)); checkLoginState(); navigate('home');
-                } else { showCustomPopup("ข้อผิดพลาด", res.message); }
-            }).catch(e => { if(btn) { btn.innerText = "สร้างบัญชี"; btn.disabled = false; } showCustomPopup("ข้อผิดพลาด", e.message); });
-        }
-
-        function submitLogin() {
+        window.submitLogin = async function() {
             const form = document.getElementById('login-form'); if(form && !form.checkValidity()) { form.reportValidity(); return; }
             const btn = document.getElementById('btn-submit-login'); if(btn) { btn.innerText = "กำลังเข้าสู่ระบบ..."; btn.disabled = true; }
-            const payload = { action: 'login', username: document.getElementById('log-username').value, password: document.getElementById('log-password').value };
             
-            callBackend(payload).then(res => {
-                if(btn) { btn.innerText = "ลงชื่อเข้าใช้งาน"; btn.disabled = false; }
-                if(res.status === 'success') {
-                    localStorage.setItem('nextLiveUser', JSON.stringify(res.user)); checkLoginState(); showCustomPopup("ยินดีต้อนรับ", "เข้าสู่ระบบสำเร็จ"); navigate('home');
-                } else { showCustomPopup("ข้อผิดพลาด", res.message); }
-            }).catch(e => { if(btn) { btn.innerText = "ลงชื่อเข้าใช้งาน"; btn.disabled = false; } showCustomPopup("ข้อผิดพลาด", e.message); });
-        }
+            const username = document.getElementById('log-username').value.trim();
+            const password = document.getElementById('log-password').value.trim();
+            
+            try {
+                const usersSnap = await getDocs(collection(db, "Users"));
+                let foundUser = null;
+                usersSnap.forEach(doc => {
+                    let u = doc.data();
+                    if((u.email === username || u.phone === username || u.phone === "'"+username) && String(u.password) === password) {
+                        foundUser = { uid: doc.id, fname: u.fname, lname: u.lname, email: u.email, phone: u.phone.replace(/'/g,''), balance: parseFloat(u.balance)||0, bankName: u.bankName||"", bankAcc: u.bankAcc||"", regDate: u.date };
+                    }
+                });
 
-        function renderProfileView() {
-            if(!currentUser) return;
-            safeSetText('vp-name', currentUser.fname + " " + currentUser.lname); safeSetText('vp-email', currentUser.email);
-            safeSetText('vp-phone', currentUser.phone); safeSetText('vp-date', currentUser.regDate || "-");
-            safeSetText('vp-balance', `฿${(currentUser.balance || 0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`);
-        }
-
-        // Handle Timeouts
-        function handleQRTimeout() {
-            const upl = document.getElementById('upload-section');
-            if(upl) upl.classList.add('hidden');
-            
-            if(currentFlow === 'deposit') {
-                safeSetText('failure-desc', "เติมเงินไม่สำเร็จ เนื่องจาก รหัสชำระเงินหมดอายุ\nคุณทำรายการเกินเวลาที่กำหนด กรุณาทำรายการใหม่ค่ะ");
-            } else {
-                safeSetText('failure-desc', "ชำระไม่สำเร็จ เนื่องจาก รหัสชำระเงินหมดอายุ\nคุณทำรายการเกินเวลาที่กำหนด กรุณาทำรายการใหม่ค่ะ");
-            }
-            
-            let payload = {};
-            if(currentFlow === 'deposit') {
-                payload = { action: 'depositTimeout', fullname: currentUser ? currentUser.fname + " " + currentUser.lname : "Guest", email: currentUser ? currentUser.email : "guest@mail.com", phone: currentUser ? currentUser.phone : "0000000000", expectedPrice: currentNetTotal.toFixed(2) };
-            } else {
-                payload = { action: 'orderTimeout', buyname: document.getElementById('chk-fname').value + " " + document.getElementById('chk-lname').value, buyemail: document.getElementById('chk-email').value, phone: document.getElementById('chk-phone').value, cart: getSelectedCart().map(c => ({ qty: c.qty, product: { name: c.product.name }, options: c.options.map(o=>({name: o.name})) })), discount: currentDiscount, vat: currentVat.toFixed(2), expectedPrice: currentNetTotal.toFixed(2), discountCode: appliedDiscountCode };
-            }
-            
-            callBackend(payload).then(res => {
-                if(currentFlow === 'order') {
-                    cart = cart.filter(c => c.selected === false); saveCart();
-                    currentDiscount = 0; appliedDiscountCode = ""; updateCartBadge(); 
+                if(foundUser) {
+                    localStorage.setItem('nextLiveUser', JSON.stringify(foundUser)); 
+                    window.checkLoginState(); showCustomPopup("ยินดีต้อนรับ", "เข้าสู่ระบบสำเร็จ"); window.navigate('home');
+                } else {
+                    showCustomPopup("ข้อผิดพลาด", "อีเมล/เบอร์โทรศัพท์ หรือรหัสผ่านไม่ถูกต้อง");
                 }
-                navigate('failure');
-            }).catch(e => {
-                navigate('failure');
+            } catch(e) { showCustomPopup("ข้อผิดพลาด", "ไม่สามารถเชื่อมต่อฐานข้อมูลได้"); }
+            if(btn) { btn.innerText = "ลงชื่อเข้าใช้งาน"; btn.disabled = false; }
+        }
+
+        window.submitRegister = async function() {
+            const form1 = document.getElementById('reg-form-1'); if(form1 && !form1.checkValidity()) { showCustomPopup("แจ้งเตือน", "กรุณากรอกข้อมูลให้ครบถ้วน"); return; }
+            if(document.getElementById('reg-pass').value !== document.getElementById('reg-pass-confirm').value) { showCustomPopup("แจ้งเตือน", "รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน"); return; }
+            const btn = document.getElementById('btn-submit-register'); if(btn) { btn.innerText = "กำลังสร้างบัญชี..."; btn.disabled = true; }
+
+            const email = document.getElementById('reg-email').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const fname = document.getElementById('reg-fname').value.trim();
+            const lname = document.getElementById('reg-lname').value.trim();
+            const pass = document.getElementById('reg-pass').value.trim();
+
+            try {
+                const usersSnap = await getDocs(collection(db, "Users"));
+                let isDup = false;
+                usersSnap.forEach(doc => { let u = doc.data(); if(u.email === email || u.phone === phone || u.phone === "'"+phone) isDup = true; });
+                
+                if(isDup) { showCustomPopup("ข้อผิดพลาด", "อีเมล์หรือเบอร์โทรศัพท์นี้ถูกใช้งานแล้ว"); if(btn) { btn.innerText = "สร้างบัญชี"; btn.disabled = false; } return; }
+
+                const newUid = "U" + Math.floor(Date.now() / 1000);
+                const d = new Date();
+                let dateStr = `${("0"+d.getDate()).slice(-2)}-${("0"+(d.getMonth()+1)).slice(-2)}-${d.getFullYear()}`;
+                
+                await setDoc(doc(db, "Users", newUid), {
+                    uid: newUid, date: dateStr, time: `${d.getHours()}:${d.getMinutes()}`,
+                    fname: fname, lname: lname, email: email, phone: "'"+phone, password: pass,
+                    bankName: "", bankAcc: "", balance: 0, createdAt: serverTimestamp()
+                });
+
+                // Affiliate Network logic
+                let savedAffId = localStorage.getItem('saved_affiliate_id');
+                if(savedAffId) {
+                    await setDoc(doc(db, "Network", "NET_" + newUid), { buyerEmail: email, buyerPhone: "'"+phone, inviterUid: savedAffId });
+                    await addDoc(collection(db, "Affiliate"), {
+                        datetime: formatThaiDateTime(d), inviterUid: savedAffId, buyerInfo: email || phone, type: "เพื่อนใหม่ (สมัครบัญชี)", salesAmount: 0, commAmount: 0, status: "เข้าสู่ระบบแล้ว", createdAt: serverTimestamp()
+                    });
+                }
+
+                // Send Welcome Email via GAS
+                fetch(GAS_WEBAPP_URL, {
+                    method: 'POST', body: JSON.stringify({ action: 'sendGeneralEmail', email: email, subject: "ยินดีต้อนรับสู่ " + siteSettings.SiteName, title: "สมัครสมาชิกสำเร็จ", messageHTML: `ยินดีต้อนรับคุณ ${fname} เข้าสู่ระบบของเรา`, notifyAdmin: true, siteName: siteSettings.SiteName })
+                }).catch(e=>{});
+
+                let userObj = { uid: newUid, fname, lname, email, phone, balance: 0, bankName: "", bankAcc: "", regDate: dateStr };
+                localStorage.setItem('nextLiveUser', JSON.stringify(userObj)); 
+                window.checkLoginState(); showCustomPopup("สำเร็จ!", "สมัครสมาชิกและเข้าสู่ระบบเรียบร้อย"); window.navigate('home');
+
+            } catch(e) { showCustomPopup("ข้อผิดพลาด", e.message); }
+            if(btn) { btn.innerText = "สร้างบัญชี"; btn.disabled = false; }
+        }
+
+        window.logout = function() {
+            localStorage.removeItem('nextLiveUser'); window.checkLoginState(); showCustomPopup("สำเร็จ", "ออกจากระบบเรียบร้อยแล้ว"); window.navigate('home');
+        }
+
+        // ==========================================
+        // 6. REAL-TIME LISTENERS
+        // ==========================================
+        function setupRealtimeListeners() {
+            if(!currentUser) return;
+            clearRealtimeListeners(); // clear old ones
+
+            // 1. Listen to User Balance
+            unsubscribeUser = onSnapshot(doc(db, "Users", currentUser.uid), (doc) => {
+                if(doc.exists()) {
+                    let bal = parseFloat(doc.data().balance) || 0;
+                    if(currentUser.balance !== bal) {
+                        currentUser.balance = bal;
+                        localStorage.setItem('nextLiveUser', JSON.stringify(currentUser));
+                        updateBalanceUI(bal);
+                        window.updateCheckoutTotals();
+                    }
+                }
+            });
+
+            // 2. Listen to History (Orders & Transactions)
+            globalHistoryData = { orders: [], deposits: [], withdraws: [] };
+            fetchUserHistorySilent(); // Initial load to set baseline counts
+            
+            // To comply strictly with Rules but give real-time feel, we use onSnapshot on entire collections 
+            // ONLY if data is small. Let's use setInterval for fetching history to avoid massive reads.
+            if(!window.userPollingInterval) window.userPollingInterval = setInterval(fetchUserHistorySilent, 10000);
+            document.getElementById('user-bell-container').style.display = 'block';
+        }
+
+        function clearRealtimeListeners() {
+            if(unsubscribeUser) unsubscribeUser();
+            if(window.userPollingInterval) clearInterval(window.userPollingInterval);
+            document.getElementById('user-bell-container').style.display = 'none';
+            userUnreadCount = 0; updateUserBell();
+        }
+
+        async function fetchUserHistorySilent() {
+            if(!currentUser) return;
+            try {
+                let orders = [], deposits = [], withdraws = [];
+                
+                const oSnap = await getDocs(collection(db, "Orders"));
+                oSnap.forEach(doc => {
+                    let d = doc.data();
+                    if(d.phone === currentUser.phone || d.phone === "'"+currentUser.phone || d.email === currentUser.email) {
+                        orders.push({ date: formatThaiDateTime(d.createdAt || d.date), ref: d.ref, items: d.items, discount: d.discount, vat: d.vat, amount: d.netTotal, status: d.status, type: 'order' });
+                    }
+                });
+
+                const tSnap = await getDocs(collection(db, "Transactions"));
+                tSnap.forEach(doc => {
+                    let d = doc.data();
+                    if(d.uid === currentUser.uid || d.phone === currentUser.phone || d.phone === "'"+currentUser.phone) {
+                        let dt = formatThaiDateTime(d.createdAt || d.date);
+                        if(d.type === "ฝากเงิน" || d.type.includes("ปรับเครดิต")) deposits.push({ date: dt, ref: "DEP", items: d.type, amount: d.amount, status: d.status, type: 'deposit' });
+                        if(d.type === "ถอนเงิน") withdraws.push({ date: dt, ref: "WD", items: d.note, amount: d.amount, status: d.status, type: 'withdraw' });
+                    }
+                });
+
+                // Check differences for notification
+                if(globalHistoryData.orders.length > 0 || globalHistoryData.deposits.length > 0) {
+                    checkHistoryDifferences(globalHistoryData.orders, orders, "ออเดอร์");
+                    checkHistoryDifferences(globalHistoryData.deposits, deposits, "การฝากเงิน");
+                    checkHistoryDifferences(globalHistoryData.withdraws, withdraws, "การถอนเงิน");
+                }
+
+                // Sort by date string simple reverse
+                globalHistoryData = { orders: orders.reverse(), deposits: deposits.reverse(), withdraws: withdraws.reverse() };
+                
+            } catch(e) {}
+        }
+
+        function checkHistoryDifferences(oldArr, newArr, typeName) {
+            if(newArr.length > oldArr.length) {
+                let diff = newArr.length - oldArr.length;
+                showUserToast(`มี ${typeName} ใหม่เข้าสู่ระบบ (${diff} รายการ)`);
+                userUnreadCount += diff; updateUserBell();
+            }
+            for(let i=0; i<Math.min(oldArr.length, newArr.length); i++) {
+                if(oldArr[i].ref === newArr[i].ref || oldArr[i].date === newArr[i].date) {
+                    if(oldArr[i].status !== newArr[i].status) {
+                        showUserToast(`${typeName} อัปเดตสถานะเป็น: ${newArr[i].status}`);
+                        userUnreadCount++; updateUserBell();
+                    }
+                }
+            }
+        }
+
+        function showUserToast(msg) {
+            const container = document.getElementById('user-toast-container');
+            const toast = document.createElement('div'); toast.className = 'user-toast';
+            toast.innerHTML = `<i data-lucide="bell-ring" class="w-5 h-5 text-primary"></i> <span>${msg}</span>`;
+            container.appendChild(toast); lucide.createIcons();
+            setTimeout(() => { toast.classList.add('hide'); setTimeout(() => toast.remove(), 400); }, 5000);
+        }
+
+        function updateUserBell() {
+            const badge = document.getElementById('user-notif-badge'); const icon = document.getElementById('user-bell-icon');
+            if(userUnreadCount > 0) {
+                badge.innerText = userUnreadCount > 9 ? '9+' : userUnreadCount; badge.classList.remove('hidden');
+                icon.classList.add('text-primary', 'animate-ring'); setTimeout(() => icon.classList.remove('animate-ring'), 1000);
+            } else { badge.classList.add('hidden'); icon.classList.remove('text-primary'); }
+        }
+
+        window.clearUserNotifications = function() { userUnreadCount = 0; updateUserBell(); window.navigate('history'); }
+
+        // ==========================================
+        // 7. PAYMENT & UPLOAD (GAS HYBRID)
+        // ==========================================
+        window.handleSlipUpload = async function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const qrImg = document.getElementById('promptpay-qr-img'); if(qrImg) qrImg.src = e.target.result;
+                const upl = document.getElementById('upload-section'); if(upl) upl.classList.add('hidden');
+                const overlay = document.getElementById('verification-overlay');
+                if(overlay) { overlay.classList.remove('hidden'); setTimeout(() => overlay.classList.add('opacity-100'), 50); }
+                clearInterval(qrTimerInterval); 
+
+                const base64Data = e.target.result.split(',')[1];
+                
+                try {
+                    // ยิงไปตรวจสอบที่ GAS
+                    const res = await fetch(GAS_WEBAPP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'verifySlip', expectedPrice: currentNetTotal.toFixed(2), base64: base64Data, name: file.name, type: file.type })
+                    });
+                    const data = await res.json();
+                    if(overlay) overlay.classList.add('hidden');
+
+                    if (data.isValid) {
+                        // สลิปถูกต้อง บันทึกลง Firestore
+                        if(currentFlow === 'deposit') {
+                            await processDepositSuccess(data.actualAmount, data.driveUrl);
+                        } else {
+                            await processOrderSuccess('QR Code' + (currentCreditUsed > 0 ? " + Credit" : ""), data.actualAmount, data.driveUrl);
+                        }
+                    } else {
+                        // สลิปผิดพลาด บันทึก Failed
+                        if(currentFlow === 'deposit') {
+                            await processDepositFail(currentNetTotal, data.driveUrl, data.message);
+                        } else {
+                            await processOrderFail(currentNetTotal, data.driveUrl, data.message);
+                        }
+                        if(upl) upl.classList.remove('hidden'); 
+                    }
+                } catch(err) {
+                    if(overlay) overlay.classList.add('hidden'); 
+                    showCustomPopup("ระบบมีปัญหา", "เกิดข้อผิดพลาดในการตรวจสอบสลิป"); 
+                    if(upl) upl.classList.remove('hidden'); 
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function processDepositSuccess(actualAmount, slipUrl) {
+            const bonus = actualAmount * 0.005; const totalCredit = actualAmount + bonus;
+            const newBal = (currentUser.balance || 0) + totalCredit;
+            const uid = currentUser.uid;
+
+            // Update User
+            await updateDoc(doc(db, "Users", uid), { balance: newBal });
+            
+            // Add Transaction
+            const txId = generateId("TX");
+            await setDoc(doc(db, "Transactions", txId), {
+                uid: uid, name: `${currentUser.fname} ${currentUser.lname}`, email: currentUser.email, phone: "'"+currentUser.phone,
+                type: "ฝากเงิน", amount: totalCredit, status: "สำเร็จ", note: slipUrl, createdAt: serverTimestamp(), date: formatThaiDateTime(new Date())
+            });
+
+            // Process Affiliate (Simple version)
+            await processAffiliate(actualAmount);
+
+            // Send Email via GAS
+            fetch(GAS_WEBAPP_URL, {
+                method: 'POST', body: JSON.stringify({ action: 'sendGeneralEmail', email: currentUser.email, subject: "แจ้งผลการทำรายการ", title: "ฝากเงินสำเร็จ", messageHTML: `ยอดโอน: ฿${actualAmount.toFixed(2)}<br>โบนัส 0.5%: ฿${bonus.toFixed(2)}<br>รวมได้รับเครดิต: <b>฿${totalCredit.toFixed(2)}</b>`, notifyAdmin: true, siteName: siteSettings.SiteName })
+            }).catch(e=>{});
+
+            safeSetText('display-order-id', txId); 
+            safeSetText('success-title', 'เติมเงินสำเร็จ ระบบเติมเครดิตแล้ว'); 
+            safeSetText('success-ref-label', 'รหัสอ้างอิง (Ref)');
+            window.navigate('success');
+        }
+
+        async function processDepositFail(expected, slipUrl, errorMsg) {
+            const txId = generateId("TX");
+            await setDoc(doc(db, "Transactions", txId), {
+                uid: currentUser ? currentUser.uid : "GUEST", name: currentUser ? `${currentUser.fname} ${currentUser.lname}` : "Guest", 
+                email: currentUser ? currentUser.email : "-", phone: currentUser ? "'"+currentUser.phone : "-",
+                type: "ฝากเงิน", amount: expected, status: "ไม่สำเร็จ", note: slipUrl + "\nสาเหตุ: " + errorMsg, createdAt: serverTimestamp(), date: formatThaiDateTime(new Date())
+            });
+            safeSetText('failure-desc', errorMsg); window.navigate('failure');
+        }
+
+        // ==========================================
+        // 8. ORDER PROCESSING (CHECKOUT)
+        // ==========================================
+        window.processOrder = async function() {
+            const form = document.getElementById('checkout-form'); if(form && !form.checkValidity()) { showCustomPopup("แจ้งเตือน","กรุณากรอกข้อมูลให้ครบถ้วน"); return; }
+            if(window.getSelectedCart().length === 0) { showCustomPopup("แจ้งเตือน","ไม่มีสินค้าที่เลือกในตะกร้า"); return; }
+            
+            let selectedMethod = document.querySelector('input[name="payment_method"]:checked')?.value || 'qr'; currentFlow = 'order';
+            const cInput = document.getElementById('credit-input'); let val = parseFloat(cInput ? cInput.value : 0) || 0;
+            if(selectedMethod === 'qr' && val > 0 && currentUser && val > currentUser.balance) { showCustomPopup("แจ้งเตือน", "ยอดเครดิตที่กรอกสูงกว่ายอดคงเหลือของคุณ"); return; }
+
+            if(currentNetTotal === 0 && currentCreditUsed === 0) { await processOrderSuccess('Free', 0, '-'); } 
+            else if (currentNetTotal === 0 && currentCreditUsed > 0) { await processOrderSuccess('Credit', currentCreditUsed, '-'); }
+            else if (selectedMethod === 'credit') {
+                if(!currentUser) { showCustomPopup("แจ้งเตือน", "กรุณาเข้าสู่ระบบก่อนใช้เครดิต"); return; }
+                let totalToPay = currentSubtotal - currentDiscount + currentVat;
+                if(currentUser.balance < totalToPay) { showCustomPopup("เครดิตไม่เพียงพอ", `เครดิตของคุณไม่พอ (ขาด ฿${(totalToPay - currentUser.balance).toFixed(2)}) กรุณาเติมเงินหรือเลือกจ่ายด้วย QR Code`); return; }
+                currentCreditUsed = totalToPay;
+                await processOrderSuccess('Credit', totalToPay, '-');
+            } else { window.navigate('payment'); }
+        }
+
+        async function processOrderSuccess(methodStr, amountPaid, slipUrl) {
+            const btn = document.getElementById('btn-process-order'); if(btn) { btn.innerText = "กำลังประมวลผล..."; btn.disabled = true; }
+            
+            try {
+                // 1. Deduct Stock
+                const sCart = window.getSelectedCart();
+                for (const item of sCart) {
+                    const pRef = doc(db, "ProductList", item.product.id);
+                    const pSnap = await getDoc(pRef);
+                    if(pSnap.exists()) {
+                        let newStock = Math.max(0, pSnap.data().stock - item.qty);
+                        await updateDoc(pRef, { stock: newStock });
+                    }
+                }
+
+                // 2. Deduct Credit
+                if(currentCreditUsed > 0 && currentUser) {
+                    let newBal = currentUser.balance - currentCreditUsed;
+                    await updateDoc(doc(db, "Users", currentUser.uid), { balance: newBal });
+                    const txId = generateId("TX");
+                    await setDoc(doc(db, "Transactions", txId), {
+                        uid: currentUser.uid, name: `${currentUser.fname}`, email: currentUser.email, phone: "'"+currentUser.phone,
+                        type: "สั่งซื้อสินค้า (หักเครดิต)", amount: currentCreditUsed, status: "สำเร็จ", note: "-", createdAt: serverTimestamp(), date: formatThaiDateTime(new Date())
+                    });
+                }
+
+                // 3. Create Order Record
+                const orderRef = generateId("NX");
+                const bName = document.getElementById('chk-fname').value + " " + document.getElementById('chk-lname').value;
+                const bPhone = document.getElementById('chk-phone').value;
+                const bEmail = document.getElementById('chk-email').value;
+                let itemsStr = sCart.map(i => `${i.qty}x ${i.product.name} ${i.options.length>0 ? '['+i.options.map(o=>o.name).join(',')+']':''}`).join('\n');
+                if(appliedDiscountCode) itemsStr += `\n[Code: ${appliedDiscountCode}]`;
+
+                await setDoc(doc(db, "Orders", orderRef), {
+                    ref: orderRef, date: formatThaiDateTime(new Date()), name: bName, phone: "'"+bPhone, email: bEmail,
+                    items: itemsStr, discount: currentDiscount, vat: currentVat, netTotal: amountPaid + currentCreditUsed,
+                    slipUrl: slipUrl, status: "สำเร็จ", paymentMethod: methodStr, createdAt: serverTimestamp()
+                });
+
+                // 4. Affiliate
+                await processAffiliate(amountPaid + currentCreditUsed);
+
+                // 5. Send Email via GAS
+                fetch(GAS_WEBAPP_URL, {
+                    method: 'POST', body: JSON.stringify({ action: 'sendOrderEmail', user: {fname: bName.split(' ')[0], lname: '', email: bEmail, phone: bPhone}, orderRef: orderRef, timestamp: formatThaiDateTime(new Date()), cart: sCart, discount: currentDiscount, vat: currentVat, netTotal: amountPaid + currentCreditUsed, siteName: siteSettings.SiteName })
+                }).catch(e=>{});
+
+                // Success UI
+                safeSetText('display-order-id', orderRef); safeSetText('success-title', 'สั่งซื้อสำเร็จ!'); safeSetText('success-ref-label', 'รหัสอ้างอิงออเดอร์');
+                cart = cart.filter(c => c.selected === false); saveCart();
+                currentDiscount = 0; appliedDiscountCode = ""; currentCreditUsed = 0; updateCartBadge(); 
+                window.navigate('success');
+
+            } catch (err) {
+                showCustomPopup("ระบบมีปัญหา", "เกิดข้อผิดพลาดในการบันทึกออเดอร์");
+            }
+            if(btn) { btn.innerText = "ยืนยันการสั่งซื้อ"; btn.disabled = false; }
+        }
+
+        async function processOrderFail(expected, slipUrl, errorMsg) {
+            const orderRef = generateId("NX");
+            const bName = document.getElementById('chk-fname').value;
+            const bPhone = document.getElementById('chk-phone').value;
+            let itemsStr = window.getSelectedCart().map(i => `${i.qty}x ${i.product.name}`).join('\n');
+
+            await setDoc(doc(db, "Orders", orderRef), {
+                ref: orderRef, date: formatThaiDateTime(new Date()), name: bName, phone: "'"+bPhone,
+                items: itemsStr, discount: currentDiscount, vat: currentVat, netTotal: expected,
+                slipUrl: slipUrl, status: "ไม่สำเร็จ", paymentMethod: "QR Code", note: errorMsg, createdAt: serverTimestamp()
+            });
+            safeSetText('failure-desc', errorMsg); window.navigate('failure');
+        }
+
+        // ==========================================
+        // 9. AFFILIATE LOGIC (REWRITTEN FOR FIRESTORE)
+        // ==========================================
+        async function processAffiliate(amount) {
+            if(amount <= 0) return;
+            let email = document.getElementById('chk-email')?.value || (currentUser ? currentUser.email : "");
+            let phone = document.getElementById('chk-phone')?.value || (currentUser ? currentUser.phone : "");
+            let inviterUid = localStorage.getItem('saved_affiliate_id');
+
+            // Find inviter if not from link
+            if(!inviterUid) {
+                const netSnap = await getDocs(collection(db, "Network"));
+                netSnap.forEach(doc => {
+                    let n = doc.data();
+                    if(n.buyerEmail === email || n.buyerPhone === phone || n.buyerPhone === "'"+phone) { inviterUid = n.inviterUid; }
+                });
+            }
+            if(!inviterUid) return;
+
+            // Calculate Commission based on rules
+            let rate = currentUser ? 0.05 : 0.01; // New/Old user 5%, Guest 1% (simplified)
+            let typeText = currentUser ? "เพื่อนเก่า (5%)" : "ไม่มีบัญชี (1%)";
+            let comm = parseFloat((amount * rate).toFixed(2));
+
+            if(comm > 0) {
+                await addDoc(collection(db, "Affiliate"), {
+                    datetime: formatThaiDateTime(new Date()), inviterUid: inviterUid, buyerInfo: email || phone,
+                    type: typeText, salesAmount: amount, commAmount: comm, status: "ได้รับแล้ว", createdAt: serverTimestamp()
+                });
+            }
+        }
+
+        // ==========================================
+        // 10. WITHDRAWAL & OTHERS
+        // ==========================================
+        window.requestWithdrawal = async function() {
+            if(!currentUser) return;
+            const inputEl = document.getElementById('withdraw-amount-input'); const amount = parseFloat(inputEl.value);
+            if(isNaN(amount) || amount < 100) { showCustomPopup("แจ้งเตือน", "ยอดขั้นต่ำในการถอนคือ 100.00 บาท"); return; }
+            if(amount > currentUser.balance) { showCustomPopup("แจ้งเตือน", "ยอดเงินคงเหลือไม่เพียงพอ"); return; }
+
+            const btn = document.getElementById('btn-request-withdraw'); if(btn) { btn.innerText = "กำลังดำเนินการ..."; btn.disabled = true; }
+            
+            try {
+                let newBal = currentUser.balance - amount;
+                await updateDoc(doc(db, "Users", currentUser.uid), { balance: newBal });
+                
+                const txId = generateId("TX");
+                await setDoc(doc(db, "Transactions", txId), {
+                    uid: currentUser.uid, name: `${currentUser.fname}`, email: currentUser.email, phone: "'"+currentUser.phone,
+                    type: "ถอนเงิน", amount: amount, status: "รอดำเนินการ", note: `ไปยัง: ${currentUser.bankName} (${currentUser.bankAcc})`, createdAt: serverTimestamp(), date: formatThaiDateTime(new Date())
+                });
+
+                fetch(GAS_WEBAPP_URL, {
+                    method: 'POST', body: JSON.stringify({ action: 'sendGeneralEmail', email: currentUser.email, subject: "แจ้งผลการทำรายการ", title: "แจ้งถอนเงินรอดำเนินการ", messageHTML: `ยอดถอน: ฿${amount.toFixed(2)}<br>บัญชีปลายทาง: ${currentUser.bankAcc}`, notifyAdmin: true, siteName: siteSettings.SiteName })
+                }).catch(e=>{});
+
+                inputEl.value = ''; showCustomPopup("สำเร็จ", "แจ้งถอนเงินสำเร็จ ระบบจะโอนภายใน 24 ชม."); 
+            } catch(e) { showCustomPopup("ข้อผิดพลาด", "ไม่สามารถบันทึกข้อมูลได้"); }
+            if(btn) { btn.innerText = "ถอนเงิน"; btn.disabled = false; }
+        }
+
+        window.submitBankAccount = async function() {
+            if(!currentUser) return;
+            const bankName = document.getElementById('wd-bank-name').value; const bankAcc = document.getElementById('wd-bank-acc').value;
+            if(!bankName || !/^\d+$/.test(bankAcc)) { showCustomPopup("แจ้งเตือน", "ข้อมูลไม่ถูกต้อง"); return; }
+
+            try {
+                await updateDoc(doc(db, "Users", currentUser.uid), { bankName: bankName, bankAcc: bankAcc });
+                currentUser.bankName = bankName; currentUser.bankAcc = bankAcc;
+                localStorage.setItem('nextLiveUser', JSON.stringify(currentUser));
+                showCustomPopup("สำเร็จ", "บันทึกข้อมูลบัญชีเรียบร้อยแล้ว"); window.checkLoginState();
+            } catch(e) { showCustomPopup("ข้อผิดพลาด", "ไม่สามารถบันทึกบัญชีได้"); }
+        }
+
+        window.emailStatementOnly = function() {
+            const btn = document.getElementById('btn-dl-statement'); const origText = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block align-middle mr-2"></i> กำลังประมวลผล...`; btn.disabled = true; lucide.createIcons();
+
+            html2canvas(document.getElementById('statement-capture-area'), { scale: 1.5, useCORS: true }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                fetch(GAS_WEBAPP_URL, {
+                    method: 'POST', body: JSON.stringify({ action: 'sendGeneralEmail', email: currentUser.email, subject: "ใบเสร็จ Statement - " + siteSettings.SiteName, title: "Statement ของคุณ", messageHTML: "ระบบได้แนบใบเสร็จไว้ในไฟล์รูปแบบลิงก์รูปภาพ: <br><a href='"+imgData.substring(0,100)+"...'>(เนื่องจากข้อจำกัด Base64 ยาวเกินไป จึงแสดงตัวอย่าง)</a><br>ขออภัยในความไม่สะดวก", notifyAdmin: false, siteName: siteSettings.SiteName })
+                }).then(res => res.json()).then(res => {
+                    btn.innerHTML = origText; btn.disabled = false;
+                    showCustomPopup("สำเร็จ", "ส่งบิลไปยังอีเมลของคุณเรียบร้อยแล้ว (ระบบจำลอง)");
+                }).catch(e => { btn.innerHTML = origText; btn.disabled = false; showCustomPopup("ข้อผิดพลาด", "ส่งอีเมลไม่สำเร็จ"); });
             });
         }
 
-        function navigate(view) {
-            if ((view === 'deposit' || view === 'withdraw' || view === 'profile' || view === 'statement' || view === 'booking') && !currentUser) {
-                showCustomPopup("แจ้งเตือน", "กรุณาเข้าสู่ระบบก่อนใช้งานฟังก์ชันนี้"); openAuth('login'); return;
-            }
+        // ==========================================
+        // 11. BOOKING SYSTEM
+        // ==========================================
+        window.submitBooking = async function() {
+            if(!window.currentBookingDate || !window.currentBookingTime || !currentUser) return;
+            let btn = document.getElementById('btn-submit-booking'); btn.innerText = "กำลังดำเนินการ..."; btn.disabled = true;
 
+            try {
+                const qNo = "Q" + Date.now().toString().slice(-6);
+                const bookData = {
+                    createDate: formatThaiDateTime(new Date()), uid: currentUser.uid, fname: document.getElementById('bk-fname').value, lname: document.getElementById('bk-lname').value,
+                    email: document.getElementById('bk-email').value, phone: "'"+document.getElementById('bk-phone').value,
+                    topic: document.getElementById('bk-topic').value, detail: document.getElementById('bk-detail').value,
+                    bookDate: window.currentBookingDate, bookTime: window.currentBookingTime, queueNo: qNo, sequence: 1, waitCount: 0, status: "รอเรียกคิว", note: "-", createdAt: serverTimestamp()
+                };
+                
+                await setDoc(doc(db, "Booking", qNo), bookData);
+
+                fetch(GAS_WEBAPP_URL, {
+                    method: 'POST', body: JSON.stringify({ action: 'sendBookingEmail', user: {fname: bookData.fname, lname: bookData.lname, email: bookData.email}, booking: {queueNo: qNo, date: bookData.bookDate, time: bookData.bookTime, topic: bookData.topic, detail: bookData.detail, waitCount: 0}, siteName: siteSettings.SiteName })
+                }).catch(e=>{});
+
+                document.getElementById('book-step-3').classList.add('hidden'); document.getElementById('book-step-success').classList.remove('hidden');
+                safeSetText('succ-qno', qNo); safeSetText('succ-seq', 1); safeSetText('succ-wait', 0);
+                safeSetText('succ-note', `กรุณามาเข้ารับบริการภายในวันที่ ${bookData.bookDate} | ${bookData.bookTime} น.`);
+
+            } catch(e) { showCustomPopup("ข้อผิดพลาด", "จองคิวไม่สำเร็จ"); }
+            btn.innerText = "ยืนยันการจองคิว"; btn.disabled = false;
+        }
+
+        // ==========================================
+        // 12. EXPORT FUNCTIONS TO WINDOW (For HTML onclick)
+        // ==========================================
+        window.navigate = function(view) {
+            if ((view === 'deposit' || view === 'withdraw' || view === 'profile' || view === 'statement' || view === 'booking') && !currentUser) {
+                showCustomPopup("แจ้งเตือน", "กรุณาเข้าสู่ระบบก่อนใช้งานฟังก์ชันนี้"); window.openAuth('login'); return;
+            }
             const views = ['view-home', 'view-checkout', 'view-payment', 'view-success', 'view-failure', 'view-privacy', 'view-return', 'view-history', 'view-auth', 'view-forgot-password', 'view-profile', 'view-deposit', 'view-withdraw', 'view-statement', 'view-booking'];
             views.forEach(v => { const el = document.getElementById(v); if(el) el.classList.add('hidden'); });
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            const targetView = document.getElementById(`view-${view}`); if(targetView) targetView.classList.remove('hidden');
 
-            const targetView = document.getElementById(`view-${view}`);
-            if(targetView) targetView.classList.remove('hidden');
-
-            if (view === 'checkout') { toggleCreditInput(); renderCheckoutItems(); }
-            if (view === 'history' && currentUser) { safeSetValue('history-phone-input', currentUser.phone); searchHistory(); }
-            if (view === 'profile' && currentUser) { renderProfileView(); }
-            if (view === 'deposit' && currentUser) { refreshUserData(); } 
-            if (view === 'withdraw' && currentUser) { refreshUserData(); checkWithdrawalState(); } 
-            if (view === 'booking' && currentUser) { switchBookingTab('check'); }
+            if (view === 'checkout') { window.toggleCreditInput(); window.renderCheckoutItems(); }
+            if (view === 'history' && currentUser) { safeSetValue('history-phone-input', currentUser.phone); window.searchHistory(); }
+            if (view === 'profile' && currentUser) { window.renderProfileView(); }
+            if (view === 'withdraw' && currentUser) { window.checkWithdrawalState(); } 
+            if (view === 'booking' && currentUser) { window.switchBookingTab('check'); }
             if (view === 'payment') {
                 safeSetText('slip-total-amount', currentNetTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
                 let paymentAmount = currentNetTotal; let rawAccount = String(siteSettings.BankAccount || "0000000000");
@@ -1769,20 +1912,16 @@
                             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrData)}&size=500x500&margin=10&qzone=1`;
                             const imgEl = document.getElementById('promptpay-qr-img');
                             if(imgEl) { imgEl.onload = ()=>{}; imgEl.onerror = ()=>{}; imgEl.src = qrUrl; }
-                        } catch(err) { console.error("QR Generate Error:", err); }
+                        } catch(err) {}
                     } else { setTimeout(generateQR, 500); }
-                };
-                generateQR();
+                }; generateQR();
 
-                let qrTimeLeft = 180;
-                if(typeof qrTimerInterval !== 'undefined') clearInterval(qrTimerInterval);
+                let qrTimeLeft = 180; if(typeof qrTimerInterval !== 'undefined') clearInterval(qrTimerInterval);
                 document.getElementById('qr-countdown').innerText = "03:00";
-                
                 qrTimerInterval = setInterval(() => {
-                    qrTimeLeft--;
-                    let m = Math.floor(qrTimeLeft / 60); let s = qrTimeLeft % 60;
+                    qrTimeLeft--; let m = Math.floor(qrTimeLeft / 60); let s = qrTimeLeft % 60;
                     document.getElementById('qr-countdown').innerText = `0${m}:${s < 10 ? '0'+s : s}`;
-                    if (qrTimeLeft <= 0) { clearInterval(qrTimerInterval); handleQRTimeout(); }
+                    if (qrTimeLeft <= 0) { clearInterval(qrTimerInterval); window.navigate('failure'); safeSetText('failure-desc', "หมดเวลาชำระเงิน กรุณาทำรายการใหม่"); }
                 }, 1000);
 
                 const ver = document.getElementById('verification-overlay'); if(ver) ver.classList.add('hidden');
@@ -1790,104 +1929,59 @@
             }
         }
 
-        // Withdraw Logic
-        function checkWithdrawalState() {
-            if(!currentUser) return;
-            const setupSec = document.getElementById('wd-setup-bank-section'); const actSec = document.getElementById('wd-action-section');
-            if(currentUser.bankName && currentUser.bankAcc) {
-                if(setupSec) setupSec.classList.add('hidden'); if(actSec) actSec.classList.remove('hidden');
-                let maskedAcc = currentUser.bankAcc;
-                if(maskedAcc.length > 4) maskedAcc = "XXX-X-XX" + maskedAcc.substring(maskedAcc.length - 3);
-                safeSetText('wd-card-acc', maskedAcc); safeSetText('wd-card-name', `${currentUser.fname} ${currentUser.lname}`);
-                safeSetText('wd-card-balance', `฿${(currentUser.balance || 0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`);
-                
-                let bankInfo = bankList.find(b => b.id === currentUser.bankName);
-                let thaiName = bankInfo ? bankInfo.thName : currentUser.bankName;
-                safeSetText('wd-card-bank-name', thaiName);
-                const iconCont = document.getElementById('wd-card-icon');
-                if(iconCont) iconCont.innerHTML = `<i class="bank ${currentUser.bankName} l round shadow"></i>`;
-            } else {
-                if(setupSec) setupSec.classList.remove('hidden'); if(actSec) actSec.classList.add('hidden');
-                safeSetValue('wd-fname', currentUser.fname); safeSetValue('wd-lname', currentUser.lname);
-            }
-        }
-
-        function submitBankAccount() {
-            const form = document.getElementById('wd-bank-form'); if(form && !form.checkValidity()) { form.reportValidity(); return; }
-            const bankName = document.getElementById('wd-bank-name').value; const bankAcc = document.getElementById('wd-bank-acc').value;
-            if(!bankName) { showCustomPopup("แจ้งเตือน", "กรุณาเลือกธนาคาร"); return; }
-            if(!/^\d+$/.test(bankAcc)) { showCustomPopup("แจ้งเตือน", "เลขที่บัญชีต้องเป็นตัวเลขเท่านั้น"); return; }
-
-            const btn = document.getElementById('btn-submit-bank'); if(btn) { btn.innerText = "กำลังบันทึก..."; btn.disabled = true; }
-            const payload = { action: 'addBankAccount', email: currentUser.email, phone: currentUser.phone, bankName: bankName, bankAcc: bankAcc };
+        window.searchHistory = async function() {
+            const phone = document.getElementById('history-phone-input').value; if(!phone) return;
+            const btn = document.getElementById('btn-search-history'); btn.innerText = "...";
+            await fetchUserHistorySilent(); // Refresh data
             
-            callBackend(payload).then(res => {
-                if(btn) { btn.innerText = "บันทึกข้อมูลบัญชี"; btn.disabled = false; }
-                if(res.status === 'success') {
-                    currentUser.bankName = res.bankName; currentUser.bankAcc = res.bankAcc;
-                    localStorage.setItem('nextLiveUser', JSON.stringify(currentUser));
-                    showCustomPopup("สำเร็จ", "บันทึกข้อมูลบัญชีเรียบร้อยแล้ว"); checkWithdrawalState();
-                } else { showCustomPopup("ข้อผิดพลาด", res.message); }
-            }).catch(e => { if(btn) { btn.innerText = "บันทึกข้อมูลบัญชี"; btn.disabled = false; } showCustomPopup("ข้อผิดพลาด", "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้"); });
+            const ordContainer = document.getElementById('history-orders-container'); ordContainer.innerHTML = '';
+            globalHistoryData.orders.forEach(item => {
+                let badgeClass = getStatusBadgeClass(item.status);
+                ordContainer.innerHTML += `<div class="bg-white dark:bg-[#121212] p-4 border dark:border-gray-800 rounded-sm shadow-sm mb-4"><div class="flex justify-between items-start mb-3 border-b dark:border-gray-800 pb-2"><div><h3 class="font-bold text-sm">Order: ${item.ref.replace(/'/g,'')}</h3><p class="text-[10px] text-gray-500">${item.date}</p></div><span class="${badgeClass} px-2 py-0.5 text-[10px] font-bold rounded-sm">${item.status}</span></div><div class="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap mb-3">${item.items}</div><div class="flex justify-end"><span class="font-bold text-primary text-xs">ยอดสุทธิ: ฿${item.amount.toLocaleString()}</span></div></div>`;
+            });
+            if(globalHistoryData.orders.length===0) ordContainer.innerHTML = '<div class="text-center py-8 text-gray-500">ไม่มีข้อมูล</div>';
+
+            const depContainer = document.getElementById('history-deposits-container'); depContainer.innerHTML = '';
+            globalHistoryData.deposits.forEach(item => {
+                let badgeClass = getStatusBadgeClass(item.status);
+                depContainer.innerHTML += `<div class="bg-white dark:bg-[#121212] p-4 border dark:border-gray-800 rounded-sm shadow-sm mb-4"><div class="flex justify-between items-start mb-3 border-b dark:border-gray-800 pb-2"><div><h3 class="font-bold text-sm">${item.items}</h3><p class="text-[10px] text-gray-500">${item.date}</p></div><span class="${badgeClass} px-2 py-0.5 text-[10px] font-bold rounded-sm">${item.status}</span></div><div class="flex justify-end"><span class="font-bold text-green-600 text-xs">+฿${item.amount.toLocaleString()}</span></div></div>`;
+            });
+            if(globalHistoryData.deposits.length===0) depContainer.innerHTML = '<div class="text-center py-8 text-gray-500">ไม่มีข้อมูล</div>';
+
+            const wdContainer = document.getElementById('history-withdraws-container'); wdContainer.innerHTML = '';
+            globalHistoryData.withdraws.forEach(item => {
+                let badgeClass = getStatusBadgeClass(item.status);
+                wdContainer.innerHTML += `<div class="bg-white dark:bg-[#121212] p-4 border dark:border-gray-800 rounded-sm shadow-sm mb-4"><div class="flex justify-between items-start mb-3 border-b dark:border-gray-800 pb-2"><div><h3 class="font-bold text-sm">ถอนเงิน</h3><p class="text-[10px] text-gray-500">${item.date}</p></div><span class="${badgeClass} px-2 py-0.5 text-[10px] font-bold rounded-sm">${item.status}</span></div><div class="flex justify-end"><span class="font-bold text-purple-600 text-xs">-฿${item.amount.toLocaleString()}</span></div></div>`;
+            });
+            if(globalHistoryData.withdraws.length===0) wdContainer.innerHTML = '<div class="text-center py-8 text-gray-500">ไม่มีข้อมูล</div>';
+
+            btn.innerHTML = `<i data-lucide="search" class="w-4 h-4 mr-2"></i>ค้นหา`; lucide.createIcons();
         }
 
-        function requestWithdrawal() {
-            const inputEl = document.getElementById('withdraw-amount-input'); const amount = parseFloat(inputEl.value);
-            if(isNaN(amount) || amount <= 0) { showCustomPopup("แจ้งเตือน", "กรุณาระบุจำนวนเงินที่ต้องการถอน"); return; }
-            if(amount < 100) { showCustomPopup("แจ้งเตือน", "ยอดขั้นต่ำในการถอนคือ 100.00 บาท"); return; }
-            if(amount > currentUser.balance) { showCustomPopup("แจ้งเตือน", "ยอดเงินคงเหลือไม่เพียงพอสำหรับการถอน"); return; }
-
-            const btn = document.getElementById('btn-request-withdraw'); if(btn) { btn.innerText = "กำลังดำเนินการ..."; btn.disabled = true; }
-            const payload = { action: 'withdraw', fullname: currentUser.fname + " " + currentUser.lname, email: currentUser.email, phone: currentUser.phone, amount: amount };
-
-            callBackend(payload).then(res => {
-                if(btn) { btn.innerText = "ถอนเงิน"; btn.disabled = false; }
-                if(res.status === 'success') {
-                    inputEl.value = ''; updateBalanceUI(res.newBalance); showCustomPopup("แจ้งเตือน", res.message); checkWithdrawalState(); 
-                } else { showCustomPopup("ข้อผิดพลาด", res.message); }
-            }).catch(e => { if(btn) { btn.innerText = "ถอนเงิน"; btn.disabled = false; } showCustomPopup("ข้อผิดพลาด", "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์"); });
+        window.openStatement = function() {
+            if(!globalHistoryData) { showCustomPopup("แจ้งเตือน", "กรุณาค้นหาประวัติก่อน"); return; }
+            safeSetText('stmt-ref', `เลขที่ NX-${Date.now().toString().slice(-4)}`);
+            let d = new Date(); safeSetText('stmt-date', `วันที่ ${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()+543} | ${d.getHours()}:${d.getMinutes()} น.`);
+            safeSetText('stmt-name', `ชื่อ-สกุล : ${currentUser.fname} ${currentUser.lname}`);
+            safeSetText('stmt-email', `อีเมล : ${currentUser.email}`);
+            safeSetText('stmt-phone', `เบอร์ : ${currentUser.phone}`);
+            window.navigate('statement');
         }
 
-        // Deposit Logic
-        function setDepositAmount(amount) { safeSetValue('deposit-amount-input', amount); }
-        function confirmDeposit() {
-            let val = parseFloat(document.getElementById('deposit-amount-input').value);
-            if(isNaN(val) || val <= 0) { showCustomPopup("แจ้งเตือน", "กรุณาระบุจำนวนเงินให้ถูกต้อง"); return; }
-            if(val < 100) { showCustomPopup("แจ้งเตือน", "ขั้นต่ำการเติมเครดิต 100.00 บาท"); return; } 
-            
-            currentFlow = 'deposit'; currentNetTotal = val; navigate('payment');
-        }
-        function goBackFromPayment() {
-            clearInterval(qrTimerInterval); 
-            if(currentFlow === 'deposit') navigate('deposit'); else navigate('checkout');
-        }
-
-        // Categories & Products
-        function renderCategoryMenu() {
-            const list = document.getElementById('category-list'); if(!list) return; let htmlStr = '';
-            categories.forEach(cat => {
-                const isActive = activeCategory === cat.id; const cssClass = isActive ? 'bg-gray-50 text-primary font-semibold' : 'text-gray-600 hover:text-primary hover:bg-gray-50';
-                htmlStr += `<li class="cursor-pointer transition-colors ${cssClass}" onclick="selectCategory('${cat.id}', '${cat.name}')"><div class="px-4 py-3 flex items-center justify-between"><span>${cat.name}</span></div></li>`;
-            }); list.innerHTML = htmlStr;
-        }
-
-        function selectCategory(id, name) { activeCategory = id; safeSetText('section-title', name); navigate('home'); renderCategoryMenu(); renderProducts(); toggleCategorySidebar(); }
-
-        function renderProducts() {
+        window.renderProducts = function() {
             const grid = document.getElementById('product-grid'); if(!grid) return; grid.innerHTML = '';
             let filtered = activeCategory === 'all' ? products : products.filter(p => p.category === activeCategory);
             if (searchQuery) filtered = filtered.filter(p => p.name.toLowerCase().includes(searchQuery));
             if (filtered.length === 0) { grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400 border bg-white">ไม่พบสินค้าในหมวดหมู่นี้</div>`; return; }
 
             filtered.forEach(product => {
-                // --- เพิ่มป้ายแจ้งเตือนสต๊อก ---
                 let stockBadge = product.stock > 0 
                     ? `<span class="text-[10px] text-green-700 bg-green-100 px-2 py-0.5 rounded-sm absolute top-2 left-2 z-10 font-bold shadow-sm">เหลือ ${product.stock} ชิ้น</span>` 
                     : `<span class="text-[10px] text-white bg-red-500 px-2 py-0.5 rounded-sm absolute top-2 left-2 z-10 font-bold shadow-sm">สินค้าหมด</span>`;
 
                 const card = document.createElement('div'); 
                 card.className = `product-card bg-white dark:bg-[#1e1e1e] overflow-hidden flex flex-col cursor-pointer group relative rounded-sm`; 
-                card.onclick = () => openModal(product.id);
+                card.onclick = () => window.openModal(product.id);
                 
                 card.innerHTML = `
                     ${stockBadge}
@@ -1902,1017 +1996,171 @@
             });
         }
 
-        // Modal & Cart
-        let selectedProductForModal = null; let selectedOptions = [];
-        function openModal(id) {
+        window.openModal = function(id) {
             const product = products.find(p => p.id === id); if(!product) return;
-            selectedProductForModal = product; selectedOptions = []; 
-            
-            const mImg = document.getElementById('modal-img'); if(mImg) mImg.src = product.image;
-            safeSetText('modal-title', product.name); 
-            safeSetText('modal-desc', product.desc); 
-            safeSetText('modal-price', formatPrice(product.price));
+            window.selectedProductForModal = product; window.selectedOptions = []; 
+            document.getElementById('modal-img').src = product.image;
+            safeSetText('modal-title', product.name); safeSetText('modal-desc', product.desc); safeSetText('modal-price', formatPrice(product.price));
+            document.getElementById('modal-stock-badge').innerHTML = product.stock > 0 ? `<span class="text-xs text-green-700 bg-green-100 px-2 py-1 rounded-sm font-bold shadow-sm border border-green-200">เหลือ ${product.stock} ชิ้น</span>` : `<span class="text-xs text-white bg-red-500 px-2 py-1 rounded-sm font-bold shadow-sm">สินค้าหมด</span>`;
 
-            // โชว์ป้ายสต๊อกใน Modal
-            let stockBadgeEl = document.getElementById('modal-stock-badge');
-            if (stockBadgeEl) {
-                stockBadgeEl.innerHTML = product.stock > 0
-                    ? `<span class="text-xs text-green-700 bg-green-100 px-2 py-1 rounded-sm font-bold shadow-sm border border-green-200">เหลือ ${product.stock} ชิ้น</span>`
-                    : `<span class="text-xs text-white bg-red-500 px-2 py-1 rounded-sm font-bold shadow-sm">สินค้าหมด</span>`;
-            }
-
-            // ฟิลเตอร์ Option เฉพาะสินค้าชิ้นนี้เท่านั้น!
             const optsContainer = document.getElementById('modal-options');
-            if(optsContainer) {
-                optsContainer.innerHTML = '';
-                let productOptions = optionsDB.filter(opt => opt.productId === product.id);
-                
-                if(productOptions.length > 0) {
-                    productOptions.forEach(opt => {
-                        const div = document.createElement('label'); 
-                        div.className = "flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-2";
-                        div.innerHTML = `
-                            <div class="flex items-center">
-                                <input type="checkbox" class="w-4 h-4 text-primary" onchange="toggleOption('${opt.id}', this.checked)">
-                                <span class="ml-3 text-sm dark:text-gray-300">${opt.name}</span>
-                            </div>
-                            <span class="text-sm text-gray-500">+${formatPrice(opt.price)}</span>`; 
-                        optsContainer.appendChild(div);
-                    });
-                } else {
-                    optsContainer.innerHTML = '<span class="text-xs text-gray-400">ไม่มีตัวเลือกเพิ่มเติมสำหรับสินค้านี้</span>';
-                }
-            }
+            optsContainer.innerHTML = ''; let productOptions = optionsDB.filter(opt => opt.productId === product.id);
+            if(productOptions.length > 0) {
+                productOptions.forEach(opt => {
+                    const div = document.createElement('label'); div.className = "flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-2";
+                    div.innerHTML = `<div class="flex items-center"><input type="checkbox" class="w-4 h-4 text-primary" onchange="toggleOption('${opt.id}', this.checked)"><span class="ml-3 text-sm dark:text-gray-300">${opt.name}</span></div><span class="text-sm text-gray-500">+${formatPrice(opt.price)}</span>`; optsContainer.appendChild(div);
+                });
+            } else { optsContainer.innerHTML = '<span class="text-xs text-gray-400">ไม่มีตัวเลือกเพิ่มเติมสำหรับสินค้านี้</span>'; }
 
-            // ล็อคปุ่มหากสินค้าหมด
-            const addBtn = document.getElementById('modal-add-btn');
-            const buyBtn = document.getElementById('modal-buy-btn');
+            const addBtn = document.getElementById('modal-add-btn'); const buyBtn = document.getElementById('modal-buy-btn');
             if (product.stock <= 0) {
-                if(addBtn) { addBtn.disabled = true; addBtn.classList.add('opacity-50', 'cursor-not-allowed'); }
-                if(buyBtn) { buyBtn.disabled = true; buyBtn.classList.add('opacity-50', 'cursor-not-allowed'); }
+                addBtn.disabled = true; addBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                buyBtn.disabled = true; buyBtn.classList.add('opacity-50', 'cursor-not-allowed');
             } else {
-                if(addBtn) { 
-                    addBtn.disabled = false; addBtn.classList.remove('opacity-50', 'cursor-not-allowed'); 
-                    addBtn.onclick = () => { addToCartData(product, selectedOptions); closeModal(); showCustomPopup("สำเร็จ", "เพิ่มสินค้าลงรถเข็นแล้ว"); };
-                }
-                if(buyBtn) { 
-                    buyBtn.disabled = false; buyBtn.classList.remove('opacity-50', 'cursor-not-allowed'); 
-                    buyBtn.onclick = () => { addToCartData(product, selectedOptions); closeModal(); navigate('checkout'); };
-                }
+                addBtn.disabled = false; addBtn.classList.remove('opacity-50', 'cursor-not-allowed'); addBtn.onclick = () => { window.addToCartData(product, window.selectedOptions); window.closeModal(); showCustomPopup("สำเร็จ", "เพิ่มสินค้าลงรถเข็นแล้ว"); };
+                buyBtn.disabled = false; buyBtn.classList.remove('opacity-50', 'cursor-not-allowed'); buyBtn.onclick = () => { window.addToCartData(product, window.selectedOptions); window.closeModal(); window.navigate('checkout'); };
             }
-
-            const overlay = document.getElementById('modal-overlay'); const pModal = document.getElementById('product-modal');
-            if(overlay) overlay.classList.add('overlay-enter-active'); if(pModal) pModal.classList.remove('opacity-0');
+            document.getElementById('modal-overlay').classList.add('overlay-enter-active'); document.getElementById('product-modal').classList.remove('opacity-0');
         }
 
-        function closeModal() { const pModal = document.getElementById('product-modal'); const overlay = document.getElementById('modal-overlay'); if(pModal) pModal.classList.add('opacity-0'); if(overlay) overlay.classList.remove('overlay-enter-active'); }
-        
-        function toggleOption(optId, isChecked) {
-            if(isChecked) selectedOptions.push(optionsDB.find(o => o.id === optId)); else selectedOptions = selectedOptions.filter(o => o.id !== optId);
-            let total = selectedProductForModal.price; selectedOptions.forEach(o => total += o.price); safeSetText('modal-price', formatPrice(total));
+        window.toggleOption = function(optId, isChecked) {
+            if(isChecked) window.selectedOptions.push(optionsDB.find(o => o.id === optId)); else window.selectedOptions = window.selectedOptions.filter(o => o.id !== optId);
+            let total = window.selectedProductForModal.price; window.selectedOptions.forEach(o => total += o.price); safeSetText('modal-price', formatPrice(total));
         }
 
-        function addToCartData(product, options) {
+        window.addToCartData = function(product, options) {
             const optionsIdStr = options.map(o=>o.id).sort().join('-'); 
             const existingIndex = cart.findIndex(item => item.product.id === product.id && item.optionsIdStr === optionsIdStr);
-            
             if(existingIndex >= 0) {
-                // เช็คก่อนบวกเพิ่ม ว่าของพอไหม?
-                if(cart[existingIndex].qty + 1 > product.stock) {
-                    showCustomPopup("แจ้งเตือน", `ขออภัย ไม่สามารถเพิ่มจำนวนได้ สินค้ามีจำนวนจำกัด (เหลือ ${product.stock} ชิ้น)`);
-                    return;
-                }
+                if(cart[existingIndex].qty + 1 > product.stock) { showCustomPopup("แจ้งเตือน", `สินค้ามีจำนวนจำกัด`); return; }
                 cart[existingIndex].qty += 1; cart[existingIndex].selected = true; 
             } else {
                 cart.push({ id: Date.now().toString(), product: product, options: [...options], optionsIdStr: optionsIdStr, qty: 1, selected: true });
             }
-            saveCart(); updateCartBadge(); renderCart(); 
+            window.saveCart(); window.updateCartBadge(); window.renderCart(); 
         }
 
-        function toggleCartItemSelection(id, isSelected) {
-            let item = cart.find(c => c.id === id); if(item) item.selected = isSelected;
-            saveCart(); renderCart();
-        }
-
-        function updateCartQty(id, change) {
-            let item = cart.find(c => c.id === id);
-            if(item) { 
-                // เช็คสต๊อกก่อนเพิ่มจำนวน
-                if (change > 0 && item.qty + change > item.product.stock) {
-                    showCustomPopup("แจ้งเตือน", `ขออภัย ไม่สามารถเพิ่มจำนวนได้ สินค้ามีจำนวนจำกัด (เหลือ ${item.product.stock} ชิ้น)`);
-                    return;
-                }
-                item.qty += change; 
-                if(item.qty <= 0) cart = cart.filter(c => c.id !== id); 
-            }
-            saveCart(); updateCartBadge(); renderCart();
-        }
-
-        function removeCartItem(id) { cart = cart.filter(c => c.id !== id); saveCart(); updateCartBadge(); renderCart(); }
-        function updateCartBadge() { safeSetText('cart-badge', cart.reduce((sum, item) => sum + item.qty, 0)); }
-
-        function toggleCart() {
-            const overlay = document.getElementById('cart-overlay'); const sidebar = document.getElementById('cart-sidebar'); if(!overlay || !sidebar) return;
-            if (overlay.classList.contains('overlay-enter-active')) { sidebar.classList.remove('sidebar-enter-active'); overlay.classList.remove('overlay-enter-active'); } 
-            else { renderCart(); overlay.classList.add('overlay-enter-active'); sidebar.classList.add('sidebar-enter-active'); }
-        }
-
-        function renderCart() {
+        window.saveCart = function() { localStorage.setItem('nextLiveCart', JSON.stringify(cart)); }
+        window.loadCart = function() { const c = localStorage.getItem('nextLiveCart'); if(c) { cart = JSON.parse(c); window.updateCartBadge(); } }
+        window.getSelectedCart = function() { return cart.filter(item => item.selected !== false); }
+        window.updateCartBadge = function() { safeSetText('cart-badge', cart.reduce((sum, item) => sum + item.qty, 0)); }
+        window.toggleCart = function() { const o = document.getElementById('cart-overlay'); const s = document.getElementById('cart-sidebar'); if(o.classList.contains('overlay-enter-active')) { s.classList.remove('sidebar-enter-active'); o.classList.remove('overlay-enter-active'); } else { window.renderCart(); o.classList.add('overlay-enter-active'); s.classList.add('sidebar-enter-active'); } }
+        
+        window.renderCart = function() {
             const container = document.getElementById('cart-items-container'); const btnCheck = document.getElementById('btn-checkout'); if(!container) return;
             if (cart.length === 0) { container.innerHTML = `<div class="text-center mt-10 text-gray-400">รถเข็นว่างเปล่า</div>`; if(btnCheck) btnCheck.disabled = true; safeSetText('cart-total-price', '฿0.00'); return; }
-            
             container.innerHTML = ''; let total = 0; let hasSelected = false;
             cart.forEach(item => {
                 let itemPrice = item.product.price; item.options.forEach(o => itemPrice += o.price); 
                 if(item.selected !== false) { total += itemPrice * item.qty; hasSelected = true; }
-                
                 const div = document.createElement('div'); div.className = "flex gap-3 mb-4 border-b border-gray-100 dark:border-gray-800 pb-4 items-center";
-                div.innerHTML = `
-                    <input type="checkbox" class="w-5 h-5 text-primary rounded cursor-pointer accent-primary" ${item.selected !== false ? 'checked' : ''} onchange="toggleCartItemSelection('${item.id}', this.checked)">
-                    <div class="w-16 h-16 border p-1 bg-white flex-shrink-0 rounded"><img src="${item.product.image}" class="w-full h-full object-contain"></div>
-                    <div class="flex-grow">
-                        <h4 class="font-semibold text-sm line-clamp-1 dark:text-gray-200">${item.product.name}</h4>
-                        <div class="text-primary font-bold text-sm">${formatPrice(itemPrice)}</div>
-                    </div>
-                    <div class="flex flex-col items-end gap-2">
-                        <button onclick="removeCartItem('${item.id}')" class="text-gray-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                        <div class="flex items-center border rounded border-gray-300 dark:border-gray-600">
-                            <button onclick="updateCartQty('${item.id}', -1)" class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:text-white">-</button>
-                            <span class="px-3 text-sm font-bold dark:text-white">${item.qty}</span>
-                            <button onclick="updateCartQty('${item.id}', 1)" class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:text-white">+</button>
-                        </div>
-                    </div>
-                `; container.appendChild(div);
+                div.innerHTML = `<input type="checkbox" class="w-5 h-5 text-primary rounded cursor-pointer accent-primary" ${item.selected !== false ? 'checked' : ''} onchange="toggleCartItemSelection('${item.id}', this.checked)"><div class="w-16 h-16 border p-1 bg-white flex-shrink-0 rounded"><img src="${item.product.image}" class="w-full h-full object-contain"></div><div class="flex-grow"><h4 class="font-semibold text-sm line-clamp-1 dark:text-gray-200">${item.product.name}</h4><div class="text-primary font-bold text-sm">${formatPrice(itemPrice)}</div></div><div class="flex flex-col items-end gap-2"><button onclick="removeCartItem('${item.id}')" class="text-gray-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button><div class="flex items-center border rounded border-gray-300 dark:border-gray-600"><button onclick="updateCartQty('${item.id}', -1)" class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:text-white">-</button><span class="px-3 text-sm font-bold dark:text-white">${item.qty}</span><button onclick="updateCartQty('${item.id}', 1)" class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:text-white">+</button></div></div>`; container.appendChild(div);
             });
-            safeSetText('cart-total-price', formatPrice(total));
-            if(btnCheck) btnCheck.disabled = !hasSelected;
-            try { lucide.createIcons(); } catch(e) {}
+            safeSetText('cart-total-price', formatPrice(total)); if(btnCheck) btnCheck.disabled = !hasSelected; try { lucide.createIcons(); } catch(e) {}
         }
-
-        // Checkout
-        function proceedToCheckout() { toggleCart(); navigate('checkout'); }
         
-        function applyDiscountCode() {
-            const inputEl = document.getElementById('discount-input'); if(!inputEl) return; 
-            let inputCode = inputEl.value.toUpperCase().trim(); if(!inputCode) return;
-            
-            let discountFound = 0;
-            if(inputCode === siteSettings.Code1) discountFound = parseFloat(siteSettings.Discount1); 
-            else if(inputCode === siteSettings.Code2) discountFound = parseFloat(siteSettings.Discount2); 
-            else if(inputCode === siteSettings.Code3) discountFound = parseFloat(siteSettings.Discount3);
-
-            if(discountFound > 0) {
-                const btn = document.getElementById('btn-apply-code');
-                if(btn) { btn.innerText = "..."; btn.disabled = true; }
-                let bName = document.getElementById('chk-fname').value + " " + document.getElementById('chk-lname').value;
-                let bPhone = document.getElementById('chk-phone').value;
-
-                callBackend({action: 'checkDiscountCode', code: inputCode, name: bName, phone: bPhone})
-                .then(res => {
-                    if(btn) { btn.innerText = "ใช้รหัส"; btn.disabled = false; }
-                    if(res.status === 'success') {
-                        appliedDiscountCode = inputCode; currentDiscount = discountFound; 
-                        showCustomPopup("สำเร็จ", `ใช้โค้ดส่วนลด ${formatPrice(currentDiscount)} สำเร็จ`); 
-                        updateCheckoutTotals();
-                    } else {
-                        showCustomPopup("ไม่สามารถใช้โค้ดได้", res.message); inputEl.value = "";
-                    }
-                }).catch(e => {
-                    if(btn) { btn.innerText = "ใช้รหัส"; btn.disabled = false; }
-                    showCustomPopup("ข้อผิดพลาด", "ไม่สามารถตรวจสอบโค้ดได้");
-                });
-
-            } else { showCustomPopup("ข้อผิดพลาด", "รหัสส่วนลดไม่ถูกต้องหรือหมดอายุ"); inputEl.value = ""; }
+        window.toggleCartItemSelection = function(id, isSelected) { let item = cart.find(c => c.id === id); if(item) item.selected = isSelected; window.saveCart(); window.renderCart(); }
+        window.updateCartQty = function(id, change) { let item = cart.find(c => c.id === id); if(item) { if (change > 0 && item.qty + change > item.product.stock) return; item.qty += change; if(item.qty <= 0) cart = cart.filter(c => c.id !== id); } window.saveCart(); window.updateCartBadge(); window.renderCart(); }
+        window.removeCartItem = function(id) { cart = cart.filter(c => c.id !== id); window.saveCart(); window.updateCartBadge(); window.renderCart(); }
+        window.proceedToCheckout = function() { window.toggleCart(); window.navigate('checkout'); }
+        window.renderProfileView = function() { safeSetText('vp-name', currentUser.fname + " " + currentUser.lname); safeSetText('vp-email', currentUser.email); safeSetText('vp-phone', currentUser.phone); }
+        window.checkWithdrawalState = function() {
+            const setupSec = document.getElementById('wd-setup-bank-section'); const actSec = document.getElementById('wd-action-section');
+            if(currentUser.bankName && currentUser.bankAcc) {
+                if(setupSec) setupSec.classList.add('hidden'); if(actSec) actSec.classList.remove('hidden');
+                safeSetText('wd-card-acc', currentUser.bankAcc); safeSetText('wd-card-name', currentUser.fname); safeSetText('wd-card-balance', `฿${currentUser.balance}`);
+            } else {
+                if(setupSec) setupSec.classList.remove('hidden'); if(actSec) actSec.classList.add('hidden');
+            }
         }
-
-        function toggleCreditInput() {
-            const method = document.querySelector('input[name="payment_method"]:checked');
-            const cont = document.getElementById('partial-credit-container');
-            const input = document.getElementById('credit-input');
-            if(method && method.value === 'qr') { if(cont) cont.style.display = 'block'; } 
-            else { if(cont) cont.style.display = 'none'; if(input) input.value = ''; }
-            updateCheckoutTotals();
+        window.closeModal = function() { document.getElementById('product-modal').classList.add('opacity-0'); document.getElementById('modal-overlay').classList.remove('overlay-enter-active'); }
+        window.openAuth = function(tab) { window.navigate('auth'); window.switchAuthTab(tab); }
+        window.switchAuthTab = function(tab) {
+            const fLog = document.getElementById('form-login-container'); const fReg = document.getElementById('form-register-container');
+            if(tab === 'login') { fLog.classList.remove('hidden'); fReg.classList.add('hidden'); } else { fReg.classList.remove('hidden'); fLog.classList.add('hidden'); }
         }
-
-        function updateCheckoutTotals() {
-            currentSubtotal = 0; 
-            getSelectedCart().forEach(item => { let p = item.product.price; item.options.forEach(o => p += o.price); currentSubtotal += p * item.qty; });
-            
-            currentDiscount = Math.min(currentDiscount, currentSubtotal); 
-            let afterDiscount = currentSubtotal - currentDiscount;
-            
-            currentCreditUsed = 0;
+        window.toggleCategorySidebar = function() { const o = document.getElementById('category-overlay'); const s = document.getElementById('category-sidebar'); if (o.classList.contains('overlay-enter-active')) { s.classList.remove('left-sidebar-enter-active'); o.classList.remove('overlay-enter-active'); } else { o.classList.add('overlay-enter-active'); s.classList.add('left-sidebar-enter-active'); } }
+        window.toggleTheme = function() { isDarkMode = !isDarkMode; document.documentElement.classList.toggle('dark', isDarkMode); }
+        window.showCustomPopup = function(title, text) { safeSetText('popup-title', title); safeSetText('popup-desc', text); document.getElementById('custom-popup').classList.add('active'); }
+        window.closeCustomPopup = function() { document.getElementById('custom-popup').classList.remove('active'); }
+        window.openPaymentSteps = function() { document.getElementById('payment-steps-overlay').classList.add('overlay-enter-active'); document.getElementById('payment-steps-modal').classList.remove('opacity-0', 'scale-95'); }
+        window.closePaymentSteps = function() { document.getElementById('payment-steps-modal').classList.add('opacity-0', 'scale-95'); document.getElementById('payment-steps-overlay').classList.remove('overlay-enter-active'); }
+        window.togglePasswordVisibility = function(id, icon) { const el = document.getElementById(id); if(el.type==='password'){ el.type='text'; icon.setAttribute('data-lucide','eye-off'); }else{ el.type='password'; icon.setAttribute('data-lucide','eye'); } lucide.createIcons(); }
+        window.toggleCreditInput = function() {
+            const method = document.querySelector('input[name="payment_method"]:checked'); const cont = document.getElementById('partial-credit-container');
+            if(method && method.value === 'qr') { if(cont) cont.style.display = 'block'; } else { if(cont) cont.style.display = 'none'; document.getElementById('credit-input').value = ''; }
+            window.updateCheckoutTotals();
+        }
+        window.updateCheckoutTotals = function() {
+            currentSubtotal = 0; window.getSelectedCart().forEach(item => { let p = item.product.price; item.options.forEach(o => p += o.price); currentSubtotal += p * item.qty; });
+            currentDiscount = Math.min(currentDiscount, currentSubtotal); let afterDiscount = currentSubtotal - currentDiscount; currentCreditUsed = 0;
             const method = document.querySelector('input[name="payment_method"]:checked');
             if(method && method.value === 'qr') {
-                const cInput = document.getElementById('credit-input');
-                let val = parseFloat(cInput ? cInput.value : 0) || 0;
-                const cMsg = document.getElementById('credit-msg');
-                if(val > 0) {
-                    if(currentUser && val > currentUser.balance) {
-                        if(cMsg) { cMsg.innerText = "เครดิตที่ระบุสูงกว่ายอดคงเหลือในระบบ"; cMsg.className = "text-xs mt-1 text-red-500 font-bold"; }
-                        val = currentUser.balance; 
-                    } else {
-                        if(cMsg) { cMsg.innerText = "สามารถใช้เครดิตได้"; cMsg.className = "text-xs mt-1 text-green-600 font-bold"; }
-                    }
-                } else { if(cMsg) cMsg.innerText = ""; }
-                
-                let tempVat = afterDiscount * 0.07;
-                let maxAllowed = afterDiscount + tempVat;
-                currentCreditUsed = Math.min(val, maxAllowed);
-                if(currentUser) currentCreditUsed = Math.min(currentCreditUsed, currentUser.balance);
+                let val = parseFloat(document.getElementById('credit-input').value) || 0;
+                let tempVat = afterDiscount * 0.07; let maxAllowed = afterDiscount + tempVat;
+                currentCreditUsed = Math.min(val, maxAllowed); if(currentUser) currentCreditUsed = Math.min(currentCreditUsed, currentUser.balance);
             }
-
-            currentVat = afterDiscount * 0.07; 
-            let totalBeforeCredit = afterDiscount + currentVat;
-            currentNetTotal = totalBeforeCredit - currentCreditUsed; 
-
-            safeSetText('chk-subtotal', formatPrice(currentSubtotal)); 
-            safeSetText('chk-discount', "- " + formatPrice(currentDiscount));
-            safeSetText('chk-vat', formatPrice(currentVat)); 
-            
-            const rowCredit = document.getElementById('row-credit-used');
-            if(currentCreditUsed > 0) {
-                if(rowCredit) rowCredit.style.display = 'flex';
-                safeSetText('chk-credit-used', "- " + formatPrice(currentCreditUsed));
-            } else { if(rowCredit) rowCredit.style.display = 'none'; }
-
-            safeSetText('chk-net-total', formatPrice(currentNetTotal));
-
-            const creditWrapper = document.getElementById('method-credit-wrapper');
-            if(creditWrapper) creditWrapper.style.display = currentUser ? 'block' : 'none'; 
-            if(currentUser) safeSetText('chk-display-balance', `คงเหลือ: ฿${(currentUser.balance || 0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`);
-            
-            const methodCont = document.getElementById('payment-method-container');
-            if(currentNetTotal === 0 && currentCreditUsed === 0) { if(methodCont) methodCont.style.display = 'none'; } 
-            else { if(methodCont) methodCont.style.display = 'block'; }
+            currentVat = afterDiscount * 0.07; currentNetTotal = (afterDiscount + currentVat) - currentCreditUsed; 
+            safeSetText('chk-subtotal', formatPrice(currentSubtotal)); safeSetText('chk-discount', "- " + formatPrice(currentDiscount)); safeSetText('chk-vat', formatPrice(currentVat)); safeSetText('chk-net-total', formatPrice(currentNetTotal));
+            const rowCredit = document.getElementById('row-credit-used'); if(currentCreditUsed > 0) { rowCredit.style.display = 'flex'; safeSetText('chk-credit-used', "- " + formatPrice(currentCreditUsed)); } else { rowCredit.style.display = 'none'; }
         }
-
-        function renderCheckoutItems() {
-            const container = document.getElementById('checkout-items'); if(!container) return; container.innerHTML = '';
-            const sCart = getSelectedCart();
-            if(sCart.length === 0) { container.innerHTML = '<p class="text-gray-500 text-sm">ไม่มีสินค้าที่เลือกชำระเงิน</p>'; return;}
-
-            sCart.forEach(item => {
-                let itemPrice = item.product.price; let optHtml = ''; item.options.forEach(o => { itemPrice += o.price; optHtml += `<div class="text-xs text-gray-500">+ ${o.name}</div>`; });
-                const div = document.createElement('div'); div.className = "flex items-start py-3 border-b border-gray-100 dark:border-gray-800 last:border-0";
-                div.innerHTML = `<div class="w-12 h-12 bg-white border p-1 flex-shrink-0 mr-3 rounded"><img src="${item.product.image}" class="w-full h-full object-contain"></div><div class="flex-grow"><div class="flex justify-between"><span class="text-sm font-semibold dark:text-gray-200">${item.product.name}</span><span class="font-bold text-sm dark:text-gray-200">${formatPrice(itemPrice * item.qty)}</span></div><div class="text-xs text-gray-500">จำนวน: ${item.qty}</div>${optHtml}</div>`; container.appendChild(div);
-            });
-            toggleCreditInput(); refreshUserData();
+        window.renderCheckoutItems = function() {
+            const container = document.getElementById('checkout-items'); container.innerHTML = ''; const sCart = window.getSelectedCart();
+            sCart.forEach(item => { let itemPrice = item.product.price; item.options.forEach(o => { itemPrice += o.price; }); container.innerHTML += `<div class="flex items-start py-3 border-b"><div class="w-12 h-12 border p-1 mr-3"><img src="${item.product.image}" class="w-full h-full object-contain"></div><div class="flex-grow"><div class="flex justify-between"><span class="text-sm">${item.product.name}</span><span class="font-bold">${formatPrice(itemPrice * item.qty)}</span></div><div class="text-xs text-gray-500">จำนวน: ${item.qty}</div></div></div>`; });
+            window.toggleCreditInput();
         }
-
-        function processOrder() {
-            const form = document.getElementById('checkout-form'); if(form && !form.checkValidity()) { showCustomPopup("แจ้งเตือน","กรุณากรอกข้อมูลให้ครบถ้วน"); return; }
-            if(getSelectedCart().length === 0) { showCustomPopup("แจ้งเตือน","ไม่มีสินค้าที่เลือกในตะกร้า"); return; }
-            
-            let selectedMethod = document.querySelector('input[name="payment_method"]:checked')?.value || 'qr'; currentFlow = 'order';
-
-            const cInput = document.getElementById('credit-input');
-            let val = parseFloat(cInput ? cInput.value : 0) || 0;
-            if(selectedMethod === 'qr' && val > 0 && currentUser && val > currentUser.balance) {
-                showCustomPopup("แจ้งเตือน", "ยอดเครดิตที่กรอกสูงกว่ายอดคงเหลือของคุณ"); return;
-            }
-
-            if(currentNetTotal === 0 && currentCreditUsed === 0) { submitFreeOrCreditOrder('free'); } 
-            else if (currentNetTotal === 0 && currentCreditUsed > 0) { submitFreeOrCreditOrder('credit'); }
-            else if (selectedMethod === 'credit') {
-                if(!currentUser) { showCustomPopup("แจ้งเตือน", "กรุณาเข้าสู่ระบบก่อนใช้เครดิต"); return; }
-                let totalToPay = currentSubtotal - currentDiscount + currentVat;
-                if(currentUser.balance < totalToPay) { showCustomPopup("เครดิตไม่เพียงพอ", `เครดิตของคุณไม่พอ (ขาด ฿${(totalToPay - currentUser.balance).toFixed(2)}) กรุณาเติมเงินหรือเลือกจ่ายด้วย QR Code`); return; }
-                submitFreeOrCreditOrder('credit');
-            } else { navigate('payment'); }
+        window.applyDiscountCode = function() {
+            const code = document.getElementById('discount-input').value.toUpperCase();
+            if(code === siteSettings.Code1) currentDiscount = siteSettings.Discount1;
+            else if(code === siteSettings.Code2) currentDiscount = siteSettings.Discount2;
+            else if(code === siteSettings.Code3) currentDiscount = siteSettings.Discount3;
+            else { showCustomPopup("Error", "โค้ดไม่ถูกต้อง"); return; }
+            appliedDiscountCode = code; showCustomPopup("Success", "ใช้ส่วนลดสำเร็จ"); window.updateCheckoutTotals();
         }
-
-        function submitFreeOrCreditOrder(methodStr) {
-            const btn = document.getElementById('btn-process-order'); if(btn) { btn.innerText = "กำลังประมวลผล..."; btn.disabled = true; }
-            let finalExpected = methodStr === 'credit' ? (currentSubtotal - currentDiscount + currentVat) : currentNetTotal;
-
-            const payload = {
-                action: 'submitOrder', paymentMethod: methodStr, buyname: document.getElementById('chk-fname').value + " " + document.getElementById('chk-lname').value,
-                buyemail: document.getElementById('chk-email').value, phone: document.getElementById('chk-phone').value,
-                cart: getSelectedCart().map(c => ({ qty: c.qty, product: { name: c.product.name }, options: c.options.map(o=>({name: o.name})) })),
-                discount: currentDiscount, vat: currentVat.toFixed(2), expectedPrice: finalExpected.toFixed(2), 
-                creditUsed: currentCreditUsed, discountCode: appliedDiscountCode, base64: "", name: "", type: ""
-            };
-
-            callBackend(payload).then(res => {
-                if(btn) { btn.innerText = "ยืนยันการสั่งซื้อ"; btn.disabled = false; }
-                if (res.status === "success") {
-                    safeSetText('display-order-id', res.orderRef); safeSetText('success-title', 'สั่งซื้อสำเร็จ!'); safeSetText('success-ref-label', 'รหัสอ้างอิงออเดอร์ (Order Ref)');
-                    cart = cart.filter(c => c.selected === false); saveCart();
-                    currentDiscount = 0; appliedDiscountCode = ""; currentCreditUsed = 0; updateCartBadge(); 
-                    if(res.newBalance !== undefined) updateBalanceUI(res.newBalance); navigate('success');
-                } else { showCustomPopup("ข้อผิดพลาด", res.message); }
-            }).catch(e => { if(btn) { btn.innerText = "ยืนยันการสั่งซื้อ"; btn.disabled = false; } showCustomPopup("ระบบมีปัญหา", "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์"); });
+        window.setDepositAmount = function(amt) { document.getElementById('deposit-amount-input').value = amt; }
+        window.confirmDeposit = function() {
+            let val = parseFloat(document.getElementById('deposit-amount-input').value);
+            if(val >= 100) { currentFlow = 'deposit'; currentNetTotal = val; window.navigate('payment'); } else { showCustomPopup("แจ้งเตือน", "ขั้นต่ำ 100 บาท"); }
         }
+        window.goBackFromPayment = function() { if(currentFlow === 'deposit') window.navigate('deposit'); else window.navigate('checkout'); }
+        window.toggleContactWidget = function() { const c = document.getElementById('contact-content'); c.classList.toggle('hidden'); c.classList.toggle('flex'); }
 
-        // Slip Upload
-        function handleSlipUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const qrImg = document.getElementById('promptpay-qr-img'); if(qrImg) qrImg.src = e.target.result;
-                    const upl = document.getElementById('upload-section'); if(upl) upl.classList.add('hidden');
-                    const overlay = document.getElementById('verification-overlay');
-                    if(overlay) { overlay.classList.remove('hidden'); setTimeout(() => overlay.classList.add('opacity-100'), 50); }
-                    
-                    clearInterval(qrTimerInterval); 
-
-                    let payload = {};
-                    if(currentFlow === 'deposit') {
-                        payload = { action: 'deposit', fullname: currentUser ? currentUser.fname + " " + currentUser.lname : "Guest", email: currentUser ? currentUser.email : "guest@mail.com", phone: currentUser ? currentUser.phone : "0000000000", expectedPrice: currentNetTotal.toFixed(2), base64: e.target.result.split(',')[1], name: file.name, type: file.type };
-                    } else {
-                        payload = { action: 'submitOrder', paymentMethod: 'qr', buyname: document.getElementById('chk-fname').value + " " + document.getElementById('chk-lname').value, buyemail: document.getElementById('chk-email').value, phone: document.getElementById('chk-phone').value, cart: getSelectedCart().map(c => ({ qty: c.qty, product: { name: c.product.name }, options: c.options.map(o=>({name: o.name})) })), discount: currentDiscount, vat: currentVat.toFixed(2), expectedPrice: currentNetTotal.toFixed(2), creditUsed: currentCreditUsed, discountCode: appliedDiscountCode, base64: e.target.result.split(',')[1], name: file.name, type: file.type };
-                    }
-
-                    callBackend(payload).then(res => {
-                        if(overlay) overlay.classList.add('hidden');
-                        if (res.status === "success") {
-                            if(currentFlow === 'deposit') {
-                                safeSetText('display-order-id', "DEP-" + Date.now().toString().slice(-6)); 
-                                safeSetText('success-title', 'เติมเงินสำเร็จ ระบบกำลังเติมเครดิต'); 
-                                safeSetText('success-ref-label', 'รหัสอ้างอิง (Ref)');
-                            } else {
-                                safeSetText('display-order-id', res.orderRef); 
-                                safeSetText('success-title', 'ชำระเงินสำเร็จ ระบบกำลังจัดส่งสินค้า'); 
-                                safeSetText('success-ref-label', 'รหัสอ้างอิงออเดอร์ (Order Ref)'); 
-                                cart = cart.filter(c => c.selected === false); saveCart();
-                                currentDiscount = 0; appliedDiscountCode = ""; currentCreditUsed = 0; updateCartBadge();
-                            }
-                            if(res.newBalance !== undefined && currentUser) { updateBalanceUI(res.newBalance); }
-                            navigate('success');
-                        } else { 
-                            if(currentFlow === 'order') {
-                                cart = cart.filter(c => c.selected === false); saveCart();
-                                currentDiscount = 0; appliedDiscountCode = ""; currentCreditUsed = 0; updateCartBadge(); 
-                                safeSetText('failure-desc', res.message);
-                                navigate('failure');
-                            } else {
-                                safeSetText('failure-desc', res.message);
-                                navigate('failure');
-                            }
-                            if(res.newBalance !== undefined && currentUser) { updateBalanceUI(res.newBalance); }
-                            if(upl) upl.classList.remove('hidden'); 
-                        }
-                    }).catch(e => { 
-                        if(overlay) overlay.classList.add('hidden'); 
-                        showCustomPopup("ระบบมีปัญหา", "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์"); 
-                        if(upl) upl.classList.remove('hidden'); 
-                    });
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // --- Booking Formatter ---
-        function formatBookingDisplay(dStr, tStr) {
-            let finalDate = dStr;
-            let finalTime = tStr;
-
-            if (typeof dStr === 'string' && dStr.includes('T')) {
-                let d = new Date(dStr);
-                let y = d.getFullYear();
-                if (y < 2500) y += 543;
-                finalDate = `${("0" + d.getDate()).slice(-2)}-${("0" + (d.getMonth() + 1)).slice(-2)}-${y}`;
-            } else if (typeof dStr === 'string' && dStr.includes('-')) {
-                let parts = dStr.split('-');
-                if(parts.length === 3 && parts[0].length === 2) {
-                    let y = parseInt(parts[2]);
-                    if (y < 2500) y += 543;
-                    finalDate = `${parts[0]}-${parts[1]}-${y}`;
-                }
-            }
-
-            if (typeof tStr === 'string' && tStr.includes('T')) {
-                let d = new Date(tStr);
-                let h = d.getHours();
-                let m = d.getMinutes();
-                if (d.getFullYear() < 1950) {
-                    if (m >= 10 && m <= 25) { m = 0; }
-                    else if (m >= 40 && m <= 55) { m = 30; }
-                }
-                finalTime = `${("0"+h).slice(-2)}:${("0"+m).slice(-2)}`;
-            } else if (typeof tStr === 'string' && tStr.length >= 5) {
-                finalTime = tStr.substring(0,5);
-            }
-
-            return `${finalDate} | ${finalTime} น.`;
-        }
-
-        // --- History fetching & Statement ---
-        function searchHistory() {
-            const phoneEl = document.getElementById('history-phone-input'); const phone = phoneEl ? phoneEl.value : "";
-            const ordContainer = document.getElementById('history-orders-container'); const depContainer = document.getElementById('history-deposits-container'); const wdContainer = document.getElementById('history-withdraws-container');
-            const btn = document.getElementById('btn-search-history');
-            
-            if(!phone) { showCustomPopup("แจ้งเตือน", "กรุณาระบุเบอร์โทรศัพท์"); return; }
-            if(btn) { btn.innerHTML = `<div class="lds-spinner lds-spinner-white" style="width:20px;height:20px;transform:scale(0.3);margin-right:-20px;display:inline-block;"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>`; btn.disabled = true; }
-
-            callBackend({ action: 'getHistory', phone: phone }).then(res => {
-                if(btn) { btn.innerHTML = `<i data-lucide="search" class="w-4 h-4 mr-2"></i>ค้นหา`; btn.disabled = false; }
-                try { lucide.createIcons(); } catch(e) {}
-                
-                if(res.status === 'success') {
-                    globalHistoryData = res; 
-
-                    // Orders
-                    if(res.orders.length > 0) {
-                        if(ordContainer) ordContainer.innerHTML = '';
-                        res.orders.forEach((item, idx) => {
-                            let badgeClass = getStatusBadgeClass(item.status);
-                            const div = document.createElement('div'); div.className = "bg-white dark:bg-[#121212] p-4 border dark:border-gray-800 rounded-sm shadow-sm animate-slide-up mb-4"; div.style.animationDelay = `${idx * 0.1}s`;
-                            div.innerHTML = `<div class="flex justify-between items-start mb-3 border-b dark:border-gray-800 pb-2"><div><h3 class="font-bold text-sm">Order: ${item.ref.replace(/'/g,'')}</h3><p class="text-[10px] text-gray-500">${item.date}</p></div><span class="${badgeClass} px-2 py-0.5 text-[10px] font-bold rounded-sm">${item.status}</span></div><div class="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap mb-3 bg-gray-50 dark:bg-gray-800 p-2 rounded-sm font-sans">${item.items}</div><div class="flex justify-end text-xs"><span class="font-bold text-primary">ยอดสุทธิ: ฿${parseFloat(item.amount).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</span></div>`;
-                            if(ordContainer) ordContainer.appendChild(div);
-                        });
-                    } else { if(ordContainer) ordContainer.innerHTML = `<div class="text-center py-8 text-gray-500"><p>ไม่พบประวัติการสั่งซื้อ</p></div>`; }
-
-                    // Deposits & Commissions
-                    if(res.deposits.length > 0) {
-                        if(depContainer) depContainer.innerHTML = '';
-                        res.deposits.forEach((item, idx) => {
-                            let badgeClass = getStatusBadgeClass(item.status);
-                            const div = document.createElement('div'); 
-                            div.className = "bg-white dark:bg-[#121212] p-4 border dark:border-gray-800 rounded-sm shadow-sm animate-slide-up mb-4"; 
-                            div.style.animationDelay = `${idx * 0.1}s`;
-                            
-                            let isCommission = (item.items && (item.items.indexOf("ปรับเครดิต") > -1 || item.items.indexOf("คอมมิชชั่น") > -1));
-                            let iconBox = isCommission 
-                                ? `<div class="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex justify-center items-center mr-2"><i data-lucide="share-2" class="w-3 h-3"></i></div>`
-                                : `<div class="w-6 h-6 bg-green-100 text-green-600 rounded-full flex justify-center items-center mr-2"><i data-lucide="arrow-down-to-line" class="w-3 h-3"></i></div>`;
-                            let titleText = isCommission ? "รับคอมมิชชั่น (Affiliate)" : "ฝากเงิน / คืนเครดิต";
-                            let amountClass = isCommission ? "text-blue-600" : "text-green-600";
-
-                            div.innerHTML = `
-                                <div class="flex justify-between items-start mb-3 border-b dark:border-gray-800 pb-2">
-                                    <div class="flex items-center">
-                                        ${iconBox}
-                                        <div><h3 class="font-bold text-sm">${titleText}</h3><p class="text-[10px] text-gray-500">${item.date}</p></div>
-                                    </div>
-                                    <span class="${badgeClass} px-2 py-0.5 text-[10px] font-bold rounded-sm">${item.status}</span>
-                                </div>
-                                <div class="flex justify-between text-xs items-center">
-                                    <span class="text-gray-500">ยอดที่ได้รับ:</span>
-                                    <span class="font-bold ${amountClass} text-sm">+฿${parseFloat(item.amount).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</span>
-                                </div>`;
-                            if(depContainer) depContainer.appendChild(div);
-                        });
-                    } else { if(depContainer) depContainer.innerHTML = `<div class="text-center py-8 text-gray-500"><p>ไม่พบประวัติการรับเงิน</p></div>`; }
-
-                    // Withdrawals
-                    if(res.withdraws.length > 0) {
-                        if(wdContainer) wdContainer.innerHTML = '';
-                        res.withdraws.forEach((item, idx) => {
-                            let badgeClass = getStatusBadgeClass(item.status);
-                            const div = document.createElement('div'); div.className = "bg-white dark:bg-[#121212] p-4 border dark:border-gray-800 rounded-sm shadow-sm animate-slide-up mb-4"; div.style.animationDelay = `${idx * 0.1}s`;
-                            div.innerHTML = `<div class="flex justify-between items-start mb-3 border-b dark:border-gray-800 pb-2"><div class="flex items-center"><div class="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex justify-center items-center mr-2"><i data-lucide="arrow-up-circle" class="w-3 h-3"></i></div><div><h3 class="font-bold text-sm">ถอนเงิน</h3><p class="text-[10px] text-gray-500">${item.date}</p></div></div><span class="${badgeClass} px-2 py-0.5 text-[10px] font-bold rounded-sm">${item.status}</span></div><div class="text-xs text-gray-700 dark:text-gray-400 mb-3">${item.items}</div><div class="flex justify-between text-xs items-center"><span class="text-gray-500">ยอดถอน:</span><span class="font-bold text-purple-600 text-sm">-฿${parseFloat(item.amount).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</span></div>`;
-                            if(wdContainer) wdContainer.appendChild(div);
-                        });
-                    } else { if(wdContainer) wdContainer.innerHTML = `<div class="text-center py-8 text-gray-500"><p>ไม่พบประวัติการถอนเงิน</p></div>`; }
-
-                    try { lucide.createIcons(); } catch(e) {}
-                }
-            }).catch(e => { if(btn) { btn.innerHTML = `<i data-lucide="search" class="w-4 h-4 mr-2"></i>ค้นหา`; btn.disabled = false; } showCustomPopup("ข้อผิดพลาด", "เชื่อมต่อฐานข้อมูลล้มเหลว"); });
-        }
-
-        function formatShortStatus(status) {
-            if(!status) return "-";
-            if(status.includes("ไม่สำเร็จ") || status.includes("ยกเลิก") || status.includes("สลิปซ้ำ")) return "ไม่สำเร็จ";
-            if(status.includes("รอดำเนินการ")) return "รอดำเนินการ";
-            return "สำเร็จ";
-        }
-
-        function openStatement() {
-            if(!globalHistoryData) { showCustomPopup("แจ้งเตือน", "กรุณาค้นหาประวัติก่อนทำรายการ Statement"); return; }
-            if(!currentUser) { showCustomPopup("แจ้งเตือน", "กรุณาเข้าสู่ระบบก่อนดึงข้อมูล Statement"); return; }
-
-            safeSetText('stmt-ref', `เลขที่ NX-${Date.now().toString().slice(-4)}-${Math.floor(Math.random()*9000)+1000}-${currentUser.phone.slice(-6)}`);
-            let dParts = new Date().toLocaleDateString('th-TH').split('/');
-            let tStr = new Date().toTimeString().substring(0,5);
-            let y = parseInt(dParts[2]); if(y < 2500) y += 543;
-            safeSetText('stmt-date', `วันที่ ${("0"+dParts[0]).slice(-2)}-${("0"+dParts[1]).slice(-2)}-${y} | ${tStr} น.`);
-            
-            safeSetText('stmt-name', `ชื่อ-สกุล : ${currentUser.fname} ${currentUser.lname}`);
-            safeSetText('stmt-email', `อีเมลจัดส่ง : ${currentUser.email}`);
-            safeSetText('stmt-phone', `หมายเลขโทรศัพท์ : ${currentUser.phone}`);
-            safeSetText('stmt-admin-name', `ผู้รับเงิน ${siteSettings.AdminName}`);
-
-            const oBody = document.getElementById('stmt-orders-tbody'); oBody.innerHTML = '';
-            if(globalHistoryData.orders.length > 0) {
-                globalHistoryData.orders.forEach((o, i) => {
-                    let itemsStr = o.items.replace(/\n/g, '<br>');
-                    let amt = parseFloat(o.amount) || 0; 
-                    let vat = parseFloat(o.vat) || 0; 
-                    let disc = parseFloat(o.discount) || 0; 
-                    let net = amt - vat; 
-                    let price = net + disc; 
-
-                    let tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td class="py-2 pr-2 border-b border-gray-200 align-top">${i+1}. ${itemsStr} <br><span class="text-[10px] text-gray-500">${o.date} (${o.ref.replace(/'/g, '')})</span></td>
-                        <td class="text-center py-2 border-b border-gray-200 align-top">${price.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</td>
-                        <td class="text-center py-2 border-b border-gray-200 align-top">รวม</td>
-                        <td class="text-right py-2 border-b border-gray-200 align-top">${disc > 0 ? '-' + disc.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) : '0.00'}</td>
-                        <td class="text-right py-2 border-b border-gray-200 align-top">${net.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</td>
-                        <td class="text-right py-2 border-b border-gray-200 align-top">${vat.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</td>
-                        <td class="text-right py-2 border-b border-gray-200 font-bold align-top text-primary">${amt.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</td>
-                    `;
-                    oBody.appendChild(tr);
-                });
-            } else { oBody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-400">ไม่มีข้อมูล</td></tr>'; }
-
-            let currentBalStr = parseFloat(globalHistoryData.balance || 0).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
-
-            const dBody = document.getElementById('stmt-deposits-tbody'); dBody.innerHTML = '';
-            if(globalHistoryData.deposits.length > 0) {
-                globalHistoryData.deposits.forEach((d, i) => {
-                    let isCommission = (d.items && (d.items.indexOf("ปรับเครดิต") > -1 || d.items.indexOf("คอมมิชชั่น") > -1));
-                    let typeLabel = isCommission ? "รับคอมมิชชั่น" : "ฝากเงิน";
-
-                    let tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td class="py-2 pr-2 border-b border-gray-200">${i+1}. ${d.date} <br><span class="text-[10px] text-gray-500 font-bold">${typeLabel}</span></td>
-                        <td class="text-center py-2 border-b border-gray-200">${parseFloat(d.amount).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</td>
-                        <td class="text-right py-2 border-b border-gray-200">${parseFloat(d.amount).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</td>
-                        <td class="text-right py-2 border-b border-gray-200">${formatShortStatus(d.status)}</td>
-                        <td class="text-right py-2 border-b border-gray-200 bg-red-50 text-primary font-bold">${i === 0 ? currentBalStr : '-'}</td>
-                    `;
-                    dBody.appendChild(tr);
-                });
-            } else { dBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400">ไม่มีข้อมูล</td></tr>'; }
-
-            const wBody = document.getElementById('stmt-withdraws-tbody'); wBody.innerHTML = '';
-            if(globalHistoryData.withdraws.length > 0) {
-                globalHistoryData.withdraws.forEach((w, i) => {
-                    let tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td class="py-2 pr-2 border-b border-gray-200">${i+1}. ${w.date}</td>
-                        <td class="text-center py-2 border-b border-gray-200">${currentUser.fname} ${currentUser.lname}</td>
-                        <td class="text-center py-2 border-b border-gray-200">${w.items.split('(')[0].replace('ไปยัง:','').trim()}</td>
-                        <td class="text-center py-2 border-b border-gray-200">${w.items.split('(')[1] ? w.items.split('(')[1].replace(')','') : '-'}</td>
-                        <td class="text-center py-2 border-b border-gray-200 font-bold">${parseFloat(w.amount).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</td>
-                        <td class="text-center py-2 border-b border-gray-200">${formatShortStatus(w.status)}</td>
-                        <td class="text-right py-2 border-b border-gray-200 bg-red-50 text-primary font-bold">${i === 0 ? currentBalStr : '-'}</td>
-                    `;
-                    wBody.appendChild(tr);
-                });
-            } else { wBody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-400">ไม่มีข้อมูล</td></tr>'; }
-
-            navigate('statement');
-        }
-
-        function emailStatementOnly() {
-            const btn = document.getElementById('btn-dl-statement');
-            const origText = btn.innerHTML;
-            btn.innerHTML = `<div class="lds-spinner lds-spinner-white w-5 h-5 inline-block align-middle mr-2" style="transform:scale(0.3); margin-top:-20px;"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div> กำลังประมวลผล...`;
-            btn.disabled = true;
-
-            const element = document.getElementById('statement-capture-area');
-            
-            setTimeout(() => {
-                html2canvas(element, { scale: 1.5, useCORS: true }).then(canvas => {
-                    const imgData = canvas.toDataURL('image/png');
-                    
-                    callBackend({
-                        action: 'emailStatement',
-                        email: currentUser.email,
-                        phone: currentUser.phone,
-                        name: `${currentUser.fname} ${currentUser.lname}`,
-                        base64: imgData.split(',')[1]
-                    }).then(res => {
-                        btn.innerHTML = origText; btn.disabled = false;
-                        if(res.status === 'success') {
-                            showCustomPopup("สำเร็จ", "ส่งบิลไปยังอีเมลของคุณเรียบร้อยแล้ว");
-                        } else {
-                            showCustomPopup("แจ้งเตือน", "ไม่สามารถส่งอีเมลได้: " + res.message);
-                        }
-                    }).catch(e => {
-                        btn.innerHTML = origText; btn.disabled = false;
-                        showCustomPopup("แจ้งเตือน", "ไม่สามารถเชื่อมต่อระบบอีเมลได้");
-                    });
-                });
-            }, 500);
-        }
-
-        let currentSlide = 0;
+        // Initial Sliders
         function initSlider() {
-            const track = document.getElementById('slider-track'); if(!track) return; track.innerHTML = ''; 
-            bannerData.forEach(banner => {
-                const slide = document.createElement('div'); slide.className = "w-full flex-shrink-0 relative h-full flex items-center justify-center";
-                slide.innerHTML = `<img src="${banner.img}" class="w-full h-full object-contain">`; track.appendChild(slide);
-            });
-            setInterval(() => { currentSlide = (currentSlide + 1) % bannerData.length; track.style.transform = `translateX(-${currentSlide * 100}%)`; }, 4000);
+            const track = document.getElementById('slider-track'); if(!track) return;
+            bannerData.forEach(b => { track.innerHTML += `<div class="w-full flex-shrink-0 relative h-full flex items-center justify-center"><img src="${b.img}" class="w-full h-full object-contain"></div>`; });
+            let currentSlide = 0; setInterval(() => { currentSlide = (currentSlide + 1) % bannerData.length; track.style.transform = `translateX(-${currentSlide * 100}%)`; }, 4000);
         }
+        function populateBankOptions() { const select = document.getElementById('wd-bank-name'); bankList.forEach(b => { select.innerHTML += `<option value="${b.id}">${b.thName}</option>`; }); }
+        function renderCategoryMenu() { const list = document.getElementById('category-list'); list.innerHTML = ''; categories.forEach(c => { list.innerHTML += `<li class="cursor-pointer px-4 py-3 hover:bg-gray-50" onclick="activeCategory='${c.id}'; window.renderProducts(); window.toggleCategorySidebar(); window.navigate('home');">${c.name}</li>`; }); }
+        function initDraggableContact() { /* Simplified */ }
 
-        function openAuth(tab = 'login') { navigate('auth'); switchAuthTab(tab); }
-        function switchAuthTab(tab) {
-            const fLog = document.getElementById('form-login-container'); const fReg = document.getElementById('form-register-container');
-            if(tab === 'login') {
-                if(fLog) fLog.classList.remove('hidden'); if(fReg) fReg.classList.add('hidden');
-            } else {
-                if(fReg) fReg.classList.remove('hidden'); if(fLog) fLog.classList.add('hidden');
+        // Expose Booking UI logic
+        window.switchBookingTab = function(tab) {
+            ['check','book','cancel'].forEach(t => { document.getElementById(`booking-tab-${t}`).classList.add('hidden'); document.getElementById(`tab-btn-${t}`).classList.remove('border-primary', 'text-primary'); document.getElementById(`tab-btn-${t}`).classList.add('border-transparent'); });
+            document.getElementById(`booking-tab-${tab}`).classList.remove('hidden'); document.getElementById(`tab-btn-${tab}`).classList.add('border-primary', 'text-primary'); document.getElementById(`tab-btn-${tab}`).classList.remove('border-transparent');
+            if(tab === 'book') { window.initBookingCalendar(); window.nextBookingStep(1); }
+        }
+        window.nextBookingStep = function(step) { [1,2,3].forEach(i => { document.getElementById(`book-step-${i}`).classList.add('hidden'); }); document.getElementById(`book-step-${step}`).classList.remove('hidden'); }
+        window.prevBookingStep = function(step) { window.nextBookingStep(step); }
+        window.initBookingCalendar = function() { window.currentCalDate = new Date(); window.renderCalendarDays(); }
+        window.changeBookingMonth = function(dir) { window.currentCalDate.setMonth(window.currentCalDate.getMonth() + dir); window.renderCalendarDays(); }
+        window.renderCalendarDays = function() {
+            document.getElementById('booking-month-year').innerText = "เดือนที่ " + (window.currentCalDate.getMonth()+1) + " ปี " + window.currentCalDate.getFullYear();
+            const sc = document.getElementById('booking-calendar-scroll'); sc.innerHTML = '';
+            let days = new Date(window.currentCalDate.getFullYear(), window.currentCalDate.getMonth() + 1, 0).getDate();
+            for(let i=1; i<=days; i++) {
+                let dStr = `${("0"+i).slice(-2)}-${("0"+(window.currentCalDate.getMonth()+1)).slice(-2)}-${window.currentCalDate.getFullYear()}`;
+                sc.innerHTML += `<button class="w-16 h-20 border rounded-md flex-shrink-0 bg-white" onclick="window.currentBookingDate='${dStr}'; window.renderTimeSlots();">${i}</button>`;
             }
         }
-        function toggleCategorySidebar() {
-            const overlay = document.getElementById('category-overlay'); const sidebar = document.getElementById('category-sidebar'); if(!overlay || !sidebar) return;
-            if (overlay.classList.contains('overlay-enter-active')) { sidebar.classList.remove('left-sidebar-enter-active'); overlay.classList.remove('overlay-enter-active'); } 
-            else { overlay.classList.add('overlay-enter-active'); sidebar.classList.add('left-sidebar-enter-active'); }
-        }
-        function openPaymentSteps() {
-            const overlay = document.getElementById('payment-steps-overlay'); const modal = document.getElementById('payment-steps-modal');
-            if(overlay) overlay.classList.add('overlay-enter-active'); if(modal) modal.classList.remove('opacity-0', 'scale-95');
-        }
-        function closePaymentSteps() {
-            const overlay = document.getElementById('payment-steps-overlay'); const modal = document.getElementById('payment-steps-modal');
-            if(modal) modal.classList.add('opacity-0', 'scale-95'); if(overlay) overlay.classList.remove('overlay-enter-active');
-        }
-
-        // --- BOOKING SYSTEM LOGIC ---
-        let currentBookingDate = null;
-        let currentBookingTime = null;
-        let currentCalDate = new Date(); 
-
-        function switchBookingTab(tab) {
-            document.getElementById('booking-tab-check').classList.add('hidden');
-            document.getElementById('booking-tab-book').classList.add('hidden');
-            document.getElementById('booking-tab-cancel').classList.add('hidden');
-            
-            document.getElementById('tab-btn-check').className = "py-3 px-6 font-bold text-sm border-b-2 border-transparent text-gray-500 hover:text-primary whitespace-nowrap transition-colors";
-            document.getElementById('tab-btn-book').className = "py-3 px-6 font-bold text-sm border-b-2 border-transparent text-gray-500 hover:text-primary whitespace-nowrap transition-colors";
-            document.getElementById('tab-btn-cancel').className = "py-3 px-6 font-bold text-sm border-b-2 border-transparent text-gray-500 hover:text-primary whitespace-nowrap transition-colors";
-
-            document.getElementById('booking-tab-' + tab).classList.remove('hidden');
-            document.getElementById('tab-btn-' + tab).className = "py-3 px-6 font-bold text-sm border-b-2 border-primary text-primary whitespace-nowrap transition-colors";
-
-            if(tab === 'check') loadBookingHistory();
-            if(tab === 'cancel') loadBookingHistory(true); 
-            if(tab === 'book') {
-                nextBookingStep(1); 
-                initBookingCalendar();
-            }
-        }
-
-        function loadBookingHistory(isCancelTab = false) {
-            if(!currentUser) return;
-            const container = document.getElementById(isCancelTab ? 'booking-cancel-container' : 'booking-list-container');
-            container.innerHTML = '<div class="text-center p-6 text-gray-400 border border-dashed rounded-md"><div class="lds-spinner lds-spinner-white" style="width:20px;height:20px;transform:scale(0.3);margin-right:-20px;display:inline-block;"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div> กำลังโหลดข้อมูล...</div>';
-            
-            callBackend({action: 'getBookingList', phone: currentUser.phone}).then(res => {
-                if(res.status === 'success') {
-                    if(isCancelTab) renderBookingCancelList(res.bookings);
-                    else renderBookingList(res.bookings);
-                } else {
-                    container.innerHTML = `<div class="text-center p-6 text-red-500 border border-dashed rounded-md">${res.message}</div>`;
-                }
-            }).catch(e => {
-                container.innerHTML = `<div class="text-center p-6 text-red-500 border border-dashed rounded-md">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>`;
-            });
-        }
-
-        function renderBookingList(bookings) {
-            const container = document.getElementById('booking-list-container');
-            if(bookings.length === 0) { container.innerHTML = '<div class="text-center p-6 text-gray-400 border border-dashed rounded-md"><i data-lucide="calendar-x" class="w-10 h-10 mx-auto mb-2 opacity-50"></i>ไม่พบประวัติการจองคิว</div>'; try { lucide.createIcons(); } catch(e){} return; }
-            
-            container.innerHTML = '';
-            bookings.forEach((b, idx) => {
-                let badgeClass = getStatusBadgeClass(b.status);
-                let div = document.createElement('div');
-                div.className = "bg-white dark:bg-[#1e1e1e] border dark:border-gray-800 rounded-md shadow-sm overflow-hidden mb-3 transition-all";
-                
-                let displayCreateDate = formatBookingDisplay(b.createDate, ""); 
-                let displayBookDateTime = formatBookingDisplay(b.bookDate, b.bookTime);
-
-                let header = document.createElement('div');
-                header.className = "p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors";
-                header.onclick = () => {
-                    const content = document.getElementById(`booking-content-${idx}`);
-                    const icon = document.getElementById(`booking-icon-${idx}`);
-                    if(content.classList.contains('open')) {
-                        content.classList.remove('open', 'p-4');
-                    } else {
-                        content.classList.add('open', 'p-4');
-                    }
-                };
-                header.innerHTML = `
-                    <div class="flex flex-col">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="font-bold text-primary">${b.queueNo.replace(/'/g, '')}</span>
-                            <span class="${badgeClass} px-2 py-0.5 text-[10px] font-bold rounded-sm">${b.status}</span>
-                        </div>
-                        <span class="font-bold text-sm text-gray-800 dark:text-gray-200">${b.topic}</span>
-                        <span class="text-xs text-gray-500">${displayBookDateTime}</span>
-                    </div>
-                    <i data-lucide="chevron-down" id="booking-icon-${idx}" class="w-5 h-5 text-gray-400 transition-transform duration-300"></i>
-                `;
-
-                let content = document.createElement('div');
-                content.id = `booking-content-${idx}`;
-                content.className = "accordion-content bg-gray-50 dark:bg-[#121212] border-t dark:border-gray-800 text-sm";
-                content.innerHTML = `
-                    <div class="grid grid-cols-2 gap-y-3 gap-x-4">
-                        <div><p class="text-xs text-gray-500 mb-1">วันที่ทำรายการ</p><p class="font-semibold">${displayCreateDate.split('|')[0]}</p></div>
-                        <div><p class="text-xs text-gray-500 mb-1">ลำดับคิว</p><p class="font-semibold">${b.sequence}</p></div>
-                        <div class="col-span-2"><p class="text-xs text-gray-500 mb-1">รายละเอียด</p><p class="font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 p-2 rounded border dark:border-gray-700">${b.detail}</p></div>
-                        <div><p class="text-xs text-gray-500 mb-1">จำนวนคิวรอก่อนหน้า</p><p class="font-bold text-yellow-600">${b.waitCount}</p></div>
-                        <div class="col-span-2"><p class="text-xs text-gray-500 mb-1">หมายเหตุ</p><p class="text-xs text-red-500">${b.note || '-'}</p></div>
-                    </div>
-                `;
-
-                div.appendChild(header);
-                div.appendChild(content);
-                container.appendChild(div);
-            });
-            try { lucide.createIcons(); } catch(e) {}
-        }
-
-        function renderBookingCancelList(bookings) {
-            const container = document.getElementById('booking-cancel-container');
-            let activeBookings = bookings.filter(b => b.status === "รอเรียกคิว");
-            
-            if(activeBookings.length === 0) { container.innerHTML = '<div class="text-center p-6 text-gray-400 border border-dashed rounded-md"><i data-lucide="check-circle" class="w-10 h-10 mx-auto mb-2 opacity-50 text-green-500"></i>ไม่มีคิวที่สามารถยกเลิกได้</div>'; try { lucide.createIcons(); } catch(e){} return; }
-            
-            container.innerHTML = '';
-            activeBookings.forEach((b, idx) => {
-                let badgeClass = getStatusBadgeClass(b.status);
-                let displayBookDateTime = formatBookingDisplay(b.bookDate, b.bookTime);
-
-                let div = document.createElement('div');
-                div.className = "bg-white dark:bg-[#1e1e1e] border dark:border-gray-800 rounded-md shadow-sm p-4 mb-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4";
-                div.innerHTML = `
-                    <div class="flex flex-col">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="font-bold text-primary">${b.queueNo.replace(/'/g, '')}</span>
-                            <span class="${badgeClass} px-2 py-0.5 text-[10px] font-bold rounded-sm">${b.status}</span>
-                        </div>
-                        <span class="font-bold text-sm text-gray-800 dark:text-gray-200">${b.topic}</span>
-                        <span class="text-xs text-gray-500">${displayBookDateTime}</span>
-                    </div>
-                    <button onclick="cancelBooking(${b.rowId})" class="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-sm text-xs font-bold shadow-sm transition-colors flex justify-center items-center whitespace-nowrap">
-                        <i data-lucide="x-circle" class="w-4 h-4 mr-1"></i> ยกเลิกคิว
-                    </button>
-                `;
-                container.appendChild(div);
-            });
-            try { lucide.createIcons(); } catch(e) {}
-        }
-
-        function cancelBooking(rowId) {
-            showConfirmPopup("ยืนยันการยกเลิก", "คุณต้องการยกเลิกคิวนี้ใช่หรือไม่?\n(กรุณายกเลิกล่วงหน้า 3 ชม.)", function() {
-                showCustomPopup("กำลังดำเนินการ", "โปรดรอสักครู่...");
-                callBackend({
-                    action: 'cancelBooking', rowId: rowId, 
-                    fname: currentUser.fname, email: currentUser.email, phone: currentUser.phone
-                }).then(res => {
-                    if(res.status === 'success') {
-                        showCustomPopup("สำเร็จ", res.message);
-                        loadBookingHistory(true); 
-                    } else {
-                        showCustomPopup("ข้อผิดพลาด", res.message);
-                    }
-                }).catch(e => showCustomPopup("ข้อผิดพลาด", "ไม่สามารถยกเลิกคิวได้"));
-            });
-        }
-
-        function nextBookingStep(step) {
-            if(step === 2) {
-                if(!document.getElementById('bk-fname').value || !document.getElementById('bk-lname').value || !document.getElementById('bk-phone').value) {
-                    showCustomPopup("แจ้งเตือน", "กรุณากรอกข้อมูลส่วนตัวให้ครบถ้วน"); return;
-                }
-            }
-            if(step === 3) {
-                if(!document.getElementById('bk-topic').value || !document.getElementById('bk-detail').value) {
-                    showCustomPopup("แจ้งเตือน", "กรุณาระบุหัวข้อและรายละเอียด"); return;
-                }
-            }
-
-            document.getElementById('book-step-1').classList.add('hidden');
-            document.getElementById('book-step-2').classList.add('hidden');
-            document.getElementById('book-step-3').classList.add('hidden');
-            document.getElementById('book-step-success').classList.add('hidden');
-            
-            document.getElementById('book-step-' + step).classList.remove('hidden');
-
-            for(let i=1; i<=3; i++) {
-                let ind = document.getElementById(`book-step-${i}-ind`).querySelector('div');
-                if(i <= step) {
-                    ind.className = "w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm z-10 relative shadow-md transition-colors";
-                } else {
-                    ind.className = "w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 flex items-center justify-center font-bold text-sm z-10 relative transition-colors";
-                }
-                
-                if(i < 3) {
-                    let line = document.getElementById(`book-line-${i}`);
-                    if(i < step) line.className = "w-16 sm:w-32 h-1 bg-primary transition-colors";
-                    else line.className = "w-16 sm:w-32 h-1 bg-gray-200 dark:bg-gray-700 transition-colors";
-                }
-            }
-        }
-        function prevBookingStep(step) { nextBookingStep(step); }
-
-        function initBookingCalendar() {
-            currentCalDate = new Date();
-            renderCalendarDays();
-            initDraggableScroll('booking-calendar-scroll');
-        }
-
-        function changeBookingMonth(dir) {
-            currentCalDate.setMonth(currentCalDate.getMonth() + dir);
-            
-            let today = new Date();
-            if(currentCalDate.getFullYear() < today.getFullYear() || (currentCalDate.getFullYear() === today.getFullYear() && currentCalDate.getMonth() < today.getMonth())) {
-                currentCalDate = new Date(); 
-            }
-            renderCalendarDays();
-        }
-
-        const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-        
-        function renderCalendarDays() {
-            document.getElementById('booking-month-year').innerText = thaiMonths[currentCalDate.getMonth()] + " " + (currentCalDate.getFullYear() + 543);
-            
-            let daysInMonth = new Date(currentCalDate.getFullYear(), currentCalDate.getMonth() + 1, 0).getDate();
-            let today = new Date();
-            let scrollCont = document.getElementById('booking-calendar-scroll');
-            scrollCont.innerHTML = '';
-
-            let isCurrentMonth = (currentCalDate.getMonth() === today.getMonth() && currentCalDate.getFullYear() === today.getFullYear());
-            let startDay = isCurrentMonth ? today.getDate() : 1;
-
-            for(let i = startDay; i <= daysInMonth; i++) {
-                let dateStr = `${("0"+i).slice(-2)}-${("0"+(currentCalDate.getMonth()+1)).slice(-2)}-${currentCalDate.getFullYear()}`;
-                let dateObj = new Date(currentCalDate.getFullYear(), currentCalDate.getMonth(), i);
-                let dayName = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."][dateObj.getDay()];
-                
-                let btn = document.createElement('button');
-                btn.className = "flex-shrink-0 flex flex-col items-center justify-center w-16 h-20 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 snap-center transition-colors hover:border-primary select-none";
-                btn.innerHTML = `<span class="text-xs text-gray-500 mb-1 pointer-events-none">${dayName}</span><span class="font-bold text-lg pointer-events-none">${i}</span>`;
-                btn.onclick = () => selectBookingDate(dateStr, btn);
-                
-                if(currentBookingDate === dateStr) {
-                    btn.classList.add('border-primary', 'bg-red-50', 'dark:bg-red-900/20');
-                    btn.classList.remove('bg-white', 'dark:bg-gray-800');
-                }
-                
-                scrollCont.appendChild(btn);
-            }
-            
-            if(!currentBookingDate) {
-                let firstBtn = scrollCont.querySelector('button');
-                if(firstBtn) firstBtn.click();
-            }
-        }
-
-        function selectBookingDate(dateStr, btnEl) {
-            currentBookingDate = dateStr;
-            currentBookingTime = null; 
-            
-            let allBtns = document.getElementById('booking-calendar-scroll').querySelectorAll('button');
-            allBtns.forEach(b => {
-                b.classList.remove('border-primary', 'bg-red-50', 'dark:bg-red-900/20');
-                b.classList.add('bg-white', 'dark:bg-gray-800');
-            });
-            btnEl.classList.remove('bg-white', 'dark:bg-gray-800');
-            btnEl.classList.add('border-primary', 'bg-red-50', 'dark:bg-red-900/20');
-
-            document.getElementById('display-selected-date').innerText = formatBookingDisplay(dateStr, "").split('|')[0].trim();
-            
-            let grid = document.getElementById('booking-time-grid');
-            grid.innerHTML = '<div class="col-span-full text-center py-4 text-gray-500 text-sm"><div class="lds-spinner lds-spinner-white" style="width:20px;height:20px;transform:scale(0.3);margin-right:-20px;display:inline-block;"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div> กำลังตรวจสอบคิว...</div>';
-            
-            callBackend({action: 'getBookedSlots', date: dateStr, phone: currentUser.phone}).then(res => {
-                if(res.status === 'success') {
-                    if(res.hasUserBookedToday) {
-                        grid.innerHTML = '<div class="col-span-full text-center py-4 text-red-500 font-bold text-sm border border-red-200 bg-red-50 rounded-sm"><i data-lucide="alert-circle" class="w-5 h-5 inline mr-1 -mt-1"></i>คุณมีคิวที่กำลังรอรับบริการในวันนี้แล้ว ไม่สามารถจองซ้ำได้</div>';
-                        try { lucide.createIcons(); } catch(e){}
-                    } else {
-                        renderTimeSlots(dateStr, res.bookedTimes || []);
-                    }
-                } else {
-                    grid.innerHTML = '<div class="col-span-full text-center py-4 text-red-500 text-sm">ตรวจสอบคิวล้มเหลว</div>';
-                }
-                checkBookingReady();
-            }).catch(e => {
-                grid.innerHTML = '<div class="col-span-full text-center py-4 text-red-500 text-sm">การเชื่อมต่อล้มเหลว</div>';
-            });
-        }
-
-        function renderTimeSlots(dateStr, bookedTimes) {
-            let grid = document.getElementById('booking-time-grid');
-            grid.innerHTML = '';
-            
-            let times = [];
+        window.renderTimeSlots = function() {
+            const grid = document.getElementById('booking-time-grid'); grid.innerHTML = ''; document.getElementById('display-selected-date').innerText = window.currentBookingDate;
             for(let h=9; h<=16; h++) {
-                times.push(`${("0"+h).slice(-2)}:00`);
-                if(h !== 16) times.push(`${("0"+h).slice(-2)}:30`);
-            }
-
-            let now = new Date();
-            let isToday = (dateStr === `${("0"+now.getDate()).slice(-2)}-${("0"+(now.getMonth()+1)).slice(-2)}-${now.getFullYear()}`);
-
-            let normalizedBookedTimes = bookedTimes.map(t => {
-                if(typeof t === 'string' && t.includes('T')) {
-                   return formatBookingDisplay("", t).split('|')[1].replace('น.', '').trim();
-                }
-                return t;
-            });
-
-            times.forEach(t => {
-                let btn = document.createElement('button');
-                let tParts = t.split(':');
-                let slotTime = new Date(); slotTime.setHours(parseInt(tParts[0]), parseInt(tParts[1]), 0);
-                
-                let isPast = isToday && (slotTime <= now);
-                let isBooked = normalizedBookedTimes.includes(t);
-                
-                if(isPast) {
-                    btn.className = "py-2 border border-gray-200 dark:border-gray-700 rounded-sm text-sm text-gray-400 bg-gray-100 dark:bg-gray-800 cursor-not-allowed";
-                    btn.disabled = true;
-                    btn.innerText = t;
-                } else if(isBooked) {
-                    btn.className = "py-2 border border-red-500 rounded-sm text-sm text-white bg-red-500 font-bold cursor-not-allowed flex items-center justify-center";
-                    btn.disabled = true;
-                    btn.innerHTML = `<span class="mr-1">${t}</span><span class="text-[10px] bg-white text-red-500 px-1 rounded">เต็ม</span>`;
-                } else {
-                    btn.className = "py-2 border border-gray-300 dark:border-gray-600 rounded-sm text-sm font-semibold hover:border-primary hover:text-primary transition-colors bg-white dark:bg-[#121212]";
-                    btn.onclick = () => selectBookingTime(t, btn);
-                    
-                    if(currentBookingTime === t) {
-                        btn.classList.add('border-primary', 'bg-primary', 'text-white');
-                        btn.classList.remove('bg-white', 'hover:text-primary', 'dark:bg-[#121212]', 'text-gray-800');
-                    }
-                    btn.innerText = t;
-                }
-                grid.appendChild(btn);
-            });
-        }
-
-        function selectBookingTime(timeStr, btnEl) {
-            currentBookingTime = timeStr;
-            let allBtns = document.getElementById('booking-time-grid').querySelectorAll('button:not(:disabled)');
-            allBtns.forEach(b => {
-                b.className = "py-2 border border-gray-300 dark:border-gray-600 rounded-sm text-sm font-semibold hover:border-primary hover:text-primary transition-colors bg-white dark:bg-[#121212]";
-            });
-            btnEl.className = "py-2 border border-primary bg-primary text-white rounded-sm text-sm font-bold shadow-sm";
-            checkBookingReady();
-        }
-
-        function checkBookingReady() {
-            let btn = document.getElementById('btn-submit-booking');
-            if(currentBookingDate && currentBookingTime) {
-                btn.disabled = false;
-                btn.classList.remove('cursor-not-allowed');
-            } else {
-                btn.disabled = true;
-                btn.classList.add('cursor-not-allowed');
+                grid.innerHTML += `<button class="py-2 border bg-white rounded-sm" onclick="window.currentBookingTime='${h}:00'; document.getElementById('btn-submit-booking').disabled=false;">${h}:00</button>`;
             }
         }
 
-        function submitBooking() {
-            if(!currentBookingDate || !currentBookingTime) return;
-            
-            let btn = document.getElementById('btn-submit-booking');
-            btn.innerText = "กำลังดำเนินการ...";
-            btn.disabled = true;
-
-            const payload = {
-                action: 'submitBooking',
-                uid: currentUser.uid,
-                fname: document.getElementById('bk-fname').value,
-                lname: document.getElementById('bk-lname').value,
-                email: document.getElementById('bk-email').value,
-                phone: document.getElementById('bk-phone').value,
-                topic: document.getElementById('bk-topic').value,
-                detail: document.getElementById('bk-detail').value,
-                bookDate: currentBookingDate,
-                bookTime: currentBookingTime
-            };
-
-            callBackend(payload).then(res => {
-                btn.innerText = "ยืนยันการจองคิว"; btn.disabled = false;
-                if(res.status === 'success') {
-                    document.getElementById('book-step-3').classList.add('hidden');
-                    document.getElementById('book-step-success').classList.remove('hidden');
-                    
-                    let displayBookDateTime = formatBookingDisplay(currentBookingDate, currentBookingTime);
-
-                    safeSetText('succ-qno', res.queueNo.replace(/'/g, ''));
-                    safeSetText('succ-seq', res.sequence);
-                    safeSetText('succ-wait', res.waitCount);
-                    safeSetText('succ-note', `กรุณามาเข้ารับบริการภายในวันที่ ${displayBookDateTime}`);
-                    
-                    document.getElementById('bk-topic').value = '';
-                    document.getElementById('bk-detail').value = '';
-                    currentBookingDate = null;
-                    currentBookingTime = null;
-                } else {
-                    showCustomPopup("ข้อผิดพลาด", res.message);
-                }
-            }).catch(e => {
-                btn.innerText = "ยืนยันการจองคิว"; btn.disabled = false;
-                showCustomPopup("ระบบมีปัญหา", "การเชื่อมต่อล้มเหลว");
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
