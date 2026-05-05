@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextLive - Firebase Full Database Setup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .log-box { font-family: monospace; font-size: 13px; }
+        .success-text { color: #10b981; font-weight: bold; }
+        .error-text { color: #ef4444; font-weight: bold; }
+        .info-text { color: #60a5fa; }
+        .warning-text { color: #f59e0b; }
+        .head-text { color: #fbbf24; font-weight: bold; margin-top: 10px; border-bottom: 1px dashed #334155; padding-bottom: 4px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="bg-[#1e293b] border border-[#334155] rounded-2xl p-6 max-w-3xl w-full shadow-2xl flex flex-col h-[90vh]">
+        <div class="text-center mb-6 shrink-0">
+            <div class="w-16 h-16 bg-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-500/30">
+                <i data-lucide="database" class="w-8 h-8"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-white mb-1">Firestore Full Sync Setup</h1>
+            <p class="text-slate-400 text-sm">จำลอง 13 ชีต ลบข้อมูลซ้ำ และปั้นโครงสร้างใหม่</p>
+        </div>
+
+        <div class="mb-4 shrink-0 bg-[#0f172a] p-4 rounded-xl border border-[#334155]">
+            <label class="flex items-center space-x-3 cursor-pointer mb-4 text-sm text-slate-300">
+                <input type="checkbox" id="chk-reset" class="w-5 h-5 accent-red-500 rounded border-gray-600 focus:ring-red-500 focus:ring-2" checked>
+                <span class="font-bold text-red-400">ล้างฐานข้อมูลเก่าที่ซ้ำกันทิ้งก่อน (Reset Database)</span>
+            </label>
+            <button id="btn-start" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(59,130,246,0.5)] flex items-center justify-center gap-2">
+                <i data-lucide="rocket" class="w-5 h-5"></i> 
+                <span>เริ่มสร้างฐานข้อมูลแบบ Full Structure</span>
+            </button>
+        </div>
+
+        <!-- Terminal Log -->
+        <div class="bg-[#020617] rounded-xl p-4 border border-[#334155] flex-1 overflow-y-auto log-box" id="terminal-log">
+            <div class="text-slate-500">> รอคำสั่ง... ระบบจะสร้าง Collection ทั้ง 13 ตาราง</div>
+        </div>
+    </div>
+
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, doc, setDoc, collection, getDocs, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // Config ของคุณ
+        const firebaseConfig = {
+            apiKey: "AIzaSyAelVQfnSAlc6ixNiUk0K3cfu96qLDPQ-w",
+            authDomain: "next-live-app.firebaseapp.com",
+            projectId: "next-live-app",
+            storageBucket: "next-live-app.firebasestorage.app",
+            messagingSenderId: "644606375165",
+            appId: "1:644606375165:web:7b41c58d2363bab68b7a94",
+            measurementId: "G-QRTVCMW4Z8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        lucide.createIcons();
+        const btnStart = document.getElementById('btn-start');
+        const logBox = document.getElementById('terminal-log');
+        const chkReset = document.getElementById('chk-reset');
+
+        const allCollections = [
+            "Settings", "ProductList", "OptionsList", "Users", "Orders",
+            "Transactions", "OTP", "Booking", "Affiliate", "Network",
+            "Movies", "MovieDownloads", "MovieHistory"
+        ];
+
+        function addLog(message, type = 'normal') {
+            const div = document.createElement('div');
+            if(type === 'success') div.className = 'success-text';
+            else if(type === 'error') div.className = 'error-text';
+            else if(type === 'info') div.className = 'info-text';
+            else if(type === 'head') div.className = 'head-text';
+            else if(type === 'warning') div.className = 'warning-text';
+            else div.className = 'text-slate-300';
+            
+            div.innerText = message;
+            logBox.appendChild(div);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        // ฟังก์ชันล้างข้อมูลใน Collection
+        async function clearCollection(collectionName) {
+            addLog(`> ตรวจสอบตาราง ${collectionName}...`, "info");
+            const querySnapshot = await getDocs(collection(db, collectionName));
+            let count = 0;
+            const deletePromises = [];
+            querySnapshot.forEach((document) => {
+                deletePromises.push(deleteDoc(document.ref));
+                count++;
+            });
+            await Promise.all(deletePromises);
+            if(count > 0) {
+                addLog(`  >> ลบเอกสารเก่าทิ้ง ${count} รายการ สำเร็จ`, "warning");
+            }
+        }
+
+        async function setupFullDatabase() {
+            btnStart.disabled = true;
+            chkReset.disabled = true;
+            btnStart.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> <span>กำลังดำเนินการ...</span>';
+            lucide.createIcons();
+            logBox.innerHTML = '';
+            
+            try {
+                // ==========================================
+                // 0. RESET DATABASE (ล้างของเก่า)
+                // ==========================================
+                if (chkReset.checked) {
+                    addLog("\n[0/14] กำลังล้างฐานข้อมูลเก่าที่อาจซ้ำซ้อน...", "head");
+                    for (const coll of allCollections) {
+                        await clearCollection(coll);
+                    }
+                    addLog("> เคลียร์ฐานข้อมูลเก่าเสร็จสมบูรณ์ พร้อมเขียนข้อมูลใหม่", "success");
+                }
+
+                // ==========================================
+                // 1. SHEET_SETTINGS
+                // ==========================================
+                addLog("\n[1/13] สร้างตาราง Settings...", "head");
+                await setDoc(doc(db, "Settings", "config"), {
+                    SiteName: "NextLive Shop",
+                    AdminEmail: "nextlive.ct@gmail.com",
+                    LineLink: "https://line.me/ti/p/~@jpo3470r",
+                    FacebookLink: "https://facebook.com/",
+                    SlipOkBranchId: "90OF6QG",
+                    SlipOkApiKey: "SLIPOK90OF6QG",
+                    AdminName: "NARINPAT MEECHAI",
+                    BankAccount: "'140000621803299",
+                    AdminPhone: "'081-160-6998",
+                    Code1: "NEXTNEW50", Discount1: 50,
+                    Code2: "NEXTLIVE100", Discount2: 100,
+                    Code3: "NEXTLIVE-PRO300", Discount3: 300,
+                    SiteActive: true,
+                    updatedAt: serverTimestamp()
+                });
+                addLog("> สร้าง Settings เรียบร้อย ครบทุก Field", "success");
+
+                // ==========================================
+                // 2. SHEET_PRODUCTS
+                // ==========================================
+                addLog("\n[2/13] สร้างตาราง ProductList...", "head");
+                await setDoc(doc(db, "ProductList", "P001"), {
+                    productId: "P001",           
+                    category: "หมวดหมู่ตัวอย่าง",     
+                    name: "สินค้าทดสอบ",          
+                    description: "รายละเอียดสินค้าเบื้องต้น", 
+                    price: 1500,                 
+                    imageUrl: "https://via.placeholder.com/400", 
+                    downloadLink: "",            
+                    manualLink: "",              
+                    stock: 50                    
+                });
+                addLog("> สร้าง ProductList เรียบร้อย", "success");
+
+                // ==========================================
+                // 3. SHEET_OPTIONS
+                // ==========================================
+                addLog("\n[3/13] สร้างตาราง OptionsList...", "head");
+                await setDoc(doc(db, "OptionsList", "OPT_001"), {
+                    productId: "P001",       
+                    optionName: "VIP Upgrade",       
+                    extraPrice: 300,         
+                    downloadLink: "",        
+                    manualLink: ""           
+                });
+                addLog("> สร้าง OptionsList เรียบร้อย", "success");
+
+                // ==========================================
+                // 4. SHEET_USERS
+                // ==========================================
+                addLog("\n[4/13] สร้างตาราง Users...", "head");
+                await setDoc(doc(db, "Users", "U_ADMIN_999"), {
+                    date: "01-01-2024",      
+                    time: "12:00",           
+                    uid: "U_ADMIN_999",      
+                    fname: "Admin",          
+                    lname: "System",         
+                    email: "admin@nextlive.com", 
+                    phone: "0800000000",     
+                    password: "admin",       
+                    bankName: "kbank",       
+                    bankAcc: "1234567890",   
+                    balance: 1000            
+                });
+                addLog("> สร้าง Users เรียบร้อย", "success");
+
+                // ==========================================
+                // 5. SHEET_ORDERS
+                // ==========================================
+                addLog("\n[5/13] สร้างตาราง Orders...", "head");
+                await setDoc(doc(db, "Orders", "NX_TEST_001"), {
+                    date: "01-01-2024 | 12:00 น.", 
+                    ref: "NX_TEST_001",      
+                    name: "ลูกค้า ทดสอบ",       
+                    phone: "0801112222",     
+                    items: "1x สินค้าทดสอบ",     
+                    discount: 0,             
+                    vat: 70,                 
+                    netTotal: 1070,          
+                    slipUrl: "https://...",  
+                    status: "สำเร็จ",          
+                    paymentMethod: "QR Code" 
+                });
+                addLog("> สร้าง Orders เรียบร้อย", "success");
+
+                // ==========================================
+                // 6. SHEET_TRANSACTIONS
+                // ==========================================
+                addLog("\n[6/13] สร้างตาราง Transactions...", "head");
+                await setDoc(doc(db, "Transactions", "TX_001"), {
+                    date: "01-01-2024 | 12:00 น.", 
+                    uid: "U_ADMIN_999",      
+                    name: "Admin System",    
+                    email: "admin@nextlive.com", 
+                    phone: "0800000000",     
+                    type: "ฝากเงิน",           
+                    amount: 500,             
+                    status: "สำเร็จ",          
+                    note: "https://..."      
+                });
+                addLog("> สร้าง Transactions เรียบร้อย", "success");
+
+                // ==========================================
+                // 7. SHEET_OTP
+                // ==========================================
+                addLog("\n[7/13] สร้างตาราง OTP...", "head");
+                await setDoc(doc(db, "OTP", "OTP_001"), {
+                    datetime: "01-01-2024 | 12:00:00 น.", 
+                    email: "test@nextlive.com", 
+                    otp: "123456",          
+                    status: "รอใช้งาน",        
+                    timestampMs: Date.now() 
+                });
+                addLog("> สร้าง OTP เรียบร้อย", "success");
+
+                // ==========================================
+                // 8. SHEET_BOOKING
+                // ==========================================
+                addLog("\n[8/13] สร้างตาราง Booking...", "head");
+                await setDoc(doc(db, "Booking", "Q240512001"), {
+                    createDate: "01-01-2024", 
+                    createTime: "12:00:00",   
+                    uid: "U_ADMIN_999",       
+                    fname: "Admin",           
+                    lname: "System",          
+                    email: "admin@nextlive.com",  
+                    phone: "0800000000",      
+                    topic: "ปรึกษาระบบ",        
+                    detail: "รายละเอียด...",    
+                    bookDate: "02-01-2024",   
+                    bookTime: "13:00",        
+                    queueNo: "Q240512001",    
+                    sequence: 1,              
+                    waitCount: 0,             
+                    status: "รอเรียกคิว",        
+                    note: "-"                 
+                });
+                addLog("> สร้าง Booking เรียบร้อย", "success");
+
+                // ==========================================
+                // 9. SHEET_AFFILIATE
+                // ==========================================
+                addLog("\n[9/13] สร้างตาราง Affiliate...", "head");
+                await setDoc(doc(db, "Affiliate", "AFF_001"), {
+                    datetime: "01-01-2024 | 12:00:00", 
+                    inviterUid: "U_ADMIN_999", 
+                    buyerInfo: "test@nextlive.com", 
+                    type: "เพื่อนใหม่ (5%)",    
+                    salesAmount: 1000,         
+                    commAmount: 50,            
+                    status: "ได้รับแล้ว"          
+                });
+                addLog("> สร้าง Affiliate เรียบร้อย", "success");
+
+                // ==========================================
+                // 10. SHEET_NETWORK
+                // ==========================================
+                addLog("\n[10/13] สร้างตาราง Network...", "head");
+                await setDoc(doc(db, "Network", "NET_001"), {
+                    buyerEmail: "test@nextlive.com", 
+                    buyerPhone: "0801112222",    
+                    inviterUid: "U_ADMIN_999"    
+                });
+                addLog("> สร้าง Network เรียบร้อย", "success");
+
+                // ==========================================
+                // 11. SHEET_MOVIES
+                // ==========================================
+                addLog("\n[11/13] สร้างตาราง Movies...", "head");
+                await setDoc(doc(db, "Movies", "M001"), {
+                    movieId: "M001",             
+                    category: "ซีรีส์",            
+                    title: "ภาพยนตร์ทดสอบ 1",         
+                    description: "เรื่องย่อการทดสอบระบบ...",     
+                    imageUrl: "https://via.placeholder.com/200x300", 
+                    videoUrl: "https://youtube.com/watch?v=123",     
+                    episode: "ตอนที่ 1"            
+                });
+                addLog("> สร้าง Movies เรียบร้อย", "success");
+
+                // ==========================================
+                // 12. SHEET_MOVIE_DOWNLOADS
+                // ==========================================
+                addLog("\n[12/13] สร้างตาราง MovieDownloads...", "head");
+                await setDoc(doc(db, "MovieDownloads", "MD_001"), {
+                    datetime: "01-01-2024 | 12:00:00", 
+                    uid: "U_ADMIN_999",          
+                    buyerInfo: "admin@nextlive.com", 
+                    movieId: "M001",             
+                    movieTitle: "ภาพยนตร์ทดสอบ 1",    
+                    episode: "ตอนที่ 1"            
+                });
+                addLog("> สร้าง MovieDownloads เรียบร้อย", "success");
+
+                // ==========================================
+                // 13. SHEET_MOVIE_HISTORY
+                // ==========================================
+                addLog("\n[13/13] สร้างตาราง MovieHistory...", "head");
+                await setDoc(doc(db, "MovieHistory", "MH_001"), {
+                    datetime: "01-01-2024 | 12:00:00", 
+                    uid: "U_ADMIN_999",          
+                    buyerInfo: "admin@nextlive.com", 
+                    movieId: "M001",             
+                    movieTitle: "ภาพยนตร์ทดสอบ 1"     
+                });
+                addLog("> สร้าง MovieHistory เรียบร้อย", "success");
+
+                // ==========================================
+                // จบกระบวนการ
+                // ==========================================
+                addLog("\n====================================", "head");
+                addLog("🎉 สร้างฐานข้อมูลครบ 13 ตาราง สมบูรณ์ 100%!", "success");
+
+                btnStart.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5"></i> <span>เสร็จสมบูรณ์! พร้อมลุยหน้าบ้าน</span>';
+                btnStart.classList.replace('bg-blue-600', 'bg-emerald-600');
+                btnStart.classList.replace('hover:bg-blue-500', 'bg-emerald-600');
+                btnStart.classList.replace('shadow-[0_0_15px_rgba(59,130,246,0.5)]', 'shadow-[0_0_15px_rgba(16,185,129,0.5)]');
+                lucide.createIcons();
+
+            } catch (error) {
+                console.error(error);
+                addLog(`\n❌ เกิดข้อผิดพลาด: ${error.message}`, "error");
+                btnStart.innerHTML = '<i data-lucide="alert-triangle" class="w-5 h-5"></i> <span>ลองใหม่อีกครั้ง</span>';
+                btnStart.disabled = false;
+                chkReset.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        btnStart.addEventListener('click', setupFullDatabase);
+
+    </script>
+</body>
+</html>
