@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NextLive - Movie Drama</title>
+    <title>NextLive - Drama Tube</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
@@ -53,6 +53,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            pointer-events: auto; /* ให้รับการคลิกได้เสมอ */
         }
         
         /* สไตล์สำหรับ Iframe และ Video ให้เต็มจอแนวตั้งแบบไม่เสียสัดส่วน */
@@ -63,17 +64,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover; 
+            object-fit: contain; /* ปรับเป็น contain เพื่อให้ปุ่ม Player ของ G-Drive ไม่โดนตัดขอบ */
             border: none;
-        }
-        
-        .vertical-video-container iframe.iframe-center { object-fit: contain; }
-
-        /* พื้นที่รับสัมผัสสำหรับการปัด (ป้องกัน iFrame กลืน Event) */
-        .touch-receiver {
-            position: absolute;
-            inset: 0;
-            z-index: 5; /* อยู่เหนือวิดีโอ แต่อยู่ใต้ UI */
+            pointer-events: auto;
         }
 
         .nav-scrolled {
@@ -156,29 +149,27 @@
     <!-- ================= 2. หน้าเล่นวิดีโอ (Player View) ================= -->
     <div id="player-view" class="fixed inset-0 z-50 fade-in hidden bg-black">
         
-        <!-- ตัวจับสัมผัสสำหรับการปัดขึ้น/ลง -->
-        <div id="touch-receiver" class="touch-receiver"></div>
-
+        <!-- คอนเทนเนอร์วิดีโอ (รับการทัช/คลิกเพื่อเล่น/หยุดได้) -->
         <div class="vertical-video-container" id="video-container">
             <!-- Video/Iframe เข้ามาที่นี่ -->
         </div>
             
-        <!-- Overlay UI แบบแนวตั้ง -->
+        <!-- Overlay UI แบบแนวตั้ง (ตั้ง pointer-events: none เพื่อไม่ให้บังวิดีโอ) -->
         <div class="absolute inset-0 pointer-events-none flex flex-col justify-between z-10">
             
-            <!-- ส่วนบน: ปุ่มกลับ และ แจ้งเตือนการปัด -->
-            <div class="flex justify-between items-start p-5 bg-gradient-to-b from-black/80 via-black/30 to-transparent pointer-events-auto">
-                <button onclick="closePlayer()" class="text-white text-3xl drop-shadow-lg p-2 hover:text-red-500 transition">
+            <!-- ส่วนบน: ปุ่มกลับ และ แจ้งเตือนการปัด (เปิดให้กดปุ่มกลับได้) -->
+            <div class="flex justify-between items-start p-5 bg-gradient-to-b from-black/80 via-black/30 to-transparent">
+                <button onclick="closePlayer()" class="text-white text-3xl drop-shadow-lg p-2 hover:text-red-500 transition pointer-events-auto">
                     <i class="fa-solid fa-chevron-left"></i>
                 </button>
-                <div class="text-white/50 text-xs flex flex-col items-center pointer-events-none mt-2">
-                    <i class="fa-solid fa-angle-up animate-bounce"></i>
-                    <span>ปัดขึ้นเพื่อดูตอนถัดไป</span>
+                <div class="text-white/70 text-xs flex flex-col items-center mt-2 font-medium">
+                    <i class="fa-solid fa-angle-up animate-bounce text-lg"></i>
+                    <span class="bg-black/50 px-2 py-1 rounded-full backdrop-blur-sm">ปัดขึ้นเพื่อดูตอนถัดไป</span>
                 </div>
             </div>
 
             <!-- ส่วนล่าง: ชื่อเรื่อง, คำบรรยาย และ ปุ่มด้านขวา -->
-            <div class="p-5 bg-gradient-to-t from-black via-black/60 to-transparent pb-8 flex items-end justify-between pointer-events-none">
+            <div class="p-5 bg-gradient-to-t from-black via-black/60 to-transparent pb-8 flex items-end justify-between">
                 
                 <!-- ข้อมูลด้านซ้าย -->
                 <div class="text-white max-w-[75%] pointer-events-auto">
@@ -186,7 +177,7 @@
                     <p id="player-episode-info" class="text-sm font-medium text-gray-300 mb-3 drop-shadow-md">กำลังโหลดตอน...</p>
                     
                     <!-- ปุ่มเปิดดูตอนทั้งหมด -->
-                    <button onclick="openEpisodes()" class="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-md px-4 py-2 rounded-lg text-sm font-medium transition shadow-lg border border-white/10">
+                    <button onclick="openEpisodes()" class="flex items-center gap-2 bg-black/50 hover:bg-white/30 backdrop-blur-md px-4 py-2 rounded-lg text-sm font-medium transition shadow-lg border border-white/20">
                         <i class="fa-solid fa-layer-group text-red-500"></i> 
                         <span id="player-ep-count">ตอนทั้งหมด</span>
                         <i class="fa-solid fa-chevron-up ml-1 text-xs"></i>
@@ -196,7 +187,7 @@
                 <!-- ปุ่ม Action ด้านขวา -->
                 <div class="flex flex-col gap-6 items-center mb-2 pointer-events-auto">
                     <button onclick="shareMovie()" class="flex flex-col items-center gap-1.5 text-white hover:text-gray-300 transition group">
-                        <div class="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm border border-white/20 flex items-center justify-center group-hover:bg-white/20 transition shadow-lg">
+                        <div class="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center group-hover:bg-white/20 transition shadow-lg">
                             <i class="fa-solid fa-share text-xl drop-shadow-md"></i>
                         </div>
                         <span class="text-[11px] font-bold drop-shadow-md tracking-wider">แชร์</span>
@@ -360,40 +351,30 @@
 
         // --- 3. Deep Link (Share URL Parsing) ---
         function checkDeepLink() {
-            // คาดหวัง URL: ?หมวดหมู่/ชื่อหนัง=EP1 หรือ ?ชื่อหนัง=EP1
             const searchParams = decodeURIComponent(window.location.search);
             if (searchParams && searchParams.startsWith('?')) {
-                const queryStr = searchParams.substring(1); // ลบ '?' ออก
-                const parts = queryStr.split('='); // แยก [หมวดหมู่/ชื่อหนัง, EP1]
+                const queryStr = searchParams.substring(1); // ลบ '?'
+                const parts = queryStr.split('='); // [หมวดหมู่/ชื่อหนัง, EP1]
                 
                 if (parts.length > 0) {
-                    const infoPath = parts[0].split('/'); // แยก [หมวดหมู่, ชื่อหนัง]
+                    const infoPath = parts[0].split('/'); // [หมวดหมู่, ชื่อหนัง]
                     let targetTitle = infoPath.length > 1 ? infoPath[1] : infoPath[0];
                     let targetCat = infoPath.length > 1 ? infoPath[0] : null;
-                    let targetEpStr = parts[1]; // เช่น "EP1"
+                    let targetEpStr = parts[1];
 
-                    // ค้นหาหนัง
-                    let movieFound = null;
-                    if (targetCat) {
-                        movieFound = allMovies.find(m => m.title === targetTitle && m.category === targetCat);
-                    } else {
-                        movieFound = allMovies.find(m => m.title === targetTitle);
-                    }
+                    let movieFound = targetCat 
+                        ? allMovies.find(m => m.title === targetTitle && m.category === targetCat)
+                        : allMovies.find(m => m.title === targetTitle);
 
                     if (movieFound) {
                         let epIndex = 0;
                         if (targetEpStr && movieFound.episodes.length > 0) {
-                            // หา Index ของตอน (อิงจากชื่อตอน หรือ เลข)
                             const foundIdx = movieFound.episodes.findIndex(e => 
-                                e.title === targetEpStr || 
-                                e.ep === targetEpStr || 
-                                `EP${e.ep}` === targetEpStr ||
-                                e.title.includes(targetEpStr)
+                                e.title === targetEpStr || e.ep === targetEpStr || `EP${e.ep}` === targetEpStr || e.title.includes(targetEpStr)
                             );
                             if (foundIdx !== -1) epIndex = foundIdx;
                         }
                         
-                        // สร้าง Playlist แล้วเปิดเลย
                         buildPlaylist(movieFound.id, epIndex);
                         openPlayerFromPlaylist();
                     } else {
@@ -411,16 +392,14 @@
             let epStr = "";
             if (currentMovie.episodes.length > 0 && currentMovie.episodes[currentEpIndex]) {
                 let epData = currentMovie.episodes[currentEpIndex];
-                // ใช้ชื่อตอน หรือถ้าไม่มีให้ใช้ EP+เลข
                 epStr = encodeURIComponent(epData.title || `EP${currentEpIndex + 1}`);
             }
 
-            // Form: https://domain.com/Movie?หมวดหมู่/ชื่อหนัง=EP1
             const shareUrl = `${BASE_APP_URL}?${cat}/${title}${epStr ? '=' + epStr : ''}`;
             
             try {
                 navigator.clipboard.writeText(shareUrl);
-                showToast("คัดลอกลิงก์แชร์พร้อมระบุตอนสำเร็จ!");
+                showToast("คัดลอกลิงก์แชร์สำเร็จ! นำไปส่งให้เพื่อนได้เลย");
             } catch (err) {
                 const textArea = document.createElement("textarea");
                 textArea.value = shareUrl; document.body.appendChild(textArea);
@@ -512,11 +491,11 @@
         }
 
         function filterCategory(cat) { activeCategory = cat; renderHomeUI(); window.scrollTo(0,0); }
-        function setupSearch() { /* ซ่อนฟังก์ชันค้นหาไว้ประหยัดบรรทัด เหมือนเดิม */ }
+        function setupSearch() {} 
         function setupScrollEffect() { window.addEventListener('scroll', () => { document.getElementById('navbar').classList.toggle('nav-scrolled', window.scrollY > 50); }); }
 
 
-        // ================= 5. Video Parser (ปรับให้รองรับ Drive AutoPlay) =================
+        // ================= 5. Video Parser (Drive & Generic Native) =================
         function parseVideoUrl(url) {
             if (!url) return { type: 'unknown', url: '' };
             
@@ -524,12 +503,7 @@
             if (ytMatch) return { type: 'youtube', url: ytMatch[1] };
             
             const driveMatch = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=|file\/d\/))([-\w]{25,})/);
-            if (driveMatch) {
-                // พยายามใช้ไฟล์ตรงเพื่อให้โหลดลง <video> แท็กได้โดยตรง (ช่วยเรื่อง Swipe & AutoPlay)
-                // ข้อจำกัด: จะใช้ได้ดีกับไฟล์ที่ตั้ง Public และไม่โดน Limit / ไซส์ไม่ใหญ่เกินไปจนติดหน้าแสกนไวรัส
-                // แต่อย่างไรก็ตาม จะทำ Fallback iFrame ไว้ด้านล่างถ้าไม่ใช่ mp4 ตรงๆ
-                return { type: 'gdrive', url: driveMatch[1] };
-            }
+            if (driveMatch) return { type: 'gdrive', url: driveMatch[1] };
             
             if (url.includes('facebook.com') || url.includes('fb.watch')) return { type: 'facebook', url: url };
             
@@ -546,31 +520,27 @@
         // ================= 6. ระบบ Playlist & ปัดขึ้นลง =================
         
         function startPlayMovie(movieId) {
-            // เมื่อกดเลือกหนังจากหน้าแรก ให้เริ่มสร้าง Playlist ของหมวดหมู่นั้น
             buildPlaylist(movieId, 0);
             openPlayerFromPlaylist();
         }
 
         function buildPlaylist(startMovieId, startEpIndex = 0) {
             currentPlaylist = [];
-            
             const startMovie = allMovies.find(m => m.id === String(startMovieId));
             if(!startMovie) return;
 
-            // หากเรื่องนี้มีหลายตอน สร้าง Playlist จากตอนทั้งหมดในเรื่องนี้
+            // ถ้ามีหลายตอน ให้เรียงตอนลง List
             if (startMovie.episodes.length > 1) {
                 startMovie.episodes.forEach((ep, idx) => {
                     currentPlaylist.push({ movie: startMovie, epIndex: idx });
                 });
                 currentPlayIndex = startEpIndex;
             } else {
-                // หากเป็นหนังเดี่ยว (Single Episode) ให้สร้าง Playlist จากหนังทุกเรื่องในหมวดเดียวกัน
+                // ถ้าเป็นหนังเดี่ยว (ภาพยนตร์) ให้นำเรื่องอื่นๆ ในหมวดเดียวกันมาต่อท้าย (แบบ TikTok)
                 let sameCatMovies = allMovies.filter(m => m.category === startMovie.category);
                 sameCatMovies.forEach(m => {
-                    // ใส่ตอนแรกลงไป
                     currentPlaylist.push({ movie: m, epIndex: 0 });
                 });
-                // หา Index ปัจจุบัน
                 currentPlayIndex = currentPlaylist.findIndex(item => item.movie.id === String(startMovieId));
                 if(currentPlayIndex === -1) currentPlayIndex = 0;
             }
@@ -593,16 +563,13 @@
             document.getElementById('player-episode-info').innerText = epData ? (epData.title || `EP ${currentEpIndex + 1}`) : 'ภาพยนตร์เต็มเรื่อง';
             document.getElementById('player-ep-count').innerText = currentMovie.episodes.length > 0 ? `${currentMovie.episodes.length} ตอน` : 'หนังเดี่ยว';
 
-            // จัดการ Video Container Animation
+            // Container Animation
             const container = document.getElementById('video-container');
-            
-            // ล้างวิดีโอเก่าทิ้งก่อนเพื่อประหยัดเมมโมรี่
             if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
             container.innerHTML = '';
             
             if (animClass) {
                 container.className = `vertical-video-container ${animClass}`;
-                // ล้าง Class Animation ออกเมื่อเล่นเสร็จเพื่อรองรับการปัดครั้งต่อไป
                 setTimeout(() => container.classList.remove(animClass), 300);
             } else {
                 container.className = 'vertical-video-container';
@@ -613,28 +580,28 @@
             const videoObj = parseVideoUrl(url);
             
             if (!url) {
-                container.innerHTML = `<div class="text-white">ไม่พบลิงก์วิดีโอ</div>`;
+                container.innerHTML = `<div class="text-gray-400 font-bold">ไม่พบลิงก์วิดีโอ</div>`;
             } else {
                 let playerHtml = '';
                 switch(videoObj.type) {
                     case 'youtube':
-                        // Autoplay iframe (youtube)
-                        playerHtml = `<iframe src="https://www.youtube.com/embed/${videoObj.url}?autoplay=1&controls=1&showinfo=0&rel=0&modestbranding=1&playsinline=1&mute=0" frameborder="0" allow="autoplay; fullscreen" class="iframe-center pointer-events-auto"></iframe>`;
+                        // Autoplay
+                        playerHtml = `<iframe src="https://www.youtube.com/embed/${videoObj.url}?autoplay=1&controls=1&showinfo=0&rel=0&modestbranding=1" frameborder="0" allow="autoplay; fullscreen" class="iframe-center pointer-events-auto"></iframe>`;
                         break;
                     case 'gdrive':
-                        // พยายามใช้ iframe preview ธรรมดา แต่ใส่ autoplay (บางเบราว์เซอร์จะบล็อคถ้าไม่ mute แต่ผู้ใช้กดเข้ามาถือเป็นการ interact แล้ว มักจะเล่นได้)
-                        playerHtml = `<iframe src="https://drive.google.com/file/d/${videoObj.url}/preview?autoplay=1" frameborder="0" allow="autoplay; fullscreen" class="iframe-center pointer-events-auto"></iframe>`;
+                        // GDrive Preview - ตัด pointer-events:none ออกจากข้างบนแล้ว ตอนนี้จะกดเล่นได้
+                        playerHtml = `<iframe src="https://drive.google.com/file/d/${videoObj.url}/preview?autoplay=1" frameborder="0" allow="autoplay; fullscreen" class="w-full h-full pointer-events-auto"></iframe>`;
                         break;
                     case 'facebook':
                         playerHtml = `<iframe src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(videoObj.url)}&show_text=false&autoplay=1" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture" class="iframe-center pointer-events-auto"></iframe>`;
                         break;
                     case 'm3u8':
-                        playerHtml = `<video id="hls-video" controls autoplay playsinline class="pointer-events-auto"></video>`;
+                        playerHtml = `<video id="hls-video" controls autoplay playsinline class="pointer-events-auto w-full h-full"></video>`;
                         break;
                     case 'mp4':
                     default:
-                        // Native Video tag รองรับ Autoplay & Swipe ได้ดีที่สุด
-                        playerHtml = `<video src="${videoObj.url}" controls autoplay playsinline class="pointer-events-auto"></video>`;
+                        // Native Video
+                        playerHtml = `<video src="${videoObj.url}" controls autoplay playsinline class="pointer-events-auto w-full h-full"></video>`;
                         break;
                 }
                 container.innerHTML = playerHtml;
@@ -654,13 +621,12 @@
                 }
             }
 
-            // Show Full View
+            // Show UI
             document.getElementById('home-view').style.display = 'none';
             const playerView = document.getElementById('player-view');
             playerView.classList.remove('hidden');
             setTimeout(() => playerView.classList.add('active'), 50);
-
-            // เตรียม Bottom Sheet
+            
             prepareEpisodeSheet(currentMovie);
         }
 
@@ -679,49 +645,52 @@
             closeEpisodes();
         }
 
-        // --- ระบบ Gesture ปัดขึ้น/ลง ---
+        // --- ระบบ Swipe Gesture ปัดขึ้น/ลง โดยติดไว้ที่ตัว Player View เลย ---
         function setupSwipeGestures() {
-            const touchReceiver = document.getElementById('touch-receiver');
+            const playerView = document.getElementById('player-view');
             let startY = 0;
             let endY = 0;
-            const threshold = 50; // ระยะการปัดขั้นต่ำ
+            const threshold = 60; // ปัดแรงแค่ไหนถึงจะข้าม
 
-            touchReceiver.addEventListener('touchstart', (e) => {
+            playerView.addEventListener('touchstart', (e) => {
+                // หากแตะโดน Bottom Sheet จะไม่นับเป็นการปัดวิดีโอ
+                if (e.target.closest('#episode-sheet')) return;
                 startY = e.touches[0].clientY;
             }, {passive: true});
 
-            touchReceiver.addEventListener('touchmove', (e) => {
+            playerView.addEventListener('touchmove', (e) => {
+                if (e.target.closest('#episode-sheet')) return;
                 endY = e.touches[0].clientY;
             }, {passive: true});
 
-            touchReceiver.addEventListener('touchend', () => {
+            playerView.addEventListener('touchend', (e) => {
+                if (e.target.closest('#episode-sheet') || startY === 0 || endY === 0) {
+                    startY = 0; endY = 0; return;
+                }
+                
                 let diff = startY - endY;
                 if (diff > threshold) {
-                    // ปัดขึ้น -> ตอนถัดไป
-                    playNextItem();
+                    playNextItem(); // ปัดขึ้น
                 } else if (diff < -threshold) {
-                    // ปัดลง -> ตอนก่อนหน้า
-                    playPrevItem();
+                    playPrevItem(); // ปัดลง
                 }
                 startY = 0; endY = 0;
             });
 
-            // สำหรับคอมพิวเตอร์ (Mouse Scroll)
-            touchReceiver.addEventListener('wheel', (e) => {
+            // รองรับ Scroll Mouse บนคอม
+            playerView.addEventListener('wheel', (e) => {
+                if (e.target.closest('#episode-sheet')) return;
                 if (e.deltaY > 0) {
-                    // Scroll Down -> Next
-                    // setTimeout ป้องกันการรัว Scroll
-                    if(!touchReceiver.dataset.scrolling) {
-                        touchReceiver.dataset.scrolling = "true";
+                    if(!playerView.dataset.scrolling) {
+                        playerView.dataset.scrolling = "true";
                         playNextItem();
-                        setTimeout(() => touchReceiver.dataset.scrolling = "", 800);
+                        setTimeout(() => playerView.dataset.scrolling = "", 800);
                     }
                 } else if (e.deltaY < 0) {
-                    // Scroll Up -> Prev
-                    if(!touchReceiver.dataset.scrolling) {
-                        touchReceiver.dataset.scrolling = "true";
+                    if(!playerView.dataset.scrolling) {
+                        playerView.dataset.scrolling = "true";
                         playPrevItem();
-                        setTimeout(() => touchReceiver.dataset.scrolling = "", 800);
+                        setTimeout(() => playerView.dataset.scrolling = "", 800);
                     }
                 }
             }, {passive: true});
@@ -762,7 +731,6 @@
 
             movie.episodes.forEach((ep, index) => {
                 let epNum = ep.ep || (index + 1);
-                // ตรวจสอบว่ากำลังเล่นตอนนี้อยู่หรือไม่
                 let isPlaying = (movie.id === currentMovie.id && index === currentEpIndex);
                 let btnClass = isPlaying 
                     ? "py-3 bg-red-600 text-white rounded-lg flex items-center justify-center font-bold text-sm shadow-md"
@@ -777,13 +745,11 @@
         }
 
         function jumpToEpisode(index) {
-            // ค้นหา Index ใน Playlist ปัจจุบัน (เพื่อให้ปัดต่อได้)
             let foundInPlaylist = currentPlaylist.findIndex(item => item.movie.id === currentMovie.id && item.epIndex === index);
             if (foundInPlaylist !== -1) {
                 currentPlayIndex = foundInPlaylist;
                 openPlayerFromPlaylist();
             } else {
-                // หากหาไม่เจอ (กรณีแปลกๆ) ให้สร้าง Playlist ใหม่เลย
                 buildPlaylist(currentMovie.id, index);
                 openPlayerFromPlaylist();
             }
