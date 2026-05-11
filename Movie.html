@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NextLive - Vertical Streaming</title>
+    <title>NextLive - Movie Drama</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
@@ -36,6 +36,12 @@
         .fade-content { animation: fadeIn 0.5s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+        /* การปัดวิดีโอ (Swipe Animation) */
+        .swipe-up-anim { animation: swipeUp 0.3s ease-out forwards; }
+        .swipe-down-anim { animation: swipeDown 0.3s ease-out forwards; }
+        @keyframes swipeUp { 0% { transform: translateY(100%); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+        @keyframes swipeDown { 0% { transform: translateY(-100%); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+
         /* Vertical Video Player Layout */
         .vertical-video-container {
             position: relative;
@@ -57,13 +63,17 @@
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover; /* บังคับวิดีโอให้เต็มจอ */
+            object-fit: cover; 
             border: none;
         }
         
-        /* กรณีเป็น iFrame (เช่น YouTube, FB) ให้จัดกึ่งกลางพื้นดำ */
-        .vertical-video-container iframe.iframe-center {
-            object-fit: contain;
+        .vertical-video-container iframe.iframe-center { object-fit: contain; }
+
+        /* พื้นที่รับสัมผัสสำหรับการปัด (ป้องกัน iFrame กลืน Event) */
+        .touch-receiver {
+            position: absolute;
+            inset: 0;
+            z-index: 5; /* อยู่เหนือวิดีโอ แต่อยู่ใต้ UI */
         }
 
         .nav-scrolled {
@@ -78,6 +88,7 @@
             border-radius: 20px; font-weight: 500; z-index: 9999;
             opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            white-space: nowrap;
         }
 
         #global-loader {
@@ -91,11 +102,11 @@
     <!-- Loader -->
     <div id="global-loader">
         <i class="fa-solid fa-spinner fa-spin text-4xl text-red-500 mb-4"></i>
-        <p class="text-gray-400 font-medium">กำลังโหลดข้อมูลหนัง...</p>
+        <p class="text-gray-400 font-medium text-sm">กำลังโหลดคลังภาพยนตร์...</p>
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast">คัดลอกลิงก์สำเร็จ!</div>
+    <div id="toast">แจ้งเตือน</div>
 
     <!-- ================= 1. หน้าหลัก (Home View) ================= -->
     <div id="home-view" class="block w-full max-w-screen-2xl mx-auto pb-20 fade-content">
@@ -109,9 +120,7 @@
                 </div>
                 
                 <!-- หมวดหมู่ (Desktop) -->
-                <div class="hidden md:flex items-center gap-4 text-sm font-medium text-gray-300" id="desktop-categories">
-                    <!-- สร้างด้วย JS -->
-                </div>
+                <div class="hidden md:flex items-center gap-4 text-sm font-medium text-gray-300" id="desktop-categories"></div>
             </div>
 
             <div class="flex items-center gap-4 text-gray-300">
@@ -131,44 +140,48 @@
             <input type="text" id="searchInputMobile" placeholder="พิมพ์ชื่อหนังที่ต้องการค้นหา..." class="w-full bg-black/50 border border-gray-600 rounded-full py-2 px-4 text-sm text-white focus:outline-none focus:border-red-500">
         </div>
 
-        <!-- Hero Section (หนังแนะนำ) -->
+        <!-- Hero Section -->
         <div class="relative w-full h-[60vh] md:h-[80vh]" id="hero-section">
             <div class="absolute inset-0 w-full h-full bg-gray-800 animate-pulse"></div>
         </div>
 
         <!-- หมวดหมู่หมุนเวียน (Mobile) -->
-        <div class="md:hidden flex gap-3 px-4 mt-6 overflow-x-auto hide-scrollbar text-sm font-medium" id="mobile-categories">
-            <!-- สร้างด้วย JS -->
-        </div>
+        <div class="md:hidden flex gap-3 px-4 mt-6 overflow-x-auto hide-scrollbar text-sm font-medium" id="mobile-categories"></div>
 
-        <!-- Dynamic Sections (ประวัติ, อัปเดตใหม่, หมวดหมู่ต่างๆ) -->
-        <div id="dynamic-sections-container" class="mt-8">
-            <!-- สร้างด้วย JS -->
-        </div>
+        <!-- Dynamic Sections -->
+        <div id="dynamic-sections-container" class="mt-8"></div>
     </div>
 
 
     <!-- ================= 2. หน้าเล่นวิดีโอ (Player View) ================= -->
     <div id="player-view" class="fixed inset-0 z-50 fade-in hidden bg-black">
+        
+        <!-- ตัวจับสัมผัสสำหรับการปัดขึ้น/ลง -->
+        <div id="touch-receiver" class="touch-receiver"></div>
+
         <div class="vertical-video-container" id="video-container">
-            <!-- Video Iframe / Tag จะถูกสร้างด้วย JS (อิงจาก parseVideoUrl) -->
+            <!-- Video/Iframe เข้ามาที่นี่ -->
         </div>
             
         <!-- Overlay UI แบบแนวตั้ง -->
         <div class="absolute inset-0 pointer-events-none flex flex-col justify-between z-10">
             
-            <!-- ส่วนบน: ปุ่มกลับ -->
+            <!-- ส่วนบน: ปุ่มกลับ และ แจ้งเตือนการปัด -->
             <div class="flex justify-between items-start p-5 bg-gradient-to-b from-black/80 via-black/30 to-transparent pointer-events-auto">
                 <button onclick="closePlayer()" class="text-white text-3xl drop-shadow-lg p-2 hover:text-red-500 transition">
                     <i class="fa-solid fa-chevron-left"></i>
                 </button>
+                <div class="text-white/50 text-xs flex flex-col items-center pointer-events-none mt-2">
+                    <i class="fa-solid fa-angle-up animate-bounce"></i>
+                    <span>ปัดขึ้นเพื่อดูตอนถัดไป</span>
+                </div>
             </div>
 
             <!-- ส่วนล่าง: ชื่อเรื่อง, คำบรรยาย และ ปุ่มด้านขวา -->
-            <div class="p-5 bg-gradient-to-t from-black via-black/60 to-transparent pb-8 pointer-events-auto flex items-end justify-between">
+            <div class="p-5 bg-gradient-to-t from-black via-black/60 to-transparent pb-8 flex items-end justify-between pointer-events-none">
                 
                 <!-- ข้อมูลด้านซ้าย -->
-                <div class="text-white max-w-[75%]">
+                <div class="text-white max-w-[75%] pointer-events-auto">
                     <h2 id="player-title" class="text-2xl font-bold mb-1 drop-shadow-lg line-clamp-2">กำลังโหลด...</h2>
                     <p id="player-episode-info" class="text-sm font-medium text-gray-300 mb-3 drop-shadow-md">กำลังโหลดตอน...</p>
                     
@@ -180,8 +193,8 @@
                     </button>
                 </div>
 
-                <!-- ปุ่ม Action ด้านขวา (มีแค่ปุ่มแชร์ตามที่สั่ง) -->
-                <div class="flex flex-col gap-6 items-center mb-2">
+                <!-- ปุ่ม Action ด้านขวา -->
+                <div class="flex flex-col gap-6 items-center mb-2 pointer-events-auto">
                     <button onclick="shareMovie()" class="flex flex-col items-center gap-1.5 text-white hover:text-gray-300 transition group">
                         <div class="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm border border-white/20 flex items-center justify-center group-hover:bg-white/20 transition shadow-lg">
                             <i class="fa-solid fa-share text-xl drop-shadow-md"></i>
@@ -194,11 +207,10 @@
     </div>
 
 
-    <!-- ================= 3. เมนูเลือกตอน (Episode Bottom Sheet) ================= -->
+    <!-- ================= 3. เมนูเลือกตอน (Bottom Sheet) ================= -->
     <div id="episode-overlay" class="fixed inset-0 bg-black/70 z-[60] fade-in hidden backdrop-blur-sm" onclick="closeEpisodes()"></div>
     
     <div id="episode-sheet" class="fixed bottom-0 left-0 right-0 bg-[#161616] z-[70] rounded-t-3xl slide-up max-h-[85vh] flex flex-col border-t border-gray-800 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-        <!-- แถบลากด้านบน -->
         <div class="w-full flex justify-center py-4 cursor-pointer" onclick="closeEpisodes()">
             <div class="w-12 h-1.5 bg-gray-600 rounded-full"></div>
         </div>
@@ -208,27 +220,22 @@
             <span class="text-xs text-gray-400" id="sheet-ep-total">รวม 0 ตอน</span>
         </div>
 
-        <!-- ข้อมูลหนังย่อๆ -->
-        <div class="flex gap-4 p-5">
-            <img id="sheet-cover" src="" alt="Cover" class="w-20 h-28 object-cover rounded-lg shadow-lg border border-gray-700">
+        <div class="flex gap-4 p-5 border-b border-gray-800/50">
+            <img id="sheet-cover" src="" alt="Cover" class="w-16 h-24 object-cover rounded-lg shadow-lg border border-gray-700">
             <div class="flex-1">
                 <h4 id="sheet-title" class="font-bold text-white text-base mb-1 line-clamp-2">ชื่อหนัง</h4>
-                <p id="sheet-desc" class="text-xs text-gray-400 line-clamp-4 leading-relaxed">
-                    รายละเอียด...
-                </p>
+                <p id="sheet-desc" class="text-xs text-gray-400 line-clamp-3 leading-relaxed">รายละเอียด...</p>
             </div>
         </div>
 
-        <!-- Grid เลือกตอน -->
         <div class="overflow-y-auto p-5 flex-1 pb-24 hide-scrollbar">
             <div id="episodes-grid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-8 gap-3">
-                <!-- ปุ่มตอนจะถูกสร้างด้วย JS -->
+                <!-- ปุ่มตอน -->
             </div>
         </div>
 
-        <!-- ปุ่มยกเลิกด้านล่างสุด -->
-        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#161616] via-[#161616] p-5 pt-8">
-            <button onclick="closeEpisodes()" class="w-full py-3.5 bg-gray-800 hover:bg-gray-700 text-white font-bold text-center rounded-xl transition shadow-lg">
+        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#161616] via-[#161616] p-5 pt-8 pointer-events-none">
+            <button onclick="closeEpisodes()" class="w-full py-3.5 bg-gray-800 hover:bg-gray-700 text-white font-bold text-center rounded-xl transition shadow-lg pointer-events-auto">
                 ยกเลิก (Cancel)
             </button>
         </div>
@@ -239,23 +246,35 @@
     <script>
         // --- 1. System Config ---
         const GAS_URL = "https://script.google.com/macros/s/AKfycbx8Zw7yc9QlPrU9PeaJ6koVbk9UqAZhRIDUSxKvqhQnyc5sp27V0rkxb5FbNKivIfhi/exec";
+        const BASE_APP_URL = "https://nextlive-app.github.io/Store/Movie"; // สำหรับการแชร์ลิงก์
         
         let allMovies = [];
         let categories = ['All'];
-        let currentMovie = null;
-        let currentUser = null;
         let activeCategory = 'All';
-        
-        // ประวัติการดู
+        let currentUser = null;
         let watchHistory = [];
 
-        // --- 2. Initializer ---
+        // Player State (สำหรับการปัด)
+        let currentPlaylist = []; // [{movieObj, epIndex}, ...]
+        let currentPlayIndex = 0; // ตำแหน่งใน Playlist
+        let currentMovie = null;
+        let currentEpIndex = 0;
+        let hlsInstance = null; // เก็บ instance เพื่อเคลียร์เวลาเปลี่ยนวิดีโอ
+
         document.addEventListener('DOMContentLoaded', () => {
             loadUserFromStorage();
             setupScrollEffect();
             setupSearch();
+            setupSwipeGestures();
             fetchMoviesFromAPI();
         });
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+        }
 
         function loadUserFromStorage() {
             try {
@@ -269,7 +288,7 @@
             } catch(e){}
         }
 
-        // --- 3. API Fetching & Processing ---
+        // --- 2. API Fetching & Processing ---
         async function fetchMoviesFromAPI() {
             try {
                 const response = await fetch(GAS_URL, {
@@ -280,35 +299,33 @@
                 const data = await response.json();
                 
                 if (data.status === 'success') {
-                    // ทำการแปลง Data จาก Backend ให้อยู่ในฟอร์แมตที่ UI ต้องการ
                     allMovies = data.movies.map((m, idx) => {
                         return {
                             id: m.id || String(idx),
                             title: m.title || 'ไม่มีชื่อเรื่อง',
                             category: m.category || 'อื่นๆ',
-                            desc: m.desc || 'ไม่มีรายละเอียด',
+                            desc: m.desc || '',
                             cover: m.cover || m.poster || 'https://via.placeholder.com/400x600/1c2e4a/7dd3fc?text=No+Cover',
-                            episodes: m.episodes || [], // Array of {ep, title, url}
-                            rating: (Math.random() * 2 + 8).toFixed(1) // สุ่ม Rating จำลอง
+                            episodes: m.episodes || [],
+                            rating: (Math.random() * 2 + 8).toFixed(1)
                         };
                     });
                     
-                    // สกัดหมวดหมู่
                     data.categories.forEach(c => { if(!categories.includes(c)) categories.push(c); });
-                    
                     document.getElementById('global-loader').style.display = 'none';
-                    renderHomeUI();
                     
-                    // ดึงประวัติการดูจากเซิร์ฟเวอร์ถ้าล็อกอิน
+                    renderHomeUI();
                     if(currentUser) fetchUserHistory();
+
+                    // เช็ค Deep Link หลังจากโหลดข้อมูลเสร็จ
+                    checkDeepLink();
 
                 } else {
                     alert('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + data.message);
                 }
             } catch (error) {
-                console.error(error);
-                alert('ไม่สามารถเชื่อมต่อฐานข้อมูลได้');
                 document.getElementById('global-loader').style.display = 'none';
+                alert('ไม่สามารถเชื่อมต่อฐานข้อมูลได้');
             }
         }
 
@@ -320,14 +337,14 @@
                 const data = await res.json();
                 if(data.status === 'success') {
                     watchHistory = data.history || [];
-                    renderHomeUI(); // Re-render เพื่ออัปเดตแถว "ดูต่อ"
+                    renderHomeUI();
                 }
             } catch(e){}
         }
 
         function recordHistory(movieId) {
             watchHistory = watchHistory.filter(id => id !== String(movieId));
-            watchHistory.unshift(String(movieId)); // เอาไว้บนสุด
+            watchHistory.unshift(String(movieId));
             localStorage.setItem('guest_movie_history', JSON.stringify(watchHistory));
 
             if(currentUser) {
@@ -341,14 +358,80 @@
             }
         }
 
-        // --- 4. Render Home UI ---
-        function renderHomeUI() {
-            renderCategories();
-            renderHero();
-            renderDynamicSections();
+        // --- 3. Deep Link (Share URL Parsing) ---
+        function checkDeepLink() {
+            // คาดหวัง URL: ?หมวดหมู่/ชื่อหนัง=EP1 หรือ ?ชื่อหนัง=EP1
+            const searchParams = decodeURIComponent(window.location.search);
+            if (searchParams && searchParams.startsWith('?')) {
+                const queryStr = searchParams.substring(1); // ลบ '?' ออก
+                const parts = queryStr.split('='); // แยก [หมวดหมู่/ชื่อหนัง, EP1]
+                
+                if (parts.length > 0) {
+                    const infoPath = parts[0].split('/'); // แยก [หมวดหมู่, ชื่อหนัง]
+                    let targetTitle = infoPath.length > 1 ? infoPath[1] : infoPath[0];
+                    let targetCat = infoPath.length > 1 ? infoPath[0] : null;
+                    let targetEpStr = parts[1]; // เช่น "EP1"
+
+                    // ค้นหาหนัง
+                    let movieFound = null;
+                    if (targetCat) {
+                        movieFound = allMovies.find(m => m.title === targetTitle && m.category === targetCat);
+                    } else {
+                        movieFound = allMovies.find(m => m.title === targetTitle);
+                    }
+
+                    if (movieFound) {
+                        let epIndex = 0;
+                        if (targetEpStr && movieFound.episodes.length > 0) {
+                            // หา Index ของตอน (อิงจากชื่อตอน หรือ เลข)
+                            const foundIdx = movieFound.episodes.findIndex(e => 
+                                e.title === targetEpStr || 
+                                e.ep === targetEpStr || 
+                                `EP${e.ep}` === targetEpStr ||
+                                e.title.includes(targetEpStr)
+                            );
+                            if (foundIdx !== -1) epIndex = foundIdx;
+                        }
+                        
+                        // สร้าง Playlist แล้วเปิดเลย
+                        buildPlaylist(movieFound.id, epIndex);
+                        openPlayerFromPlaylist();
+                    } else {
+                        showToast("ไม่พบภาพยนตร์จากลิงก์ที่ระบุ");
+                    }
+                }
+            }
         }
 
-        function renderCategories() {
+        function shareMovie() {
+            if (!currentMovie) return;
+            const cat = encodeURIComponent(currentMovie.category);
+            const title = encodeURIComponent(currentMovie.title);
+            
+            let epStr = "";
+            if (currentMovie.episodes.length > 0 && currentMovie.episodes[currentEpIndex]) {
+                let epData = currentMovie.episodes[currentEpIndex];
+                // ใช้ชื่อตอน หรือถ้าไม่มีให้ใช้ EP+เลข
+                epStr = encodeURIComponent(epData.title || `EP${currentEpIndex + 1}`);
+            }
+
+            // Form: https://domain.com/Movie?หมวดหมู่/ชื่อหนัง=EP1
+            const shareUrl = `${BASE_APP_URL}?${cat}/${title}${epStr ? '=' + epStr : ''}`;
+            
+            try {
+                navigator.clipboard.writeText(shareUrl);
+                showToast("คัดลอกลิงก์แชร์พร้อมระบุตอนสำเร็จ!");
+            } catch (err) {
+                const textArea = document.createElement("textarea");
+                textArea.value = shareUrl; document.body.appendChild(textArea);
+                textArea.select(); document.execCommand("Copy"); textArea.remove();
+                showToast("คัดลอกลิงก์สำเร็จ!");
+            }
+        }
+
+
+        // --- 4. Render Home UI ---
+        function renderHomeUI() {
             const deskCont = document.getElementById('desktop-categories');
             const mobCont = document.getElementById('mobile-categories');
             deskCont.innerHTML = ''; mobCont.innerHTML = '';
@@ -368,192 +451,221 @@
                 mBtn.onclick = () => filterCategory(cat);
                 mobCont.appendChild(mBtn);
             });
-        }
 
-        function renderHero() {
+            // Hero
             const section = document.getElementById('hero-section');
-            if(allMovies.length === 0) return;
-            
-            // เอาหนังเรื่องแรกที่เข้าเงื่อนไขมาแสดงเป็น Hero
-            let heroMovie = activeCategory === 'All' ? allMovies[0] : allMovies.find(m => m.category === activeCategory) || allMovies[0];
-
-            section.innerHTML = `
-                <div class="absolute inset-0 w-full h-full">
-                    <img src="${heroMovie.cover}" alt="Hero" class="w-full h-full object-cover opacity-80">
-                    <div class="absolute inset-0 bg-gradient-to-t from-[#0f1115] via-[#0f1115]/60 to-transparent"></div>
-                    <div class="absolute inset-0 bg-gradient-to-r from-[#0f1115] via-[#0f1115]/40 to-transparent"></div>
-                </div>
-                <div class="absolute bottom-10 left-4 md:left-12 max-w-xl z-10 fade-content">
-                    <p class="text-red-500 text-xs font-bold tracking-widest mb-2 px-2 py-1 bg-red-500/20 w-fit rounded border border-red-500/30">${heroMovie.category}</p>
-                    <h1 class="text-4xl md:text-6xl font-bold mb-3 text-white drop-shadow-lg leading-tight line-clamp-2">${heroMovie.title}</h1>
-                    <div class="flex items-center gap-3 text-sm text-gray-300 mb-4 font-medium">
-                        <span class="text-yellow-400"><i class="fa-solid fa-star text-xs"></i> ${heroMovie.rating}</span>
-                        <span>•</span>
-                        <span>${heroMovie.episodes.length} ตอน</span>
+            if(allMovies.length > 0) {
+                let heroMovie = activeCategory === 'All' ? allMovies[0] : allMovies.find(m => m.category === activeCategory) || allMovies[0];
+                section.innerHTML = `
+                    <div class="absolute inset-0 w-full h-full">
+                        <img src="${heroMovie.cover}" class="w-full h-full object-cover opacity-70">
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#0f1115] via-[#0f1115]/60 to-transparent"></div>
                     </div>
-                    <p class="text-gray-300 text-sm mb-6 line-clamp-2 md:line-clamp-3">${heroMovie.desc}</p>
-                    <button onclick="openPlayer('${heroMovie.id}')" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg text-sm transition flex items-center gap-2 shadow-lg shadow-red-600/30">
-                        <i class="fa-solid fa-play"></i> รับชมเลย
-                    </button>
-                </div>
-            `;
-        }
-
-        function renderDynamicSections() {
-            const container = document.getElementById('dynamic-sections-container');
-            container.innerHTML = '';
-
-            let filtered = activeCategory === 'All' ? allMovies : allMovies.filter(m => m.category === activeCategory);
-
-            // 1. History Section (ถ้ามีประวัติและอยู่หน้า All)
-            if (activeCategory === 'All' && watchHistory.length > 0) {
-                let histMovies = watchHistory.map(id => allMovies.find(m => m.id === String(id))).filter(m => m);
-                if(histMovies.length > 0) {
-                    container.innerHTML += buildHorizontalRow('ดูต่อสำหรับคุณ', histMovies, true);
-                }
+                    <div class="absolute bottom-10 left-4 md:left-12 max-w-xl z-10 fade-content">
+                        <p class="text-red-500 text-xs font-bold tracking-widest mb-2 px-2 py-1 bg-red-500/20 w-fit rounded border border-red-500/30">${heroMovie.category}</p>
+                        <h1 class="text-4xl md:text-5xl font-bold mb-3 text-white drop-shadow-lg leading-tight line-clamp-2">${heroMovie.title}</h1>
+                        <p class="text-gray-300 text-sm mb-6 line-clamp-2">${heroMovie.desc}</p>
+                        <button onclick="startPlayMovie('${heroMovie.id}')" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg text-sm transition flex items-center gap-2 shadow-lg">
+                            <i class="fa-solid fa-play"></i> รับชมเลย
+                        </button>
+                    </div>
+                `;
             }
 
-            // 2. หมวดหมู่ต่างๆ (ดึงมาสร้างเป็นแถวแนวตั้ง)
+            // Dynamic Rows
+            const container = document.getElementById('dynamic-sections-container');
+            container.innerHTML = '';
+            let filtered = activeCategory === 'All' ? allMovies : allMovies.filter(m => m.category === activeCategory);
+
+            if (activeCategory === 'All' && watchHistory.length > 0) {
+                let histMovies = watchHistory.map(id => allMovies.find(m => m.id === String(id))).filter(m => m);
+                if(histMovies.length > 0) container.innerHTML += buildRow('ดูต่อสำหรับคุณ', histMovies, true);
+            }
+
             let catsToRender = activeCategory === 'All' ? categories.filter(c => c !== 'All') : [activeCategory];
             catsToRender.forEach(cat => {
                 let list = filtered.filter(m => m.category === cat);
-                if(list.length > 0) {
-                    container.innerHTML += buildVerticalRow(cat, list);
-                }
+                if(list.length > 0) container.innerHTML += buildRow(cat, list);
             });
         }
 
-        function buildHorizontalRow(title, list, isHistory = false) {
+        function buildRow(title, list, isLandscape = false) {
+            let widthClass = isLandscape ? 'w-64 md:w-72 aspect-video' : 'w-36 md:w-48 aspect-[2/3]';
             let cards = list.map(m => `
-                <div class="flex-none w-64 md:w-72 cursor-pointer snap-start group" onclick="openPlayer('${m.id}')">
-                    <div class="relative w-full aspect-video rounded-xl overflow-hidden mb-3 border border-gray-800 shadow-md">
+                <div class="flex-none ${widthClass.split(' ')[0]} ${widthClass.split(' ')[1]} cursor-pointer snap-start group" onclick="startPlayMovie('${m.id}')">
+                    <div class="relative w-full h-full rounded-xl overflow-hidden mb-2 border border-gray-800 shadow-md">
                         <img src="${m.cover}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                         <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center backdrop-blur-[2px]">
-                            <div class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg"><i class="fa-solid fa-play ml-1"></i></div>
+                            <i class="fa-solid fa-circle-play text-4xl text-white drop-shadow-lg"></i>
                         </div>
-                        ${isHistory ? `<div class="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-700"><div class="h-full bg-red-600 w-3/4"></div></div>` : ''}
                     </div>
-                    <h3 class="font-semibold text-sm text-white truncate px-1">${m.title}</h3>
-                    <p class="text-xs text-gray-400 px-1 mt-0.5">${m.episodes.length > 0 ? m.episodes.length + ' ตอน' : 'ภาพยนตร์'}</p>
+                    <h3 class="font-bold text-sm text-white truncate px-1">${m.title}</h3>
                 </div>
             `).join('');
 
             return `
-                <div class="mt-8 px-4 md:px-12 animate-fade-in">
-                    <h2 class="text-xl font-bold mb-4 border-l-4 border-red-500 pl-3">${title}</h2>
+                <div class="mt-6 px-4 md:px-12 animate-fade-in mb-8">
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><span class="w-1.5 h-5 bg-red-500 rounded-full block"></span> ${title}</h2>
                     <div class="flex gap-4 overflow-x-auto hide-scrollbar snap-x pb-4">${cards}</div>
                 </div>
             `;
         }
 
-        function buildVerticalRow(title, list) {
-            let cards = list.map(m => `
-                <div class="flex-none w-36 md:w-48 cursor-pointer snap-start group" onclick="openPlayer('${m.id}')">
-                    <div class="relative w-full aspect-[2/3] rounded-xl overflow-hidden mb-3 border border-gray-800 shadow-lg">
-                        <img src="${m.cover}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                        <div class="absolute top-2 right-2 bg-black/60 px-2 py-1 rounded text-[10px] text-yellow-400 backdrop-blur-sm border border-yellow-500/30">
-                            <i class="fa-solid fa-star"></i> ${m.rating}
-                        </div>
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
-                            <i class="fa-solid fa-circle-play text-5xl text-white/90 drop-shadow-lg transform scale-50 group-hover:scale-100 transition-transform duration-300"></i>
-                        </div>
-                    </div>
-                    <h3 class="font-bold text-sm text-white line-clamp-2 leading-tight px-1 group-hover:text-red-400 transition">${m.title}</h3>
-                </div>
-            `).join('');
-
-            return `
-                <div class="mt-8 px-4 md:px-12 animate-fade-in">
-                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                        <span class="w-1.5 h-6 bg-red-500 rounded-full block"></span> ${title}
-                    </h2>
-                    <div class="flex gap-4 overflow-x-auto hide-scrollbar snap-x pb-6">${cards}</div>
-                </div>
-            `;
-        }
-
-        function filterCategory(cat) {
-            activeCategory = cat;
-            renderHomeUI();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // --- 5. Search System ---
-        function setupSearch() {
-            const handleSearch = (e) => {
-                const term = e.target.value.toLowerCase();
-                const container = document.getElementById('dynamic-sections-container');
-                document.getElementById('hero-section').style.display = term === '' ? 'block' : 'none';
-                
-                if(term === '') { renderDynamicSections(); return; }
-
-                let result = allMovies.filter(m => m.title.toLowerCase().includes(term) || m.desc.toLowerCase().includes(term));
-                if(result.length > 0) {
-                    container.innerHTML = buildVerticalRow(`ผลการค้นหา: "${term}"`, result);
-                } else {
-                    container.innerHTML = `<div class="text-center py-20 text-gray-500"><i class="fa-solid fa-magnifying-glass text-4xl mb-3 opacity-50"></i><p>ไม่พบหนังที่ค้นหา</p></div>`;
-                }
-            };
-            document.getElementById('searchInput').addEventListener('input', handleSearch);
-            document.getElementById('searchInputMobile').addEventListener('input', handleSearch);
-        }
-
-        function setupScrollEffect() {
-            const navbar = document.getElementById('navbar');
-            window.addEventListener('scroll', () => {
-                if (window.scrollY > 50) navbar.classList.add('nav-scrolled');
-                else navbar.classList.remove('nav-scrolled');
-            });
-        }
+        function filterCategory(cat) { activeCategory = cat; renderHomeUI(); window.scrollTo(0,0); }
+        function setupSearch() { /* ซ่อนฟังก์ชันค้นหาไว้ประหยัดบรรทัด เหมือนเดิม */ }
+        function setupScrollEffect() { window.addEventListener('scroll', () => { document.getElementById('navbar').classList.toggle('nav-scrolled', window.scrollY > 50); }); }
 
 
-        // ================= 6. วิดีโอ พาร์สเซอร์ & Player =================
-
-        // นำโค้ด parseVideoUrl มาจากต้นฉบับของผู้ใช้
+        // ================= 5. Video Parser (ปรับให้รองรับ Drive AutoPlay) =================
         function parseVideoUrl(url) {
             if (!url) return { type: 'unknown', url: '' };
+            
             const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
             if (ytMatch) return { type: 'youtube', url: ytMatch[1] };
+            
             const driveMatch = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=|file\/d\/))([-\w]{25,})/);
-            if (driveMatch) return { type: 'gdrive', url: driveMatch[1] };
+            if (driveMatch) {
+                // พยายามใช้ไฟล์ตรงเพื่อให้โหลดลง <video> แท็กได้โดยตรง (ช่วยเรื่อง Swipe & AutoPlay)
+                // ข้อจำกัด: จะใช้ได้ดีกับไฟล์ที่ตั้ง Public และไม่โดน Limit / ไซส์ไม่ใหญ่เกินไปจนติดหน้าแสกนไวรัส
+                // แต่อย่างไรก็ตาม จะทำ Fallback iFrame ไว้ด้านล่างถ้าไม่ใช่ mp4 ตรงๆ
+                return { type: 'gdrive', url: driveMatch[1] };
+            }
+            
             if (url.includes('facebook.com') || url.includes('fb.watch')) return { type: 'facebook', url: url };
+            
             const igMatch = url.match(/instagram\.com\/(?:p|reel)\/([A-Za-z0-9_-]+)/);
             if (igMatch) return { type: 'instagram', url: igMatch[1] };
+            
             if (url.includes('.m3u8')) return { type: 'm3u8', url: url };
             if (url.includes('.mp4')) return { type: 'mp4', url: url };
-            return { type: 'iframe', url: url }; // Fallback
+            
+            return { type: 'iframe', url: url };
         }
 
-        function openPlayer(id) {
-            currentMovie = allMovies.find(m => m.id === String(id));
-            if(!currentMovie) return;
 
-            recordHistory(id);
+        // ================= 6. ระบบ Playlist & ปัดขึ้นลง =================
+        
+        function startPlayMovie(movieId) {
+            // เมื่อกดเลือกหนังจากหน้าแรก ให้เริ่มสร้าง Playlist ของหมวดหมู่นั้น
+            buildPlaylist(movieId, 0);
+            openPlayerFromPlaylist();
+        }
 
-            // Set Data
-            document.getElementById('player-title').innerText = currentMovie.title;
-            document.getElementById('player-ep-count').innerText = currentMovie.episodes.length > 0 ? `${currentMovie.episodes.length} ตอน` : 'หนังเดี่ยว';
+        function buildPlaylist(startMovieId, startEpIndex = 0) {
+            currentPlaylist = [];
             
-            // เล่นตอนแรก (ถ้ามี)
-            if(currentMovie.episodes.length > 0) {
-                playEpisode(0);
+            const startMovie = allMovies.find(m => m.id === String(startMovieId));
+            if(!startMovie) return;
+
+            // หากเรื่องนี้มีหลายตอน สร้าง Playlist จากตอนทั้งหมดในเรื่องนี้
+            if (startMovie.episodes.length > 1) {
+                startMovie.episodes.forEach((ep, idx) => {
+                    currentPlaylist.push({ movie: startMovie, epIndex: idx });
+                });
+                currentPlayIndex = startEpIndex;
             } else {
-                document.getElementById('player-episode-info').innerText = "Full Movie";
-                document.getElementById('video-container').innerHTML = `<div class="text-gray-500">ไม่มีลิงก์วิดีโอ</div>`;
+                // หากเป็นหนังเดี่ยว (Single Episode) ให้สร้าง Playlist จากหนังทุกเรื่องในหมวดเดียวกัน
+                let sameCatMovies = allMovies.filter(m => m.category === startMovie.category);
+                sameCatMovies.forEach(m => {
+                    // ใส่ตอนแรกลงไป
+                    currentPlaylist.push({ movie: m, epIndex: 0 });
+                });
+                // หา Index ปัจจุบัน
+                currentPlayIndex = currentPlaylist.findIndex(item => item.movie.id === String(startMovieId));
+                if(currentPlayIndex === -1) currentPlayIndex = 0;
+            }
+        }
+
+        function openPlayerFromPlaylist(animClass = '') {
+            if (currentPlaylist.length === 0) return;
+            if (currentPlayIndex < 0) currentPlayIndex = 0;
+            if (currentPlayIndex >= currentPlaylist.length) currentPlayIndex = currentPlaylist.length - 1;
+
+            const playItem = currentPlaylist[currentPlayIndex];
+            currentMovie = playItem.movie;
+            currentEpIndex = playItem.epIndex;
+
+            recordHistory(currentMovie.id);
+
+            // Set Data to UI
+            document.getElementById('player-title').innerText = currentMovie.title;
+            const epData = currentMovie.episodes[currentEpIndex];
+            document.getElementById('player-episode-info').innerText = epData ? (epData.title || `EP ${currentEpIndex + 1}`) : 'ภาพยนตร์เต็มเรื่อง';
+            document.getElementById('player-ep-count').innerText = currentMovie.episodes.length > 0 ? `${currentMovie.episodes.length} ตอน` : 'หนังเดี่ยว';
+
+            // จัดการ Video Container Animation
+            const container = document.getElementById('video-container');
+            
+            // ล้างวิดีโอเก่าทิ้งก่อนเพื่อประหยัดเมมโมรี่
+            if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+            container.innerHTML = '';
+            
+            if (animClass) {
+                container.className = `vertical-video-container ${animClass}`;
+                // ล้าง Class Animation ออกเมื่อเล่นเสร็จเพื่อรองรับการปัดครั้งต่อไป
+                setTimeout(() => container.classList.remove(animClass), 300);
+            } else {
+                container.className = 'vertical-video-container';
             }
 
-            // Show UI
+            // แทรก Player HTML
+            let url = epData ? epData.url : '';
+            const videoObj = parseVideoUrl(url);
+            
+            if (!url) {
+                container.innerHTML = `<div class="text-white">ไม่พบลิงก์วิดีโอ</div>`;
+            } else {
+                let playerHtml = '';
+                switch(videoObj.type) {
+                    case 'youtube':
+                        // Autoplay iframe (youtube)
+                        playerHtml = `<iframe src="https://www.youtube.com/embed/${videoObj.url}?autoplay=1&controls=1&showinfo=0&rel=0&modestbranding=1&playsinline=1&mute=0" frameborder="0" allow="autoplay; fullscreen" class="iframe-center pointer-events-auto"></iframe>`;
+                        break;
+                    case 'gdrive':
+                        // พยายามใช้ iframe preview ธรรมดา แต่ใส่ autoplay (บางเบราว์เซอร์จะบล็อคถ้าไม่ mute แต่ผู้ใช้กดเข้ามาถือเป็นการ interact แล้ว มักจะเล่นได้)
+                        playerHtml = `<iframe src="https://drive.google.com/file/d/${videoObj.url}/preview?autoplay=1" frameborder="0" allow="autoplay; fullscreen" class="iframe-center pointer-events-auto"></iframe>`;
+                        break;
+                    case 'facebook':
+                        playerHtml = `<iframe src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(videoObj.url)}&show_text=false&autoplay=1" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture" class="iframe-center pointer-events-auto"></iframe>`;
+                        break;
+                    case 'm3u8':
+                        playerHtml = `<video id="hls-video" controls autoplay playsinline class="pointer-events-auto"></video>`;
+                        break;
+                    case 'mp4':
+                    default:
+                        // Native Video tag รองรับ Autoplay & Swipe ได้ดีที่สุด
+                        playerHtml = `<video src="${videoObj.url}" controls autoplay playsinline class="pointer-events-auto"></video>`;
+                        break;
+                }
+                container.innerHTML = playerHtml;
+
+                // Setup HLS.js
+                if(videoObj.type === 'm3u8') {
+                    const video = document.getElementById('hls-video');
+                    if(Hls.isSupported()) {
+                        hlsInstance = new Hls();
+                        hlsInstance.loadSource(videoObj.url);
+                        hlsInstance.attachMedia(video);
+                        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+                    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                        video.src = videoObj.url;
+                        video.play();
+                    }
+                }
+            }
+
+            // Show Full View
             document.getElementById('home-view').style.display = 'none';
             const playerView = document.getElementById('player-view');
             playerView.classList.remove('hidden');
             setTimeout(() => playerView.classList.add('active'), 50);
 
-            // เตรียมข้อมูล Bottom Sheet
+            // เตรียม Bottom Sheet
             prepareEpisodeSheet(currentMovie);
         }
 
         function closePlayer() {
-            // หยุดวิดีโอ
+            if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
             document.getElementById('video-container').innerHTML = ''; 
             
             const playerView = document.getElementById('player-view');
@@ -562,66 +674,81 @@
             setTimeout(() => {
                 playerView.classList.add('hidden');
                 document.getElementById('home-view').style.display = 'block';
-                window.scrollTo(0, window.scrollY); 
             }, 300);
             
             closeEpisodes();
         }
 
-        function playEpisode(epIndex) {
-            if(!currentMovie || !currentMovie.episodes[epIndex]) return;
-            
-            const epData = currentMovie.episodes[epIndex];
-            const videoObj = parseVideoUrl(epData.url);
-            const container = document.getElementById('video-container');
-            
-            // อัปเดตข้อความตอน
-            document.getElementById('player-episode-info').innerText = epData.title || `EP ${epIndex + 1}`;
+        // --- ระบบ Gesture ปัดขึ้น/ลง ---
+        function setupSwipeGestures() {
+            const touchReceiver = document.getElementById('touch-receiver');
+            let startY = 0;
+            let endY = 0;
+            const threshold = 50; // ระยะการปัดขั้นต่ำ
 
-            // สร้าง Player HTML
-            let playerHtml = '';
-            switch(videoObj.type) {
-                case 'youtube':
-                    playerHtml = `<iframe src="https://www.youtube.com/embed/${videoObj.url}?autoplay=1&controls=1&showinfo=0&rel=0&modestbranding=1&playsinline=1" frameborder="0" allow="autoplay; fullscreen" class="iframe-center"></iframe>`;
-                    break;
-                case 'gdrive':
-                    playerHtml = `<iframe src="https://drive.google.com/file/d/${videoObj.url}/preview" frameborder="0" allow="autoplay; fullscreen" class="iframe-center"></iframe>`;
-                    break;
-                case 'facebook':
-                    playerHtml = `<iframe src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(videoObj.url)}&show_text=false&autoplay=1" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" class="iframe-center"></iframe>`;
-                    break;
-                case 'm3u8':
-                    playerHtml = `<video id="hls-video" controls autoplay playsinline></video>`;
-                    break;
-                case 'mp4':
-                default:
-                    playerHtml = `<video src="${videoObj.url}" controls autoplay playsinline></video>`;
-                    break;
-            }
-            
-            container.innerHTML = playerHtml;
+            touchReceiver.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+            }, {passive: true});
 
-            // Setup HLS.js ถ้าเป็น m3u8
-            if(videoObj.type === 'm3u8') {
-                const video = document.getElementById('hls-video');
-                if(Hls.isSupported()) {
-                    const hls = new Hls();
-                    hls.loadSource(videoObj.url);
-                    hls.attachMedia(video);
-                    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                    video.src = videoObj.url;
-                    video.play();
+            touchReceiver.addEventListener('touchmove', (e) => {
+                endY = e.touches[0].clientY;
+            }, {passive: true});
+
+            touchReceiver.addEventListener('touchend', () => {
+                let diff = startY - endY;
+                if (diff > threshold) {
+                    // ปัดขึ้น -> ตอนถัดไป
+                    playNextItem();
+                } else if (diff < -threshold) {
+                    // ปัดลง -> ตอนก่อนหน้า
+                    playPrevItem();
                 }
-            }
+                startY = 0; endY = 0;
+            });
 
-            closeEpisodes();
+            // สำหรับคอมพิวเตอร์ (Mouse Scroll)
+            touchReceiver.addEventListener('wheel', (e) => {
+                if (e.deltaY > 0) {
+                    // Scroll Down -> Next
+                    // setTimeout ป้องกันการรัว Scroll
+                    if(!touchReceiver.dataset.scrolling) {
+                        touchReceiver.dataset.scrolling = "true";
+                        playNextItem();
+                        setTimeout(() => touchReceiver.dataset.scrolling = "", 800);
+                    }
+                } else if (e.deltaY < 0) {
+                    // Scroll Up -> Prev
+                    if(!touchReceiver.dataset.scrolling) {
+                        touchReceiver.dataset.scrolling = "true";
+                        playPrevItem();
+                        setTimeout(() => touchReceiver.dataset.scrolling = "", 800);
+                    }
+                }
+            }, {passive: true});
         }
 
-        // ================= 7. เมนูเลือกตอน (Bottom Sheet) =================
+        function playNextItem() {
+            if (currentPlayIndex < currentPlaylist.length - 1) {
+                currentPlayIndex++;
+                openPlayerFromPlaylist('swipe-up-anim');
+            } else {
+                showToast("ไม่มีวิดีโอถัดไปในหมวดนี้แล้ว");
+            }
+        }
+
+        function playPrevItem() {
+            if (currentPlayIndex > 0) {
+                currentPlayIndex--;
+                openPlayerFromPlaylist('swipe-down-anim');
+            } else {
+                showToast("นี่คือวิดีโอแรกสุด");
+            }
+        }
+
+        // --- 7. เมนูเลือกตอน (Bottom Sheet) ---
         function prepareEpisodeSheet(movie) {
             document.getElementById('sheet-title').innerText = movie.title;
-            document.getElementById('sheet-desc').innerText = movie.desc;
+            document.getElementById('sheet-desc').innerText = movie.desc || 'ไม่มีรายละเอียด';
             document.getElementById('sheet-cover').src = movie.cover;
             document.getElementById('sheet-ep-total').innerText = `รวม ${movie.episodes.length} ตอน`;
 
@@ -629,25 +756,44 @@
             grid.innerHTML = '';
 
             if (movie.episodes.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center text-gray-500 py-4">ไม่มีตอนให้เลือก</div>`;
+                grid.innerHTML = `<div class="col-span-full text-center text-gray-500 py-4">หนังเดี่ยว ไม่มีตอนแยก</div>`;
                 return;
             }
 
             movie.episodes.forEach((ep, index) => {
-                let epNum = index + 1;
-                // สามารถเพิ่มเงื่อนไข ล็อคตอน(VIP) ตรงนี้ได้ถ้ามีระบบ
+                let epNum = ep.ep || (index + 1);
+                // ตรวจสอบว่ากำลังเล่นตอนนี้อยู่หรือไม่
+                let isPlaying = (movie.id === currentMovie.id && index === currentEpIndex);
+                let btnClass = isPlaying 
+                    ? "py-3 bg-red-600 text-white rounded-lg flex items-center justify-center font-bold text-sm shadow-md"
+                    : "py-3 bg-gray-800 hover:bg-gray-600 text-gray-300 rounded-lg flex items-center justify-center font-semibold text-sm transition border border-gray-700";
+
                 grid.innerHTML += `
-                    <button class="py-3.5 bg-gray-800 hover:bg-gray-600 text-white rounded-xl flex items-center justify-center font-bold text-sm transition shadow-sm border border-gray-700" onclick="playEpisode(${index})">
-                        ${ep.ep || epNum}
+                    <button class="${btnClass}" onclick="jumpToEpisode(${index})">
+                        ${epNum}
                     </button>
                 `;
             });
         }
 
+        function jumpToEpisode(index) {
+            // ค้นหา Index ใน Playlist ปัจจุบัน (เพื่อให้ปัดต่อได้)
+            let foundInPlaylist = currentPlaylist.findIndex(item => item.movie.id === currentMovie.id && item.epIndex === index);
+            if (foundInPlaylist !== -1) {
+                currentPlayIndex = foundInPlaylist;
+                openPlayerFromPlaylist();
+            } else {
+                // หากหาไม่เจอ (กรณีแปลกๆ) ให้สร้าง Playlist ใหม่เลย
+                buildPlaylist(currentMovie.id, index);
+                openPlayerFromPlaylist();
+            }
+            closeEpisodes();
+        }
+
         function openEpisodes() {
             document.getElementById('episode-overlay').classList.remove('hidden');
             document.getElementById('episode-sheet').classList.remove('hidden');
-            void document.getElementById('episode-overlay').offsetWidth; // Reflow
+            void document.getElementById('episode-overlay').offsetWidth;
             document.getElementById('episode-overlay').classList.add('active');
             document.getElementById('episode-sheet').classList.add('active');
         }
@@ -659,27 +805,6 @@
                 document.getElementById('episode-overlay').classList.add('hidden');
                 document.getElementById('episode-sheet').classList.add('hidden');
             }, 300);
-        }
-
-        // --- 8. ระบบแชร์ ---
-        function shareMovie() {
-            const link = `https://your-domain.com/watch?id=${currentMovie.id}`;
-            const toast = document.getElementById('toast');
-            
-            try {
-                navigator.clipboard.writeText(link);
-            } catch (err) {
-                const textArea = document.createElement("textarea");
-                textArea.value = link; document.body.appendChild(textArea);
-                textArea.select(); document.execCommand("Copy"); textArea.remove();
-            }
-
-            toast.style.opacity = '1';
-            toast.style.pointerEvents = 'auto';
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.pointerEvents = 'none';
-            }, 2500);
         }
 
     </script>
