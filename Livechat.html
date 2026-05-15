@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <!-- ป้องกันการซูมอย่างเด็ดขาดบนมือถือและแท็บเล็ต -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <title>Live Chat Interface</title>
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            touch-action: manipulation;
+        }
+
+        /* พื้นหลังลายคลื่นจางๆ */
+        .chat-background {
+            background-color: #f8fafc;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e2e8f0' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .msg-bubble {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            max-width: 75%;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        /* สติกเกอร์ไม่ต้องมีเงาและพื้นหลัง */
+        .sticker-bubble {
+            max-width: 50%;
+            position: relative;
+        }
+
+        /* อนิเมชั่นจุดกำลังพิมพ์ */
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #3B82F6;
+            border-radius: 50%;
+            display: inline-block;
+            animation: typingBounce 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { background-color: #BFDBFE; animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { background-color: #60A5FA; animation-delay: -0.16s; }
+        
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.6; }
+            40% { transform: scale(1.2); opacity: 1; }
+        }
+
+        .avatar-left { position: absolute; top: -15px; left: -15px; border: 2px solid white; }
+        .avatar-right { position: absolute; top: -15px; right: -15px; border: 2px solid white; }
+
+        /* Safe area สำหรับ iPhone X ขึ้นไป */
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 12px); }
+        
+        /* ป้องกัน Input ย่อขยายเองใน iOS */
+        input[type="text"] { font-size: 16px; }
+    </style>
+</head>
+<!-- ใช้ 100dvh เพื่อให้พอดีจอ 100% ทุกอุปกรณ์ -->
+<body class="flex flex-col h-[100dvh] w-full overflow-hidden bg-white font-sans text-gray-800 relative">
+
+    <!-- Header -->
+    <header class="flex items-center justify-between px-4 py-3 bg-white z-20 relative shadow-sm min-h-[64px]">
+        
+        <!-- ปุ่มค้นหาที่ยืดขยายได้ -->
+        <div id="search-wrapper" class="absolute left-4 z-30 flex items-center bg-gray-100 hover:bg-gray-200 rounded-full transition-all duration-300 w-10 h-10 overflow-hidden cursor-pointer" onclick="openSearch(event)">
+            <i class="ph ph-magnifying-glass text-xl text-gray-600 ml-2.5 shrink-0 pointer-events-none"></i>
+            <input type="text" id="search-input" class="bg-transparent border-none outline-none px-2 w-full text-sm opacity-0 hidden" placeholder="ค้นหาชื่อไฟล์, ข้อความ...">
+            <button id="close-search-btn" class="hidden mr-3 text-gray-400 hover:text-gray-800 shrink-0" onclick="closeSearch(event)">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        
+        <!-- ชื่อและสถานะ (จะถูกซ่อนเมื่อเปิดค้นหา) -->
+        <div id="header-title" class="flex-1 flex flex-col items-center justify-center transition-opacity duration-300 pointer-events-none">
+            <div class="relative">
+                <h1 class="text-lg font-medium text-gray-700">Nick Anderson</h1>
+                <span class="absolute top-1 -right-3 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full shadow-sm"></span>
+            </div>
+        </div>
+        
+        <!-- เมนูขวา -->
+        <button class="p-2 text-blue-600 hover:bg-gray-100 rounded-full transition-colors z-10">
+            <i class="ph ph-dots-three text-3xl"></i>
+        </button>
+    </header>
+
+    <!-- Chat Area -->
+    <main id="chat-container" class="flex-1 chat-background overflow-y-auto no-scrollbar p-6 pb-4 space-y-8 flex flex-col relative" onclick="closePanels()">
+        
+        <div class="flex flex-col items-start mt-4">
+            <div class="msg-bubble bg-white text-gray-700 py-3 px-5 rounded-3xl rounded-tl-none">
+                <img src="https://i.pravatar.cc/150?img=5" alt="Nick" class="w-8 h-8 rounded-full avatar-left object-cover">
+                Hi Nick! What's Up?
+            </div>
+        </div>
+
+        <div class="flex flex-col items-end mt-4">
+            <div class="msg-bubble bg-gradient-to-r from-[#5a8ce0] to-[#366cbe] text-white py-3 px-5 rounded-3xl rounded-tr-none">
+                <img src="https://i.pravatar.cc/150?img=11" alt="Me" class="w-8 h-8 rounded-full avatar-right object-cover">
+                Good, thx. And you?
+            </div>
+        </div>
+
+        <div class="flex flex-col items-start mt-4">
+            <div class="msg-bubble bg-white text-gray-700 py-3 px-5 rounded-3xl rounded-tl-none">
+                <img src="https://i.pravatar.cc/150?img=5" alt="Nick" class="w-8 h-8 rounded-full avatar-left object-cover">
+                Good, thx :) was in Eliat. It was amazing.
+            </div>
+        </div>
+
+        <!-- ข้อความเสียง -->
+        <div class="flex flex-col items-end mt-4">
+            <div class="msg-bubble bg-gradient-to-r from-[#5a8ce0] to-[#366cbe] py-2 px-3 pr-5 rounded-full rounded-tr-none flex items-center gap-3">
+                <img src="https://i.pravatar.cc/150?img=11" alt="Me" class="w-8 h-8 rounded-full avatar-right object-cover">
+                <button class="w-10 h-10 bg-white/20 text-white rounded-full flex items-center justify-center shrink-0 hover:bg-white/30 transition">
+                    <i class="ph-fill ph-play text-xl ml-1"></i>
+                </button>
+                <div class="flex items-center w-32 h-8 relative opacity-90">
+                    <svg viewBox="0 0 100 20" class="w-full h-full stroke-white fill-none stroke-[1.5px]">
+                        <path d="M0,10 Q5,0 10,10 T20,10 T30,10 Q35,20 40,10 T50,10 T60,10 Q65,0 70,10 T80,10 T90,10 Q95,20 100,10" />
+                        <circle cx="15" cy="10" r="1.5" class="fill-white stroke-none" />
+                        <circle cx="25" cy="4" r="0.8" class="fill-white stroke-none" />
+                    </svg>
+                </div>
+                <span class="text-white text-sm font-medium">0:30</span>
+            </div>
+        </div>
+
+        <!-- Typing Indicator -->
+        <div class="flex flex-col items-start mt-4" id="typing-indicator" style="display: none;">
+            <div class="msg-bubble bg-white py-4 px-6 rounded-full rounded-tl-none flex items-center gap-1.5 h-[48px]">
+                <img src="https://i.pravatar.cc/150?img=5" alt="Nick" class="w-8 h-8 rounded-full avatar-left object-cover">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            </div>
+        </div>
+        
+        <div id="chat-bottom-anchor" class="h-1"></div>
+    </main>
+
+    <!-- Sticker & Emoji Picker Panel -->
+    <div id="emoji-panel" class="absolute bottom-[70px] left-2 md:left-auto md:right-auto md:mx-auto md:max-w-md w-[calc(100%-16px)] bg-white border border-gray-100 shadow-xl rounded-2xl p-0 flex flex-col z-30 transition-all duration-300 transform scale-95 opacity-0 pointer-events-none h-64">
+        
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-100">
+            <button class="flex-1 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600" id="tab-emoji" onclick="switchTab('emoji')">อิโมจิ</button>
+            <button class="flex-1 py-3 text-sm font-medium text-gray-400 hover:text-gray-600" id="tab-sticker" onclick="switchTab('sticker')">สติกเกอร์</button>
+        </div>
+
+        <!-- Emoji Grid -->
+        <div id="grid-emoji" class="flex-1 overflow-y-auto p-3 grid grid-cols-6 gap-2 text-2xl no-scrollbar">
+            <button class="hover:bg-gray-100 rounded p-1 transition" onclick="insertEmoji('😀')">😀</button>
+            <button class="hover:bg-gray-100 rounded p-1 transition" onclick="insertEmoji('😂')">😂</button>
+            <button class="hover:bg-gray-100 rounded p-1 transition" onclick="insertEmoji('🥰')">🥰</button>
+            <button class="hover:bg-gray-100 rounded p-1 transition" onclick="insertEmoji('😎')">😎</button>
+            <button class="hover:bg-gray-100 rounded p-1 transition" onclick="insertEmoji('😭')">😭</button>
+            <button class="hover:bg-gray-100 rounded p-1 transition" onclick="insertEmoji('👍')">👍</button>
+            <button class="hover:bg-gray-100 rounded p-1 transition" onclick="insertEmoji('🙏')">🙏</button>
+            <button class="hover:bg-gray-100 rounded p-1 transition" onclick="insertEmoji('🎉')">🎉</button>
+            <button class="hover:bg-gray-100 rounded p-1 transition" onclick="insertEmoji('❤️')">❤️</button>
+            <button class="hover:bg-gray-100 rounded p-1 transition" onclick="insertEmoji('🔥')">🔥</button>
+            <button class="hover:bg-gray-100 rounded p-1 transition" onclick="insertEmoji('✨')">✨</button>
+            <button class="hover:bg-gray-100 rounded p-1 transition" onclick="insertEmoji('👽')">👽</button>
+        </div>
+
+        <!-- Sticker Grid (Hidden default) -->
+        <div id="grid-sticker" class="flex-1 overflow-y-auto p-4 grid grid-cols-4 gap-4 hidden no-scrollbar">
+            <!-- จำลองสติกเกอร์ด้วย SVG/รูป -->
+            <button class="hover:scale-110 transition transform active:scale-95" onclick="sendSticker('https://api.iconify.design/noto:partying-face.svg?width=100')">
+                <img src="https://api.iconify.design/noto:partying-face.svg?width=100" class="w-full drop-shadow-md">
+            </button>
+            <button class="hover:scale-110 transition transform active:scale-95" onclick="sendSticker('https://api.iconify.design/noto:red-heart.svg?width=100')">
+                <img src="https://api.iconify.design/noto:red-heart.svg?width=100" class="w-full drop-shadow-md">
+            </button>
+            <button class="hover:scale-110 transition transform active:scale-95" onclick="sendSticker('https://api.iconify.design/noto:rocket.svg?width=100')">
+                <img src="https://api.iconify.design/noto:rocket.svg?width=100" class="w-full drop-shadow-md">
+            </button>
+            <button class="hover:scale-110 transition transform active:scale-95" onclick="sendSticker('https://api.iconify.design/noto:thumbs-up.svg?width=100')">
+                <img src="https://api.iconify.design/noto:thumbs-up.svg?width=100" class="w-full drop-shadow-md">
+            </button>
+        </div>
+    </div>
+
+    <!-- Input Area -->
+    <footer class="bg-white p-2 md:p-3 pb-safe border-t border-gray-100 relative z-40 shadow-[0_-5px_15px_rgba(0,0,0,0.02)]">
+        <div class="flex items-center gap-2 max-w-4xl mx-auto bg-gray-50 rounded-full px-3 py-1.5 border border-gray-200 focus-within:border-blue-400 transition-colors">
+            
+            <!-- ปุ่ม Emoji / Sticker -->
+            <button id="toggle-emoji-btn" class="p-1.5 text-gray-400 hover:text-blue-500 transition shrink-0" onclick="toggleEmojiPanel()">
+                <i class="ph ph-smiley text-2xl"></i>
+            </button>
+
+            <!-- ช่องพิมพ์ -->
+            <input 
+                type="text" 
+                id="message-input"
+                placeholder="พิมพ์ข้อความ..." 
+                class="flex-1 bg-transparent border-none focus:outline-none text-gray-700 placeholder-gray-400 px-1"
+                autocomplete="off"
+            >
+
+            <!-- แนบไฟล์ -->
+            <input type="file" id="file-upload" class="hidden" multiple accept="image/*,video/*,.pdf">
+            <button id="attach-btn" class="p-1.5 text-gray-400 hover:text-blue-500 transition shrink-0" title="แนบไฟล์ รูปภาพ วิดีโอ PDF">
+                <i class="ph ph-paperclip text-2xl transform -rotate-45"></i>
+            </button>
+
+            <!-- ปุ่มส่ง -->
+            <button id="send-btn" class="p-1.5 text-gray-400 hover:text-blue-600 transition shrink-0">
+                <i class="ph-fill ph-paper-plane-right text-2xl" id="send-icon"></i>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const sendIcon = document.getElementById('send-icon');
+        const attachBtn = document.getElementById('attach-btn');
+        const fileUpload = document.getElementById('file-upload');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const bottomAnchor = document.getElementById('chat-bottom-anchor');
+        const emojiPanel = document.getElementById('emoji-panel');
+        
+        // --- ระบบค้นหาด้านบน ---
+        const searchWrapper = document.getElementById('search-wrapper');
+        const searchInput = document.getElementById('search-input');
+        const headerTitle = document.getElementById('header-title');
+        const closeSearchBtn = document.getElementById('close-search-btn');
+
+        function openSearch(e) {
+            // ถ้ากดยังไม่ขยาย ให้ขยาย
+            if (!searchWrapper.classList.contains('w-[calc(100%-4rem)]')) {
+                searchWrapper.classList.remove('w-10');
+                searchWrapper.classList.add('w-[calc(100%-4rem)]');
+                
+                setTimeout(() => {
+                    searchInput.classList.remove('hidden');
+                    searchInput.classList.remove('opacity-0');
+                    closeSearchBtn.classList.remove('hidden');
+                    headerTitle.classList.add('opacity-0');
+                    searchInput.focus();
+                }, 150); // รอ animation นิดนึง
+            }
+        }
+
+        function closeSearch(e) {
+            e.stopPropagation(); // ไม่ให้ทริกเกอร์ openSearch
+            searchWrapper.classList.remove('w-[calc(100%-4rem)]');
+            searchWrapper.classList.add('w-10');
+            
+            searchInput.classList.add('opacity-0');
+            closeSearchBtn.classList.add('hidden');
+            headerTitle.classList.remove('opacity-0');
+            searchInput.value = '';
+            
+            setTimeout(() => {
+                searchInput.classList.add('hidden');
+            }, 300);
+        }
+
+        // --- ระบบ Emoji & Sticker ---
+        function toggleEmojiPanel() {
+            if (emojiPanel.classList.contains('opacity-0')) {
+                emojiPanel.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                emojiPanel.classList.add('opacity-100', 'scale-100');
+            } else {
+                closePanels();
+            }
+        }
+
+        function closePanels() {
+            emojiPanel.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+            emojiPanel.classList.remove('opacity-100', 'scale-100');
+        }
+
+        function switchTab(tab) {
+            const tabEmoji = document.getElementById('tab-emoji');
+            const tabSticker = document.getElementById('tab-sticker');
+            const gridEmoji = document.getElementById('grid-emoji');
+            const gridSticker = document.getElementById('grid-sticker');
+
+            if(tab === 'emoji') {
+                tabEmoji.className = "flex-1 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600";
+                tabSticker.className = "flex-1 py-3 text-sm font-medium text-gray-400 hover:text-gray-600";
+                gridEmoji.classList.remove('hidden');
+                gridSticker.classList.add('hidden');
+            } else {
+                tabSticker.className = "flex-1 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600";
+                tabEmoji.className = "flex-1 py-3 text-sm font-medium text-gray-400 hover:text-gray-600";
+                gridSticker.classList.remove('hidden');
+                gridEmoji.classList.add('hidden');
+            }
+        }
+
+        function insertEmoji(emoji) {
+            messageInput.value += emoji;
+            messageInput.focus();
+            updateSendButtonState();
+        }
+
+        // --- ระบบส่งข้อความและไฟล์ ---
+        const scrollToBottom = () => {
+            bottomAnchor.scrollIntoView({ behavior: 'smooth' });
+        };
+
+        const updateSendButtonState = () => {
+            if (messageInput.value.trim().length > 0) {
+                sendIcon.classList.remove('text-gray-400');
+                sendIcon.classList.add('text-blue-600');
+            } else {
+                sendIcon.classList.add('text-gray-400');
+                sendIcon.classList.remove('text-blue-600');
+            }
+        };
+
+        messageInput.addEventListener('input', updateSendButtonState);
+
+        const renderRightAvatar = () => {
+            return `<img src="https://i.pravatar.cc/150?img=11" alt="Me" class="w-8 h-8 rounded-full avatar-right object-cover shadow-sm">`;
+        };
+
+        const sendMessage = (text, type = 'text') => {
+            if (!text.trim() && type === 'text') return;
+
+            const msgWrapper = document.createElement('div');
+            msgWrapper.className = 'flex flex-col items-end mt-4 mb-2';
+            let contentHTML = '';
+
+            if (type === 'file') {
+                contentHTML = `
+                    <div class="msg-bubble bg-gradient-to-r from-[#5a8ce0] to-[#366cbe] text-white py-3 px-4 pr-6 rounded-3xl rounded-tr-none flex items-center gap-3">
+                        ${renderRightAvatar()}
+                        <div class="bg-white/20 p-2 rounded-xl"><i class="ph ph-file-text text-2xl"></i></div>
+                        <span class="break-all text-sm font-medium">${text}</span>
+                    </div>
+                `;
+            } else if (type === 'sticker') {
+                // สติกเกอร์ ไม่มีกรอบ
+                contentHTML = `
+                    <div class="sticker-bubble py-1 pr-4 rounded-tr-none flex items-end justify-end">
+                        ${renderRightAvatar()}
+                        <img src="${text}" class="w-24 h-24 object-contain animate-bounce-short">
+                    </div>
+                `;
+            } else {
+                // ข้อความปกติ พร้อมแปลง Link
+                const textWithLinks = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="underline hover:text-blue-200">$1</a>');
+                contentHTML = `
+                    <div class="msg-bubble bg-gradient-to-r from-[#5a8ce0] to-[#366cbe] text-white py-3 px-5 pr-6 rounded-3xl rounded-tr-none">
+                        ${renderRightAvatar()}
+                        ${textWithLinks}
+                    </div>
+                `;
+            }
+
+            msgWrapper.innerHTML = contentHTML;
+            chatContainer.insertBefore(msgWrapper, typingIndicator);
+            
+            messageInput.value = '';
+            updateSendButtonState();
+            closePanels();
+            scrollToBottom();
+
+            simulateReply();
+        };
+
+        const sendSticker = (url) => {
+            sendMessage(url, 'sticker');
+        };
+
+        sendBtn.addEventListener('click', () => {
+            sendMessage(messageInput.value);
+        });
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage(messageInput.value);
+            }
+        });
+
+        attachBtn.addEventListener('click', () => {
+            fileUpload.click();
+        });
+
+        fileUpload.addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (files.length > 0) {
+                Array.from(files).forEach(file => {
+                    sendMessage(file.name, 'file');
+                });
+                fileUpload.value = '';
+            }
+        });
+
+        const simulateReply = () => {
+            typingIndicator.style.display = 'flex';
+            scrollToBottom();
+            
+            // ปิด typing indicator อัตโนมัติหลัง 2 วินาที (สำหรับโชว์)
+            setTimeout(() => {
+                typingIndicator.style.display = 'none';
+            }, 2000);
+        };
+
+        // Initialize
+        scrollToBottom();
+    </script>
+</body>
+</html>
