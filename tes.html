@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="th" class="scroll-smooth">
 <head>
@@ -1180,6 +1179,26 @@
         </div>
     </div>
 
+    <!-- Slip Preview Popup (สำหรับการดูสลิปในหน้าประวัติ) -->
+    <div class="popup-container" id="slip-preview-popup" onclick="closeSlipPreview()">
+        <div class="relative w-[90%] max-w-md bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-gray-800 shadow-2xl p-2 flex flex-col items-center transform scale-90 transition-transform duration-300" id="slip-preview-box" onclick="event.stopPropagation()">
+            <div class="w-full flex justify-between items-center mb-2 px-3 pt-2">
+                <h3 class="text-gray-800 dark:text-white font-bold flex items-center text-sm uppercase tracking-wider"><i data-lucide="image" class="w-4 h-4 mr-2 text-primary"></i> สลิปชำระเงิน</h3>
+                <button class="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors rounded-full p-1" onclick="closeSlipPreview()">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="w-full bg-gray-100 dark:bg-[#0A0A0A] rounded-lg overflow-hidden flex items-center justify-center min-h-[300px] max-h-[65vh] border border-gray-200 dark:border-[#222] p-2">
+                <img id="slip-preview-img" src="" class="max-w-full max-h-full object-contain rounded-md drop-shadow-lg">
+            </div>
+            <div class="w-full mt-4 flex justify-center pb-2">
+                <a id="slip-preview-link" href="#" target="_blank" class="bg-[#333333] hover:bg-black text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg transition-all flex items-center gap-2">
+                    <i data-lucide="external-link" class="w-4 h-4 text-white"></i> ดูรูปภาพต้นฉบับ
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Alerts & Confirms -->
     <div class="popup-container" id="custom-popup">
         <div class="popup-box">
@@ -1221,6 +1240,7 @@
     </div>
 <!-- Application Logic -->
     <script>
+<script>
         // ⚠️ อย่าลืมแก้ไข GAS_WEBAPP_URL ให้เป็นของคุณเอง
         const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx8Zw7yc9QlPrU9PeaJ6koVbk9UqAZhRIDUSxKvqhQnyc5sp27V0rkxb5FbNKivIfhi/exec";
         
@@ -1652,7 +1672,7 @@
         }
 
         // ============================================================================
-        // History & Statement (Accordion Style)
+        // History & Statement (Accordion Style) + Slip Preview
         // ============================================================================
         function searchHistory() {
             const phoneEl = document.getElementById('history-phone-input'); const phone = phoneEl ? phoneEl.value : "";
@@ -1677,11 +1697,14 @@
             });
         }
 
+        // ฟังก์ชันประมวลผลสถานะตรงๆ เป๊ะ 100%
         function formatShortStatusHistory(status) {
             if(!status) return "Unsuccess";
-            if(status.includes("ไม่สำเร็จ") || status.includes("ยกเลิก") || status.includes("สลิปซ้ำ")) return "Unsuccess";
-            if(status.includes("รอดำเนินการ") || status.includes("รอ")) return "Pending";
-            return "Success";
+            const s = status.toLowerCase();
+            if(s.includes("ไม่สำเร็จ") || s.includes("ยกเลิก") || s.includes("สลิปซ้ำ") || s.includes("ไม่ถูกต้อง") || s.includes("ปลอม")) return "Unsuccess";
+            if(s.includes("รอ") || s.includes("pending")) return "Pending";
+            if(s.includes("สำเร็จ") || s.includes("ถูกต้อง") || s.includes("โอนแล้ว")) return "Success";
+            return "Unsuccess"; // fallback
         }
 
         function toggleAccordion(contentId, iconId) {
@@ -1696,6 +1719,37 @@
             }
         }
 
+        // --- ระบบดูสลิปภาพ (Slip Preview Popup) ---
+        function openSlipPreview(url) {
+            const popup = document.getElementById('slip-preview-popup');
+            const img = document.getElementById('slip-preview-img');
+            const link = document.getElementById('slip-preview-link');
+            if (popup && img && link) {
+                img.src = url;
+                link.href = url;
+                popup.classList.add('active');
+                const box = document.getElementById('slip-preview-box');
+                if(box) {
+                    box.classList.remove('scale-90');
+                    box.classList.add('scale-100');
+                }
+            }
+        }
+
+        function closeSlipPreview() {
+            const popup = document.getElementById('slip-preview-popup');
+            const box = document.getElementById('slip-preview-box');
+            if (box) {
+                box.classList.remove('scale-100');
+                box.classList.add('scale-90');
+            }
+            setTimeout(() => {
+                if (popup) popup.classList.remove('active');
+                const img = document.getElementById('slip-preview-img');
+                if (img) img.src = '';
+            }, 300);
+        }
+
         function renderHistoryOrders(orders) {
             const container = document.getElementById('history-orders-container');
             if(orders.length === 0) {
@@ -1706,14 +1760,30 @@
             orders.forEach((o, idx) => {
                 let statusEng = formatShortStatusHistory(o.status);
                 let colorClass = statusEng === 'Success' ? 'text-green-500' : (statusEng === 'Pending' ? 'text-yellow-500' : 'text-red-500');
+                let amtColorClass = statusEng === 'Unsuccess' ? 'text-red-500' : 'text-primary';
                 
                 let iconStr = '';
                 if(statusEng === 'Success') iconStr = '<i data-lucide="check-circle" class="w-4 h-4 inline mr-1 -mt-1"></i>';
                 else if(statusEng === 'Unsuccess') iconStr = '<i data-lucide="x-circle" class="w-4 h-4 inline mr-1 -mt-1"></i>';
                 else iconStr = '<i data-lucide="clock" class="w-4 h-4 inline mr-1 -mt-1"></i>';
 
-                let itemsStr = o.items.replace(/\n/g, '<br>');
+                let mainStatus = o.status;
+                let note = "-";
+                if (o.status && o.status.includes('\n')) {
+                    let parts = o.status.split('\n');
+                    mainStatus = parts[0];
+                    note = parts.slice(1).join('\n');
+                }
+
+                let itemsStr = o.items ? o.items.replace(/\n/g, '<br>') : '';
                 let amt = parseFloat(o.amount) || 0;
+
+                // ตรวจสอบหา URL ของสลิป (ในกรณี Backend ส่งมาใน o.slip หรือแฝงในข้อความ items)
+                let slipBtn = '';
+                let slipUrl = o.slip || (o.items && String(o.items).includes('http') ? o.items : null); 
+                if (slipUrl && String(slipUrl).startsWith('http')) {
+                    slipBtn = `<button onclick="openSlipPreview('${slipUrl}'); event.stopPropagation();" class="ml-2 text-blue-500 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/30 p-1.5 rounded-full transition-colors shadow-sm" title="ดูสลิปชำระเงิน"><i data-lucide="image" class="w-4 h-4"></i></button>`;
+                }
 
                 let actionHtml = '';
                 if(statusEng === 'Success') {
@@ -1727,8 +1797,10 @@
                 } else {
                     actionHtml = `
                         <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                            <p class="text-xs text-red-500 font-semibold mb-1">หมายเหตุ:</p>
-                            <p class="text-xs text-gray-500 whitespace-pre-wrap">${o.status}</p>
+                            <p class="text-xs text-gray-500 font-semibold mb-1">สถานะ:</p>
+                            <p class="text-xs ${colorClass} font-semibold">${mainStatus}</p>
+                            <p class="text-xs text-gray-500 font-semibold mt-2 mb-1">หมายเหตุ:</p>
+                            <p class="text-xs text-red-500 font-semibold whitespace-pre-wrap">${note}</p>
                         </div>
                     `;
                 }
@@ -1737,17 +1809,23 @@
                 div.className = "bg-white dark:bg-[#121212] border dark:border-gray-800 rounded-sm shadow-sm overflow-hidden transition-all";
                 div.innerHTML = `
                     <div class="p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" onclick="toggleAccordion('history-order-content-${idx}', 'history-order-icon-${idx}')">
-                        <div>
-                            <h3 class="font-bold text-sm text-gray-800 dark:text-white">Order: ${o.ref.replace(/'/g,'')} <span class="${colorClass} ml-2 font-bold">${iconStr}${statusEng}</span></h3>
+                        <div class="flex-grow">
+                            <div class="flex items-center">
+                                <h3 class="font-bold text-sm text-gray-800 dark:text-white">Order: ${o.ref.replace(/'/g,'')}</h3>
+                                ${slipBtn}
+                            </div>
                             <p class="text-xs text-gray-500 mt-1">${o.date}</p>
                         </div>
-                        <i data-lucide="chevron-down" id="history-order-icon-${idx}" class="w-5 h-5 text-gray-400 transition-transform duration-300"></i>
+                        <div class="flex items-center gap-2 text-right">
+                            <span class="${colorClass} font-bold text-xs bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-700">${iconStr}${mainStatus}</span>
+                            <i data-lucide="chevron-down" id="history-order-icon-${idx}" class="w-5 h-5 text-gray-400 transition-transform duration-300"></i>
+                        </div>
                     </div>
                     <div id="history-order-content-${idx}" class="accordion-content bg-gray-50 dark:bg-[#1a1a1a] border-t dark:border-gray-800">
                         <div class="text-sm">
                             <div class="flex justify-between mb-3 border-b border-gray-200 dark:border-gray-700 pb-2">
                                 <span class="text-gray-500 text-xs font-semibold uppercase">ยอดสุทธิ</span>
-                                <span class="font-bold text-primary text-base">฿${amt.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                                <span class="font-bold ${amtColorClass} text-base">฿${amt.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</span>
                             </div>
                             <div class="mb-2">
                                 <span class="text-gray-500 text-xs font-semibold uppercase block mb-1">รายการสินค้า</span>
@@ -1771,28 +1849,51 @@
             deposits.forEach((d, idx) => {
                 let statusEng = formatShortStatusHistory(d.status);
                 let colorClass = statusEng === 'Success' ? 'text-green-500' : (statusEng === 'Pending' ? 'text-yellow-500' : 'text-red-500');
+                let amtColorClass = statusEng === 'Unsuccess' ? 'text-red-500' : 'text-green-600';
+                
                 let iconStr = statusEng === 'Success' ? '<i data-lucide="check-circle" class="w-4 h-4 inline mr-1 -mt-1"></i>' : (statusEng === 'Unsuccess' ? '<i data-lucide="x-circle" class="w-4 h-4 inline mr-1 -mt-1"></i>' : '<i data-lucide="clock" class="w-4 h-4 inline mr-1 -mt-1"></i>');
                 let amt = parseFloat(d.amount) || 0;
+
+                let mainStatus = d.status;
+                let note = "-";
+                if (d.status && d.status.includes('\n')) {
+                    let parts = d.status.split('\n');
+                    mainStatus = parts[0];
+                    note = parts.slice(1).join('\n');
+                }
+
+                let slipBtn = '';
+                let slipUrl = d.slip || (d.items && String(d.items).startsWith('http') ? d.items : null); 
+                if (slipUrl && String(slipUrl).startsWith('http')) {
+                    slipBtn = `<button onclick="openSlipPreview('${slipUrl}'); event.stopPropagation();" class="ml-2 text-blue-500 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/30 p-1.5 rounded-full transition-colors shadow-sm" title="ดูสลิป"><i data-lucide="image" class="w-4 h-4"></i></button>`;
+                }
 
                 const div = document.createElement('div');
                 div.className = "bg-white dark:bg-[#121212] border dark:border-gray-800 rounded-sm shadow-sm overflow-hidden transition-all";
                 div.innerHTML = `
                     <div class="p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" onclick="toggleAccordion('history-dep-content-${idx}', 'history-dep-icon-${idx}')">
-                        <div>
-                            <h3 class="font-bold text-sm text-gray-800 dark:text-white">Deposit <span class="${colorClass} ml-2 font-bold">${iconStr}${statusEng}</span></h3>
+                        <div class="flex-grow">
+                            <div class="flex items-center">
+                                <h3 class="font-bold text-sm text-gray-800 dark:text-white">Deposit</h3>
+                                ${slipBtn}
+                            </div>
                             <p class="text-xs text-gray-500 mt-1">${d.date}</p>
                         </div>
-                        <i data-lucide="chevron-down" id="history-dep-icon-${idx}" class="w-5 h-5 text-gray-400 transition-transform duration-300"></i>
+                        <div class="flex items-center gap-2 text-right">
+                            <span class="${colorClass} font-bold text-xs bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-700">${iconStr}${mainStatus}</span>
+                            <i data-lucide="chevron-down" id="history-dep-icon-${idx}" class="w-5 h-5 text-gray-400 transition-transform duration-300"></i>
+                        </div>
                     </div>
                     <div id="history-dep-content-${idx}" class="accordion-content bg-gray-50 dark:bg-[#1a1a1a] border-t dark:border-gray-800">
                         <div class="text-sm">
                             <div class="flex justify-between mb-2">
                                 <span class="text-gray-500 text-xs font-semibold uppercase">จำนวนเงิน</span>
-                                <span class="font-bold text-green-600">+฿${amt.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                                <span class="font-bold ${amtColorClass}">+฿${amt.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</span>
                             </div>
                             <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                                 <p class="text-xs text-gray-500 font-semibold mb-1">สถานะ/หมายเหตุ:</p>
-                                <p class="text-xs ${statusEng === 'Success' ? 'text-green-600' : 'text-red-500'} font-semibold">${d.status}</p>
+                                <p class="text-xs ${colorClass} font-semibold">${mainStatus}</p>
+                                ${note !== "-" ? `<p class="text-xs text-red-500 font-semibold mt-1 whitespace-pre-wrap">${note}</p>` : ''}
                             </div>
                         </div>
                     </div>
@@ -1810,25 +1911,47 @@
             container.innerHTML = '';
             withdraws.forEach((w, idx) => {
                 let statusEng = formatShortStatusHistory(w.status);
-                let colorClass = statusEng === 'Success' ? 'text-purple-500' : (statusEng === 'Pending' ? 'text-yellow-500' : 'text-red-500');
+                let colorClass = statusEng === 'Success' ? 'text-green-500' : (statusEng === 'Pending' ? 'text-yellow-500' : 'text-red-500');
+                let amtColorClass = statusEng === 'Unsuccess' ? 'text-red-500' : 'text-purple-600';
+                
                 let iconStr = statusEng === 'Success' ? '<i data-lucide="check-circle" class="w-4 h-4 inline mr-1 -mt-1"></i>' : (statusEng === 'Unsuccess' ? '<i data-lucide="x-circle" class="w-4 h-4 inline mr-1 -mt-1"></i>' : '<i data-lucide="clock" class="w-4 h-4 inline mr-1 -mt-1"></i>');
                 let amt = parseFloat(w.amount) || 0;
+
+                let mainStatus = w.status;
+                let note = "-";
+                if (w.status && w.status.includes('\n')) {
+                    let parts = w.status.split('\n');
+                    mainStatus = parts[0];
+                    note = parts.slice(1).join('\n');
+                }
+
+                let slipBtn = '';
+                let slipUrl = w.slip || (w.items && String(w.items).startsWith('http') ? w.items : null); 
+                if (slipUrl && String(slipUrl).startsWith('http')) {
+                    slipBtn = `<button onclick="openSlipPreview('${slipUrl}'); event.stopPropagation();" class="ml-2 text-blue-500 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/30 p-1.5 rounded-full transition-colors shadow-sm" title="ดูสลิปโอนเงิน"><i data-lucide="image" class="w-4 h-4"></i></button>`;
+                }
 
                 const div = document.createElement('div');
                 div.className = "bg-white dark:bg-[#121212] border dark:border-gray-800 rounded-sm shadow-sm overflow-hidden transition-all";
                 div.innerHTML = `
                     <div class="p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" onclick="toggleAccordion('history-wit-content-${idx}', 'history-wit-icon-${idx}')">
-                        <div>
-                            <h3 class="font-bold text-sm text-gray-800 dark:text-white">Withdraw <span class="${colorClass} ml-2 font-bold">${iconStr}${statusEng}</span></h3>
+                        <div class="flex-grow">
+                            <div class="flex items-center">
+                                <h3 class="font-bold text-sm text-gray-800 dark:text-white">Withdraw</h3>
+                                ${slipBtn}
+                            </div>
                             <p class="text-xs text-gray-500 mt-1">${w.date}</p>
                         </div>
-                        <i data-lucide="chevron-down" id="history-wit-icon-${idx}" class="w-5 h-5 text-gray-400 transition-transform duration-300"></i>
+                        <div class="flex items-center gap-2 text-right">
+                            <span class="${colorClass} font-bold text-xs bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-700">${iconStr}${mainStatus}</span>
+                            <i data-lucide="chevron-down" id="history-wit-icon-${idx}" class="w-5 h-5 text-gray-400 transition-transform duration-300"></i>
+                        </div>
                     </div>
                     <div id="history-wit-content-${idx}" class="accordion-content bg-gray-50 dark:bg-[#1a1a1a] border-t dark:border-gray-800">
                         <div class="text-sm">
                             <div class="flex justify-between mb-2">
                                 <span class="text-gray-500 text-xs font-semibold uppercase">จำนวนเงินถอน</span>
-                                <span class="font-bold text-purple-600">-฿${amt.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                                <span class="font-bold ${amtColorClass}">-฿${amt.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</span>
                             </div>
                             <div class="mb-2">
                                 <span class="text-gray-500 text-xs font-semibold uppercase">รายละเอียดบัญชี</span>
@@ -1836,7 +1959,8 @@
                             </div>
                             <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                                 <p class="text-xs text-gray-500 font-semibold mb-1">สถานะ/หมายเหตุ:</p>
-                                <p class="text-xs ${statusEng === 'Success' ? 'text-purple-600' : (statusEng==='Pending'?'text-yellow-600':'text-red-500')} font-semibold">${w.status}</p>
+                                <p class="text-xs ${colorClass} font-semibold">${mainStatus}</p>
+                                ${note !== "-" ? `<p class="text-xs text-red-500 font-semibold mt-1 whitespace-pre-wrap">${note}</p>` : ''}
                             </div>
                         </div>
                     </div>
