@@ -44,12 +44,16 @@
         .pb-safe { padding-bottom: env(safe-area-inset-bottom, 12px); }
         input[type="text"] { font-size: 16px; } 
 
-        .chat-media-obj { max-width: 100%; border-radius: 12px; cursor: pointer; }
+        .chat-media-obj { max-width: 100%; border-radius: 16px; cursor: pointer; }
+        
+        .avatar-left { position: absolute; top: -15px; left: -15px; border: 2px solid white; z-index: 10; }
+        .avatar-right { position: absolute; top: -15px; right: -15px; border: 2px solid white; z-index: 10; }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="flex flex-col h-[100dvh] w-full overflow-hidden text-gray-800 relative">
 
+    <!-- 1. Guest Form -->
     <div id="guest-screen" class="fixed inset-0 bg-[#0f1115] z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center relative overflow-hidden">
             <div class="w-20 h-20 bg-red-100 text-[#e43a3d] rounded-full flex items-center justify-center mx-auto mb-4">
@@ -67,6 +71,7 @@
         </div>
     </div>
 
+    <!-- 2. Chat Room -->
     <div id="chat-room" class="flex flex-col h-full hidden">
         <header class="flex items-center justify-between px-4 py-3 bg-white z-20 shadow-sm border-b border-gray-100">
             <div class="flex items-center gap-3">
@@ -82,17 +87,22 @@
             <button onclick="window.close()" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 transition"><i class="ph ph-x text-lg"></i></button>
         </header>
 
-        <main id="chat-container" class="flex-1 chat-background overflow-y-auto no-scrollbar p-4 space-y-4 flex flex-col relative" onclick="closePanels()">
-            <div class="flex flex-col items-start mt-2">
-                <div class="msg-bubble bg-white text-gray-700 py-3 px-4 rounded-2xl rounded-tl-sm border border-gray-100 text-sm">
+        <main id="chat-container" class="flex-1 chat-background overflow-y-auto no-scrollbar p-5 space-y-6 flex flex-col relative" onclick="closePanels()">
+            <!-- Message ต้อนรับ -->
+            <div class="flex flex-col items-start mt-2 mb-2">
+                <div class="msg-bubble bg-white text-gray-700 py-3 px-5 pr-4 rounded-2xl rounded-tl-none border border-gray-100 text-sm">
+                    <div class="w-8 h-8 rounded-full avatar-left bg-red-100 text-[#e43a3d] shadow-sm flex items-center justify-center"><i class="ph-fill ph-headset text-lg"></i></div>
                     สวัสดีค่ะ ทีมงาน Next Live ยินดีให้บริการค่ะ 💖 มีอะไรให้แอดมินช่วยเหลือแจ้งได้เลยนะคะ
                 </div>
             </div>
 
-            <div id="messages-list" class="flex flex-col space-y-4"></div>
+            <!-- Dynamic Messages list -->
+            <div id="messages-list" class="flex flex-col space-y-5"></div>
 
+            <!-- Typing Indicator -->
             <div class="flex flex-col items-start mt-2" id="typing-indicator" style="display: none;">
-                <div class="msg-bubble bg-white py-3 px-4 rounded-full rounded-tl-sm flex items-center gap-1.5 h-[40px] border border-gray-100">
+                <div class="msg-bubble bg-white py-3 px-5 rounded-full rounded-tl-none flex items-center gap-1.5 h-[40px] border border-gray-100">
+                    <div class="w-8 h-8 rounded-full avatar-left bg-red-100 text-[#e43a3d] shadow-sm flex items-center justify-center"><i class="ph-fill ph-headset text-lg"></i></div>
                     <span class="typing-dot bg-gray-400"></span>
                     <span class="typing-dot bg-gray-400"></span>
                     <span class="typing-dot bg-gray-400"></span>
@@ -101,6 +111,7 @@
             <div id="chat-bottom-anchor" class="h-2"></div>
         </main>
 
+        <!-- Emoji/Sticker Panel -->
         <div id="emoji-panel" class="absolute bottom-[70px] left-2 right-2 md:left-auto md:right-4 md:w-96 bg-white border border-gray-200 shadow-2xl rounded-2xl flex flex-col z-30 transition-all duration-300 transform scale-95 opacity-0 pointer-events-none h-64">
             <div class="flex border-b border-gray-100">
                 <button class="flex-1 py-2 text-sm font-bold text-[#e43a3d] border-b-2 border-[#e43a3d]" id="tab-emoji" onclick="switchTab('emoji')">อิโมจิ</button>
@@ -129,23 +140,35 @@
             </div>
         </div>
 
-        <footer class="bg-white p-2 pb-safe border-t border-gray-200 relative z-40">
-            <div class="flex items-end gap-2 bg-gray-100 rounded-2xl px-2 py-1.5 focus-within:ring-2 focus-within:ring-[#e43a3d]/20 transition-all border border-gray-200">
-                <button class="p-2 text-gray-400 hover:text-[#e43a3d] transition shrink-0" onclick="toggleEmojiPanel()"><i class="ph ph-smiley text-2xl"></i></button>
-                <textarea id="message-input" rows="1" placeholder="พิมพ์ข้อความ..." class="flex-1 bg-transparent border-none focus:outline-none text-gray-700 placeholder-gray-400 px-1 py-2.5 text-sm resize-none max-h-24 no-scrollbar leading-tight" oninput="autoResize(this)"></textarea>
+        <!-- Input Area -->
+        <footer class="bg-white p-2 md:p-3 pb-safe border-t border-gray-200 relative z-40 shrink-0">
+            <div class="flex items-end gap-2 max-w-4xl mx-auto bg-gray-50 rounded-full px-3 py-1.5 border border-gray-200 focus-within:border-blue-400 transition-colors">
+                <button class="p-1.5 text-gray-400 hover:text-blue-500 transition shrink-0" onclick="toggleEmojiPanel()">
+                    <i class="ph ph-smiley text-2xl"></i>
+                </button>
+                <textarea id="message-input" rows="1" placeholder="พิมพ์ข้อความตอบกลับ..." class="flex-1 bg-transparent border-none focus:outline-none text-sm text-gray-700 placeholder-gray-400 px-1 py-2.5 resize-none max-h-24 no-scrollbar leading-tight" oninput="autoResize(this)"></textarea>
+                
+                <!-- รองรับทั้งรูปภาพ วิดีโอ และเอกสาร -->
                 <input type="file" id="file-upload" class="hidden" accept="image/*,video/*,.pdf,.doc,.docx" onchange="uploadFile(event)">
-                <button class="p-2 text-gray-400 hover:text-[#e43a3d] transition shrink-0" onclick="document.getElementById('file-upload').click()"><i class="ph ph-paperclip text-2xl transform -rotate-45"></i></button>
-                <button id="send-btn" class="p-2 text-gray-300 hover:text-[#e43a3d] transition shrink-0" onclick="sendMessage()"><i class="ph-fill ph-paper-plane-right text-2xl" id="send-icon"></i></button>
+                <button class="p-1.5 text-gray-400 hover:text-blue-500 transition shrink-0" onclick="document.getElementById('file-upload').click()">
+                    <i class="ph ph-paperclip text-xl transform -rotate-45"></i>
+                </button>
+                <button id="send-btn" class="p-1.5 text-gray-300 hover:text-[#e43a3d] transition shrink-0" onclick="sendMessage()">
+                    <i class="ph-fill ph-paper-plane-right text-xl" id="send-icon"></i>
+                </button>
             </div>
         </footer>
     </div>
 
+    <!-- Script Logic -->
     <script>
+        // ⚠️ ใส่ URL ของ GAS ของคุณ
         const GAS_URL = "https://script.google.com/macros/s/AKfycbx8Zw7yc9QlPrU9PeaJ6koVbk9UqAZhRIDUSxKvqhQnyc5sp27V0rkxb5FbNKivIfhi/exec";
 
         let chatUser = null;
-        let lastMsgCount = 0;
-        let chatInterval = null;
+        let messagesArray = []; // เก็บข้อความไว้เรนเดอร์ใหม่
+        let isUploading = false;
+        let uploadingType = ''; 
 
         document.addEventListener('DOMContentLoaded', () => {
             const savedUser = localStorage.getItem('nextLiveUser');
@@ -169,7 +192,7 @@
             if(!name || !phone) return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
             
             document.getElementById('btn-start-chat').innerHTML = `<i class="ph ph-spinner animate-spin text-lg"></i> กำลังเข้าสู่ระบบ...`;
-            chatUser = { uid: 'GUEST', fname: name, phone: phone };
+            chatUser = { uid: 'GUEST_' + Date.now().toString().slice(-4), fname: name, phone: phone };
             setTimeout(startSession, 500);
         }
 
@@ -177,7 +200,7 @@
             document.getElementById('guest-screen').classList.add('hidden');
             document.getElementById('chat-room').classList.remove('hidden');
             fetchMessages();
-            chatInterval = setInterval(fetchMessages, 4000); 
+            setInterval(fetchMessages, 3000); // อัปเดตทุก 3 วินาที
         }
 
         function autoResize(el) {
@@ -222,40 +245,141 @@
             inp.value += emoji; inp.focus(); updateSendButton();
         }
 
+        // =======================
+        // ระบบ Render ข้อความ UI 
+        // =======================
+        function renderAdminAvatar() {
+            return `<div class="w-8 h-8 rounded-full avatar-left bg-red-100 text-[#e43a3d] shadow-sm flex items-center justify-center"><i class="ph-fill ph-headset text-lg"></i></div>`;
+        }
+        function renderClientAvatar() {
+            return `<img src="https://i.pravatar.cc/150?img=11" class="w-8 h-8 rounded-full avatar-right object-cover shadow-sm">`;
+        }
+
         function renderBubble(type, content, time) {
             const isUser = type === 'user';
             const timeStr = time || new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
             
             let contentHtml = '';
+            let isMediaBox = false;
+
             if (content.startsWith('[IMG]')) {
                 let url = content.replace('[IMG]', '');
-                contentHtml = `<div class="p-1"><img src="${url}" class="chat-media-obj object-cover" onclick="window.open('${url}')"></div>`;
+                // โชว์แค่รูปขอบมน (ไม่มีกรอบสีฟ้าครอบ)
+                contentHtml = `<img src="${url}" class="w-48 h-48 object-cover rounded-xl border border-gray-200 shadow-sm cursor-pointer" onclick="window.open('${url}')">`;
+                isMediaBox = true;
             } else if (content.startsWith('[VID]')) {
                 let url = content.replace('[VID]', '');
-                contentHtml = `<div class="p-1"><video src="${url}" controls class="chat-media-obj object-cover max-h-48 bg-black"></video></div>`;
+                // กล่องวิดีโอมีไอคอน Play
+                contentHtml = `
+                    <div class="flex items-center gap-3 cursor-pointer p-1" onclick="window.open('${url}')">
+                        <div class="w-10 h-10 ${isUser ? 'bg-white/20' : 'bg-red-100 text-[#e43a3d]'} rounded-full flex items-center justify-center shrink-0">
+                            <i class="ph-fill ph-video-camera text-xl"></i>
+                        </div>
+                        <div class="flex flex-col pr-2">
+                            <span class="text-sm font-bold leading-tight">คลิปวิดีโอ</span>
+                            <span class="text-[10px] ${isUser ? 'text-white/80' : 'text-gray-500'}">แตะเพื่อเล่น</span>
+                        </div>
+                    </div>`;
             } else if (content.startsWith('[FILE]')) {
                 let url = content.replace('[FILE]', '');
-                contentHtml = `<a href="${url}" target="_blank" class="flex items-center gap-2 p-1 hover:underline text-sm"><i class="ph-fill ph-file-text text-2xl"></i> ไฟล์แนบ (เปิด)</a>`;
+                contentHtml = `
+                    <div class="flex items-center gap-3 cursor-pointer p-1" onclick="window.open('${url}')">
+                        <div class="w-10 h-10 ${isUser ? 'bg-white/20' : 'bg-red-100 text-[#e43a3d]'} rounded-full flex items-center justify-center shrink-0">
+                            <i class="ph-fill ph-file-text text-xl"></i>
+                        </div>
+                        <div class="flex flex-col pr-2">
+                            <span class="text-sm font-bold leading-tight">ไฟล์เอกสาร</span>
+                            <span class="text-[10px] ${isUser ? 'text-white/80' : 'text-gray-500'}">แตะเพื่อเปิด</span>
+                        </div>
+                    </div>`;
             } else if (content.startsWith('http') && content.includes('iconify')) {
+                // Sticker
                 contentHtml = `<img src="${content}" class="w-24 h-24 object-contain">`;
-                return `<div class="flex flex-col ${isUser ? 'items-end' : 'items-start'} mt-2 mb-1"><div class="sticker-bubble">${contentHtml}</div></div>`;
+                return `<div class="flex flex-col ${isUser ? 'items-end' : 'items-start'} mt-2 mb-1"><div class="sticker-bubble">${renderClientAvatar()}${contentHtml}</div></div>`;
             } else {
+                // Text
                 contentHtml = content.replace(/\n/g, '<br>');
+                contentHtml = contentHtml.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="underline hover:opacity-80">$1</a>');
             }
 
+            // Wrap in Bubble
             if (isUser) {
-                return `
-                <div class="flex flex-col items-end mt-2 mb-1">
-                    <div class="msg-bubble bg-[#e43a3d] text-white py-2.5 px-4 rounded-2xl rounded-tr-sm text-sm shadow-sm">${contentHtml}</div>
-                    <span class="text-[10px] text-gray-400 mt-1">${timeStr}</span>
-                </div>`;
+                if (isMediaBox) {
+                    return `
+                    <div class="flex flex-col items-end mt-2 mb-1">
+                        <div class="relative max-w-[75%]">
+                            ${renderClientAvatar()}
+                            ${contentHtml}
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-1">${timeStr}</span>
+                    </div>`;
+                } else {
+                    return `
+                    <div class="flex flex-col items-end mt-2 mb-1">
+                        <div class="msg-bubble bg-gradient-to-r from-[#5a8ce0] to-[#366cbe] text-white py-2.5 px-4 pr-5 rounded-2xl rounded-tr-sm text-sm shadow-sm">
+                            ${renderClientAvatar()}
+                            ${contentHtml}
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-1">${timeStr}</span>
+                    </div>`;
+                }
             } else {
-                return `
-                <div class="flex flex-col items-start mt-2 mb-1">
-                    <div class="msg-bubble bg-white text-gray-800 border border-gray-100 py-2.5 px-4 rounded-2xl rounded-tl-sm text-sm shadow-sm">${contentHtml}</div>
-                    <span class="text-[10px] text-gray-400 mt-1">${timeStr}</span>
-                </div>`;
+                if (isMediaBox) {
+                    return `
+                    <div class="flex flex-col items-start mt-2 mb-1">
+                        <div class="relative max-w-[75%]">
+                            ${renderAdminAvatar()}
+                            ${contentHtml}
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-1">${timeStr}</span>
+                    </div>`;
+                } else {
+                    return `
+                    <div class="flex flex-col items-start mt-2 mb-1">
+                        <div class="msg-bubble bg-white text-gray-800 border border-gray-100 py-2.5 px-4 pr-3 rounded-2xl rounded-tl-sm text-sm shadow-sm">
+                            ${renderAdminAvatar()}
+                            ${contentHtml}
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-1">${timeStr}</span>
+                    </div>`;
+                }
             }
+        }
+
+        // สถานะกำลังโหลดไฟล์ (Loading Bubble)
+        function getUploadingBubbleHtml() {
+            let text = 'กำลังส่ง...';
+            if(uploadingType === 'image') text = 'กำลังอัปโหลดรูปภาพ...';
+            if(uploadingType === 'video') text = 'กำลังอัปโหลดวิดีโอ...';
+            if(uploadingType === 'file') text = 'กำลังอัปโหลดไฟล์...';
+
+            return `
+            <div class="flex flex-col items-end mt-2 mb-1">
+                <div class="msg-bubble bg-gradient-to-r from-[#5a8ce0] to-[#366cbe] text-white py-2 px-3 pr-4 rounded-2xl rounded-tr-sm text-sm shadow-sm flex items-center gap-3">
+                    ${renderClientAvatar()}
+                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center shrink-0">
+                        <i class="ph ph-spinner animate-spin text-xl text-white"></i>
+                    </div>
+                    <span class="font-medium text-sm pr-2">${text}</span>
+                </div>
+            </div>`;
+        }
+
+        // วาด UI ใหม่ทั้งหมด
+        function renderAllMessages() {
+            const list = document.getElementById('messages-list');
+            list.innerHTML = ''; 
+            
+            messagesArray.forEach(msg => {
+                if (msg.userMsg) list.innerHTML += renderBubble('user', msg.userMsg, msg.time);
+                if (msg.adminMsg) list.innerHTML += renderBubble('admin', msg.adminMsg, msg.time);
+            });
+
+            if (isUploading) {
+                list.innerHTML += getUploadingBubbleHtml();
+            }
+
+            scrollToBottom();
         }
 
         function showTyping(show) {
@@ -263,33 +387,44 @@
             if(show) scrollToBottom();
         }
 
+        // === การส่งข้อมูลไป Backend ===
         function sendMessage() {
             const inp = document.getElementById('message-input');
             const text = inp.value.trim();
             if(!text) return;
 
-            document.getElementById('messages-list').innerHTML += renderBubble('user', text, '');
-            inp.value = ''; inp.style.height = 'auto'; updateSendButton(); closePanels(); scrollToBottom(); showTyping(true);
+            // สั่ง Render ทันทีที่กดส่ง (Local)
+            messagesArray.push({ userMsg: text, time: new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) });
+            renderAllMessages();
+
+            inp.value = ''; inp.style.height = 'auto'; updateSendButton(); closePanels(); showTyping(true);
 
             fetch(GAS_URL, {
                 method: 'POST',
                 body: JSON.stringify({ action: 'sendChatMessage', uid: chatUser.uid, phone: chatUser.phone || chatUser.fname, message: text, type: 'user' })
-            }).then(() => { setTimeout(fetchMessages, 1500); }).catch(() => { showTyping(false); });
+            }).then(() => { setTimeout(fetchMessages, 1000); }).catch(() => { showTyping(false); });
         }
 
         function sendSticker(url) {
-            document.getElementById('messages-list').innerHTML += renderBubble('user', url, '');
-            closePanels(); scrollToBottom(); showTyping(true);
+            messagesArray.push({ userMsg: url, time: new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) });
+            renderAllMessages();
+            closePanels(); showTyping(true);
+
             fetch(GAS_URL, {
                 method: 'POST',
                 body: JSON.stringify({ action: 'sendChatMessage', uid: chatUser.uid, phone: chatUser.phone || chatUser.fname, message: url, type: 'user' })
-            }).then(() => setTimeout(fetchMessages, 1500));
+            }).then(() => setTimeout(fetchMessages, 1000));
         }
 
         function uploadFile(e) {
             const file = e.target.files[0]; if(!file) return;
-            document.getElementById('messages-list').innerHTML += renderBubble('user', '[IMG]https://i.gifer.com/ZKZg.gif', ''); 
-            scrollToBottom(); showTyping(true);
+            
+            if(file.type.startsWith('image/')) uploadingType = 'image';
+            else if(file.type.startsWith('video/')) uploadingType = 'video';
+            else uploadingType = 'file';
+
+            isUploading = true;
+            renderAllMessages();
 
             const reader = new FileReader();
             reader.onload = function(evt) {
@@ -297,7 +432,10 @@
                 fetch(GAS_URL, {
                     method: 'POST',
                     body: JSON.stringify({ action: 'uploadChatFile', filename: file.name, mimeType: file.type, base64: base64, uid: chatUser.uid, phone: chatUser.phone || chatUser.fname, type: 'user' })
-                }).then(() => fetchMessages());
+                }).then(() => {
+                    isUploading = false;
+                    fetchMessages();
+                });
             };
             reader.readAsDataURL(file);
         }
@@ -308,16 +446,10 @@
                 body: JSON.stringify({ action: 'getChatMessages', uid: chatUser.uid, phone: chatUser.phone || chatUser.fname })
             }).then(r=>r.json()).then(res => {
                 if(res.status === 'success' && res.messages) {
-                    if (res.messages.length !== lastMsgCount) {
-                        const list = document.getElementById('messages-list');
-                        list.innerHTML = ''; 
-                        res.messages.forEach(msg => {
-                            if (msg.userMsg) list.innerHTML += renderBubble('user', msg.userMsg, msg.time);
-                            if (msg.adminMsg) list.innerHTML += renderBubble('admin', msg.adminMsg, msg.time);
-                        });
-                        lastMsgCount = res.messages.length;
+                    if (res.messages.length !== messagesArray.length || isUploading) {
+                        messagesArray = res.messages;
+                        renderAllMessages();
                         showTyping(false);
-                        scrollToBottom();
                     }
                 }
             });
