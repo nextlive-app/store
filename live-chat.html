@@ -143,9 +143,11 @@
         <!-- Input Area -->
         <footer class="bg-white p-2 md:p-3 pb-safe border-t border-gray-200 relative z-40 shrink-0">
             <div class="flex items-end gap-2 max-w-4xl mx-auto bg-gray-50 rounded-full px-3 py-1.5 border border-gray-200 focus-within:border-blue-400 transition-colors">
+                
                 <button class="p-1.5 text-gray-400 hover:text-blue-500 transition shrink-0" onclick="toggleEmojiPanel()">
                     <i class="ph ph-smiley text-2xl"></i>
                 </button>
+
                 <textarea id="message-input" rows="1" placeholder="พิมพ์ข้อความตอบกลับ..." class="flex-1 bg-transparent border-none focus:outline-none text-sm text-gray-700 placeholder-gray-400 px-1 py-2.5 resize-none max-h-24 no-scrollbar leading-tight" oninput="autoResize(this)"></textarea>
                 
                 <!-- รองรับทั้งรูปภาพ วิดีโอ และเอกสาร -->
@@ -162,11 +164,11 @@
 
     <!-- Script Logic -->
     <script>
-        // ⚠️ ใส่ URL ของ GAS ของคุณ
+        // ⚠️ อย่าลืมใส่ URL ของ GAS ของคุณตรงนี้
         const GAS_URL = "https://script.google.com/macros/s/AKfycbx8Zw7yc9QlPrU9PeaJ6koVbk9UqAZhRIDUSxKvqhQnyc5sp27V0rkxb5FbNKivIfhi/exec";
 
         let chatUser = null;
-        let messagesArray = []; // เก็บข้อความไว้เรนเดอร์ใหม่
+        let messagesArray = []; 
         let isUploading = false;
         let uploadingType = ''; 
 
@@ -200,7 +202,7 @@
             document.getElementById('guest-screen').classList.add('hidden');
             document.getElementById('chat-room').classList.remove('hidden');
             fetchMessages();
-            setInterval(fetchMessages, 3000); // อัปเดตทุก 3 วินาที
+            setInterval(fetchMessages, 3000); 
         }
 
         function autoResize(el) {
@@ -246,13 +248,26 @@
         }
 
         // =======================
+        // ฟังก์ชันช่วยแปลง URL ของ Google Drive
+        // =======================
+        function getDirectImageUrl(url) {
+            if (!url) return url;
+            const driveMatch = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=|file\/d\/))([-\w]{25,})/);
+            if (driveMatch && driveMatch[1]) {
+                return `https://drive.google.com/uc?id=${driveMatch[1]}`;
+            }
+            return url;
+        }
+
+        // =======================
         // ระบบ Render ข้อความ UI 
         // =======================
         function renderAdminAvatar() {
             return `<div class="w-8 h-8 rounded-full avatar-left bg-red-100 text-[#e43a3d] shadow-sm flex items-center justify-center"><i class="ph-fill ph-headset text-lg"></i></div>`;
         }
         function renderClientAvatar() {
-            return `<img src="https://i.pravatar.cc/150?img=11" class="w-8 h-8 rounded-full avatar-right object-cover shadow-sm">`;
+            // ใช้ Avatar จำลอง หรือดึงจากข้อมูลจริง
+            return `<img src="https://ui-avatars.com/api/?name=${chatUser ? chatUser.fname : 'U'}&background=random" class="w-8 h-8 rounded-full avatar-right object-cover shadow-sm">`;
         }
 
         function renderBubble(type, content, time) {
@@ -263,46 +278,45 @@
             let isMediaBox = false;
 
             if (content.startsWith('[IMG]')) {
-                let url = content.replace('[IMG]', '');
-                // โชว์แค่รูปขอบมน (ไม่มีกรอบสีฟ้าครอบ)
-                contentHtml = `<img src="${url}" class="w-48 h-48 object-cover rounded-xl border border-gray-200 shadow-sm cursor-pointer" onclick="window.open('${url}')">`;
+                let rawUrl = content.replace('[IMG]', '');
+                let previewUrl = getDirectImageUrl(rawUrl); 
+                // แสดงรูปภาพพร้อมขอบมน ไร้กรอบแชท
+                contentHtml = `<img src="${previewUrl}" class="w-40 h-40 sm:w-48 sm:h-48 object-cover rounded-2xl shadow-sm cursor-pointer border border-gray-200" onclick="window.open('${rawUrl}')" onerror="this.onerror=null; this.src='https://via.placeholder.com/150?text=Image+Error';">`;
                 isMediaBox = true;
             } else if (content.startsWith('[VID]')) {
                 let url = content.replace('[VID]', '');
-                // กล่องวิดีโอมีไอคอน Play
+                // กล่องวิดีโอ มีไอคอน
                 contentHtml = `
-                    <div class="flex items-center gap-3 cursor-pointer p-1" onclick="window.open('${url}')">
-                        <div class="w-10 h-10 ${isUser ? 'bg-white/20' : 'bg-red-100 text-[#e43a3d]'} rounded-full flex items-center justify-center shrink-0">
-                            <i class="ph-fill ph-video-camera text-xl"></i>
+                    <div class="flex items-center gap-3 cursor-pointer p-2" onclick="window.open('${url}')">
+                        <div class="w-12 h-12 ${isUser ? 'bg-white/20 text-white' : 'bg-red-100 text-[#e43a3d]'} rounded-full flex items-center justify-center shrink-0">
+                            <i class="ph-fill ph-video-camera text-2xl"></i>
                         </div>
-                        <div class="flex flex-col pr-2">
-                            <span class="text-sm font-bold leading-tight">คลิปวิดีโอ</span>
-                            <span class="text-[10px] ${isUser ? 'text-white/80' : 'text-gray-500'}">แตะเพื่อเล่น</span>
+                        <div class="flex flex-col pr-4 ${isUser ? 'text-white' : 'text-gray-800'}">
+                            <span class="text-base font-bold leading-tight">ไฟล์วิดีโอ</span>
+                            <span class="text-xs ${isUser ? 'text-white/80' : 'text-gray-500'}">แตะเพื่อเล่น</span>
                         </div>
                     </div>`;
             } else if (content.startsWith('[FILE]')) {
                 let url = content.replace('[FILE]', '');
+                // กล่องเอกสาร มีไอคอน
                 contentHtml = `
-                    <div class="flex items-center gap-3 cursor-pointer p-1" onclick="window.open('${url}')">
-                        <div class="w-10 h-10 ${isUser ? 'bg-white/20' : 'bg-red-100 text-[#e43a3d]'} rounded-full flex items-center justify-center shrink-0">
-                            <i class="ph-fill ph-file-text text-xl"></i>
+                    <div class="flex items-center gap-3 cursor-pointer p-2" onclick="window.open('${url}')">
+                        <div class="w-12 h-12 ${isUser ? 'bg-white/20 text-white' : 'bg-red-100 text-[#e43a3d]'} rounded-full flex items-center justify-center shrink-0">
+                            <i class="ph-fill ph-file-text text-2xl"></i>
                         </div>
-                        <div class="flex flex-col pr-2">
-                            <span class="text-sm font-bold leading-tight">ไฟล์เอกสาร</span>
-                            <span class="text-[10px] ${isUser ? 'text-white/80' : 'text-gray-500'}">แตะเพื่อเปิด</span>
+                        <div class="flex flex-col pr-4 ${isUser ? 'text-white' : 'text-gray-800'}">
+                            <span class="text-base font-bold leading-tight">ไฟล์เอกสาร</span>
+                            <span class="text-xs ${isUser ? 'text-white/80' : 'text-gray-500'}">แตะเพื่อเปิด</span>
                         </div>
                     </div>`;
             } else if (content.startsWith('http') && content.includes('iconify')) {
-                // Sticker
                 contentHtml = `<img src="${content}" class="w-24 h-24 object-contain">`;
                 return `<div class="flex flex-col ${isUser ? 'items-end' : 'items-start'} mt-2 mb-1"><div class="sticker-bubble">${renderClientAvatar()}${contentHtml}</div></div>`;
             } else {
-                // Text
                 contentHtml = content.replace(/\n/g, '<br>');
                 contentHtml = contentHtml.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="underline hover:opacity-80">$1</a>');
             }
 
-            // Wrap in Bubble
             if (isUser) {
                 if (isMediaBox) {
                     return `
@@ -316,7 +330,7 @@
                 } else {
                     return `
                     <div class="flex flex-col items-end mt-2 mb-1">
-                        <div class="msg-bubble bg-gradient-to-r from-[#5a8ce0] to-[#366cbe] text-white py-2.5 px-4 pr-5 rounded-2xl rounded-tr-sm text-sm shadow-sm">
+                        <div class="msg-bubble bg-[#5a8ce0] text-white py-2 px-3 rounded-2xl rounded-tr-sm text-sm shadow-sm">
                             ${renderClientAvatar()}
                             ${contentHtml}
                         </div>
@@ -336,7 +350,7 @@
                 } else {
                     return `
                     <div class="flex flex-col items-start mt-2 mb-1">
-                        <div class="msg-bubble bg-white text-gray-800 border border-gray-100 py-2.5 px-4 pr-3 rounded-2xl rounded-tl-sm text-sm shadow-sm">
+                        <div class="msg-bubble bg-white text-gray-800 border border-gray-100 py-2 px-3 rounded-2xl rounded-tl-sm text-sm shadow-sm">
                             ${renderAdminAvatar()}
                             ${contentHtml}
                         </div>
@@ -346,16 +360,15 @@
             }
         }
 
-        // สถานะกำลังโหลดไฟล์ (Loading Bubble)
         function getUploadingBubbleHtml() {
             let text = 'กำลังส่ง...';
-            if(uploadingType === 'image') text = 'กำลังอัปโหลดรูปภาพ...';
-            if(uploadingType === 'video') text = 'กำลังอัปโหลดวิดีโอ...';
-            if(uploadingType === 'file') text = 'กำลังอัปโหลดไฟล์...';
+            if(uploadingType === 'image') text = 'กำลังส่งรูปภาพ...';
+            if(uploadingType === 'video') text = 'กำลังส่งวิดีโอ...';
+            if(uploadingType === 'file') text = 'กำลังส่งเอกสาร...';
 
             return `
             <div class="flex flex-col items-end mt-2 mb-1">
-                <div class="msg-bubble bg-gradient-to-r from-[#5a8ce0] to-[#366cbe] text-white py-2 px-3 pr-4 rounded-2xl rounded-tr-sm text-sm shadow-sm flex items-center gap-3">
+                <div class="msg-bubble bg-[#5a8ce0] text-white py-2 px-3 pr-4 rounded-2xl rounded-tr-sm text-sm shadow-sm flex items-center gap-3">
                     ${renderClientAvatar()}
                     <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center shrink-0">
                         <i class="ph ph-spinner animate-spin text-xl text-white"></i>
@@ -365,7 +378,6 @@
             </div>`;
         }
 
-        // วาด UI ใหม่ทั้งหมด
         function renderAllMessages() {
             const list = document.getElementById('messages-list');
             list.innerHTML = ''; 
@@ -393,7 +405,6 @@
             const text = inp.value.trim();
             if(!text) return;
 
-            // สั่ง Render ทันทีที่กดส่ง (Local)
             messagesArray.push({ userMsg: text, time: new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) });
             renderAllMessages();
 
