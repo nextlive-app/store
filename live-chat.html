@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
-    <title>Live Chat Support | Next Live</title>
+    <title>Live Chat  | Next Live</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -44,8 +44,6 @@
         .pb-safe { padding-bottom: env(safe-area-inset-bottom, 12px); }
         input[type="text"] { font-size: 16px; } 
 
-        .chat-media-obj { max-width: 100%; border-radius: 16px; cursor: pointer; }
-        
         .avatar-left { position: absolute; top: -15px; left: -15px; border: 2px solid white; z-index: 10; }
         .avatar-right { position: absolute; top: -15px; right: -15px; border: 2px solid white; z-index: 10; }
     </style>
@@ -73,7 +71,7 @@
 
     <!-- 2. Chat Room -->
     <div id="chat-room" class="flex flex-col h-full hidden">
-        <header class="flex items-center justify-between px-4 py-3 bg-white z-20 shadow-sm border-b border-gray-100">
+        <header class="flex items-center justify-between px-4 py-3 bg-white z-20 shadow-sm border-b border-gray-100 shrink-0">
             <div class="flex items-center gap-3">
                 <div class="relative">
                     <div class="w-10 h-10 bg-red-100 text-[#e43a3d] rounded-full flex items-center justify-center border border-red-200"><i class="ph-fill ph-headset text-xl"></i></div>
@@ -143,14 +141,11 @@
         <!-- Input Area -->
         <footer class="bg-white p-2 md:p-3 pb-safe border-t border-gray-200 relative z-40 shrink-0">
             <div class="flex items-end gap-2 max-w-4xl mx-auto bg-gray-50 rounded-full px-3 py-1.5 border border-gray-200 focus-within:border-blue-400 transition-colors">
-                
                 <button class="p-1.5 text-gray-400 hover:text-blue-500 transition shrink-0" onclick="toggleEmojiPanel()">
                     <i class="ph ph-smiley text-2xl"></i>
                 </button>
-
-                <textarea id="message-input" rows="1" placeholder="พิมพ์ข้อความตอบกลับ..." class="flex-1 bg-transparent border-none focus:outline-none text-sm text-gray-700 placeholder-gray-400 px-1 py-2.5 resize-none max-h-24 no-scrollbar leading-tight" oninput="autoResize(this)"></textarea>
+                <textarea id="message-input" rows="1" placeholder="พิมพ์ข้อความ..." class="flex-1 bg-transparent border-none focus:outline-none text-sm text-gray-700 placeholder-gray-400 px-1 py-2.5 resize-none max-h-24 no-scrollbar leading-tight" oninput="autoResize(this)"></textarea>
                 
-                <!-- รองรับทั้งรูปภาพ วิดีโอ และเอกสาร -->
                 <input type="file" id="file-upload" class="hidden" accept="image/*,video/*,.pdf,.doc,.docx" onchange="uploadFile(event)">
                 <button class="p-1.5 text-gray-400 hover:text-blue-500 transition shrink-0" onclick="document.getElementById('file-upload').click()">
                     <i class="ph ph-paperclip text-xl transform -rotate-45"></i>
@@ -254,7 +249,7 @@
             if (!url) return url;
             const driveMatch = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=|file\/d\/))([-\w]{25,})/);
             if (driveMatch && driveMatch[1]) {
-                return `https://drive.google.com/uc?id=${driveMatch[1]}`;
+                return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w800`;
             }
             return url;
         }
@@ -266,7 +261,6 @@
             return `<div class="w-8 h-8 rounded-full avatar-left bg-red-100 text-[#e43a3d] shadow-sm flex items-center justify-center"><i class="ph-fill ph-headset text-lg"></i></div>`;
         }
         function renderClientAvatar() {
-            // ใช้ Avatar จำลอง หรือดึงจากข้อมูลจริง
             return `<img src="https://ui-avatars.com/api/?name=${chatUser ? chatUser.fname : 'U'}&background=random" class="w-8 h-8 rounded-full avatar-right object-cover shadow-sm">`;
         }
 
@@ -280,12 +274,10 @@
             if (content.startsWith('[IMG]')) {
                 let rawUrl = content.replace('[IMG]', '');
                 let previewUrl = getDirectImageUrl(rawUrl); 
-                // แสดงรูปภาพพร้อมขอบมน ไร้กรอบแชท
                 contentHtml = `<img src="${previewUrl}" class="w-40 h-40 sm:w-48 sm:h-48 object-cover rounded-2xl shadow-sm cursor-pointer border border-gray-200" onclick="window.open('${rawUrl}')" onerror="this.onerror=null; this.src='https://via.placeholder.com/150?text=Image+Error';">`;
                 isMediaBox = true;
             } else if (content.startsWith('[VID]')) {
                 let url = content.replace('[VID]', '');
-                // กล่องวิดีโอ มีไอคอน
                 contentHtml = `
                     <div class="flex items-center gap-3 cursor-pointer p-2" onclick="window.open('${url}')">
                         <div class="w-12 h-12 ${isUser ? 'bg-white/20 text-white' : 'bg-red-100 text-[#e43a3d]'} rounded-full flex items-center justify-center shrink-0">
@@ -298,7 +290,6 @@
                     </div>`;
             } else if (content.startsWith('[FILE]')) {
                 let url = content.replace('[FILE]', '');
-                // กล่องเอกสาร มีไอคอน
                 contentHtml = `
                     <div class="flex items-center gap-3 cursor-pointer p-2" onclick="window.open('${url}')">
                         <div class="w-12 h-12 ${isUser ? 'bg-white/20 text-white' : 'bg-red-100 text-[#e43a3d]'} rounded-full flex items-center justify-center shrink-0">
@@ -311,7 +302,7 @@
                     </div>`;
             } else if (content.startsWith('http') && content.includes('iconify')) {
                 contentHtml = `<img src="${content}" class="w-24 h-24 object-contain">`;
-                return `<div class="flex flex-col ${isUser ? 'items-end' : 'items-start'} mt-2 mb-1"><div class="sticker-bubble">${renderClientAvatar()}${contentHtml}</div></div>`;
+                return `<div class="flex flex-col ${isUser ? 'items-end' : 'items-start'} mt-2 mb-1"><div class="sticker-bubble">${isUser ? renderClientAvatar() : renderAdminAvatar()}${contentHtml}</div></div>`;
             } else {
                 contentHtml = content.replace(/\n/g, '<br>');
                 contentHtml = contentHtml.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="underline hover:opacity-80">$1</a>');
@@ -330,7 +321,7 @@
                 } else {
                     return `
                     <div class="flex flex-col items-end mt-2 mb-1">
-                        <div class="msg-bubble bg-[#5a8ce0] text-white py-2 px-3 rounded-2xl rounded-tr-sm text-sm shadow-sm">
+                        <div class="msg-bubble bg-[#5a8ce0] text-white py-2.5 px-4 pr-5 rounded-2xl rounded-tr-sm text-sm shadow-sm">
                             ${renderClientAvatar()}
                             ${contentHtml}
                         </div>
@@ -350,7 +341,7 @@
                 } else {
                     return `
                     <div class="flex flex-col items-start mt-2 mb-1">
-                        <div class="msg-bubble bg-white text-gray-800 border border-gray-100 py-2 px-3 rounded-2xl rounded-tl-sm text-sm shadow-sm">
+                        <div class="msg-bubble bg-white text-gray-800 border border-gray-100 py-2.5 px-4 pr-3 rounded-2xl rounded-tl-sm text-sm shadow-sm">
                             ${renderAdminAvatar()}
                             ${contentHtml}
                         </div>
@@ -430,9 +421,11 @@
         function uploadFile(e) {
             const file = e.target.files[0]; if(!file) return;
             
-            if(file.type.startsWith('image/')) uploadingType = 'image';
-            else if(file.type.startsWith('video/')) uploadingType = 'video';
-            else uploadingType = 'file';
+            let mime = file.type;
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (['jpg','jpeg','png','gif','webp','heic'].includes(ext)) { mime = 'image/'+ext; uploadingType = 'image'; }
+            else if (['mp4','mov','avi','mkv'].includes(ext)) { mime = 'video/'+ext; uploadingType = 'video'; }
+            else { uploadingType = 'file'; }
 
             isUploading = true;
             renderAllMessages();
@@ -442,7 +435,7 @@
                 const base64 = evt.target.result.split(',')[1];
                 fetch(GAS_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ action: 'uploadChatFile', filename: file.name, mimeType: file.type, base64: base64, uid: chatUser.uid, phone: chatUser.phone || chatUser.fname, type: 'user' })
+                    body: JSON.stringify({ action: 'uploadChatFile', filename: file.name, mimeType: mime, base64: base64, uid: chatUser.uid, phone: chatUser.phone || chatUser.fname, type: 'user' })
                 }).then(() => {
                     isUploading = false;
                     fetchMessages();
