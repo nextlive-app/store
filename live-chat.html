@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>Live Chat Support | Next Live</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
     <style>
@@ -38,20 +36,20 @@
         .sticker-bubble { max-width: 50%; position: relative; animation: bounceIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes bounceIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-        /* Typing Dots */
         .typing-dot { width: 6px; height: 6px; background-color: #e43a3d; border-radius: 50%; display: inline-block; animation: typingBounce 1.4s infinite ease-in-out both; }
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
         @keyframes typingBounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.6; } 40% { transform: scale(1.2); opacity: 1; } }
 
         .pb-safe { padding-bottom: env(safe-area-inset-bottom, 12px); }
-        input[type="text"] { font-size: 16px; } /* ป้องกัน iOS Zoom */
+        input[type="text"] { font-size: 16px; } 
+
+        .chat-media-obj { max-width: 100%; border-radius: 12px; cursor: pointer; }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="flex flex-col h-[100dvh] w-full overflow-hidden text-gray-800 relative">
 
-    <!-- 1. หน้าต่างต้อนรับ (Guest Form) -->
     <div id="guest-screen" class="fixed inset-0 bg-[#0f1115] z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center relative overflow-hidden">
             <div class="w-20 h-20 bg-red-100 text-[#e43a3d] rounded-full flex items-center justify-center mx-auto mb-4">
@@ -69,9 +67,7 @@
         </div>
     </div>
 
-    <!-- 2. หน้าต่างแชท (Chat Room) -->
     <div id="chat-room" class="flex flex-col h-full hidden">
-        <!-- Header -->
         <header class="flex items-center justify-between px-4 py-3 bg-white z-20 shadow-sm border-b border-gray-100">
             <div class="flex items-center gap-3">
                 <div class="relative">
@@ -86,10 +82,7 @@
             <button onclick="window.close()" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 transition"><i class="ph ph-x text-lg"></i></button>
         </header>
 
-        <!-- Messages Area -->
         <main id="chat-container" class="flex-1 chat-background overflow-y-auto no-scrollbar p-4 space-y-4 flex flex-col relative" onclick="closePanels()">
-            
-            <!-- Message เริ่มต้น -->
             <div class="flex flex-col items-start mt-2">
                 <div class="msg-bubble bg-white text-gray-700 py-3 px-4 rounded-2xl rounded-tl-sm border border-gray-100 text-sm">
                     สวัสดีค่ะ ทีมงาน Next Live ยินดีให้บริการค่ะ 💖 มีอะไรให้แอดมินช่วยเหลือแจ้งได้เลยนะคะ
@@ -98,7 +91,6 @@
 
             <div id="messages-list" class="flex flex-col space-y-4"></div>
 
-            <!-- Typing Indicator -->
             <div class="flex flex-col items-start mt-2" id="typing-indicator" style="display: none;">
                 <div class="msg-bubble bg-white py-3 px-4 rounded-full rounded-tl-sm flex items-center gap-1.5 h-[40px] border border-gray-100">
                     <span class="typing-dot bg-gray-400"></span>
@@ -109,13 +101,11 @@
             <div id="chat-bottom-anchor" class="h-2"></div>
         </main>
 
-        <!-- Emoji/Sticker Panel -->
         <div id="emoji-panel" class="absolute bottom-[70px] left-2 right-2 md:left-auto md:right-4 md:w-96 bg-white border border-gray-200 shadow-2xl rounded-2xl flex flex-col z-30 transition-all duration-300 transform scale-95 opacity-0 pointer-events-none h-64">
             <div class="flex border-b border-gray-100">
                 <button class="flex-1 py-2 text-sm font-bold text-[#e43a3d] border-b-2 border-[#e43a3d]" id="tab-emoji" onclick="switchTab('emoji')">อิโมจิ</button>
                 <button class="flex-1 py-2 text-sm font-bold text-gray-400 hover:text-gray-600" id="tab-sticker" onclick="switchTab('sticker')">สติกเกอร์</button>
             </div>
-            <!-- Emoji Grid -->
             <div id="grid-emoji" class="flex-1 overflow-y-auto p-2 grid grid-cols-6 gap-1 text-2xl no-scrollbar">
                 <button class="hover:bg-gray-100 rounded transition" onclick="insertEmoji('😀')">😀</button>
                 <button class="hover:bg-gray-100 rounded transition" onclick="insertEmoji('😂')">😂</button>
@@ -130,7 +120,6 @@
                 <button class="hover:bg-gray-100 rounded transition" onclick="insertEmoji('👍')">👍</button>
                 <button class="hover:bg-gray-100 rounded transition" onclick="insertEmoji('🥺')">🥺</button>
             </div>
-            <!-- Sticker Grid -->
             <div id="grid-sticker" class="flex-1 overflow-y-auto p-4 grid grid-cols-4 gap-4 hidden no-scrollbar">
                 <button class="hover:scale-110 transition transform active:scale-95" onclick="sendSticker('https://api.iconify.design/noto:partying-face.svg?width=100')"><img src="https://api.iconify.design/noto:partying-face.svg?width=100" class="w-full drop-shadow-md"></button>
                 <button class="hover:scale-110 transition transform active:scale-95" onclick="sendSticker('https://api.iconify.design/noto:red-heart.svg?width=100')"><img src="https://api.iconify.design/noto:red-heart.svg?width=100" class="w-full drop-shadow-md"></button>
@@ -140,7 +129,6 @@
             </div>
         </div>
 
-        <!-- Input Area -->
         <footer class="bg-white p-2 pb-safe border-t border-gray-200 relative z-40">
             <div class="flex items-end gap-2 bg-gray-100 rounded-2xl px-2 py-1.5 focus-within:ring-2 focus-within:ring-[#e43a3d]/20 transition-all border border-gray-200">
                 <button class="p-2 text-gray-400 hover:text-[#e43a3d] transition shrink-0" onclick="toggleEmojiPanel()"><i class="ph ph-smiley text-2xl"></i></button>
@@ -152,23 +140,19 @@
         </footer>
     </div>
 
-    <!-- Script Logic -->
     <script>
-        // ⚠️ ใส่ URL ของ GAS ที่คุณ Deploy ไว้
         const GAS_URL = "https://script.google.com/macros/s/AKfycbx8Zw7yc9QlPrU9PeaJ6koVbk9UqAZhRIDUSxKvqhQnyc5sp27V0rkxb5FbNKivIfhi/exec";
 
         let chatUser = null;
-        let lastMessageTimestamp = 0;
+        let lastMsgCount = 0;
         let chatInterval = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             const savedUser = localStorage.getItem('nextLiveUser');
             if (savedUser) {
-                // ถ้าล็อกอินในระบบร้านค้าแล้ว ให้ดึงข้อมูลมาใช้เลย
                 chatUser = JSON.parse(savedUser);
                 startSession();
             } else {
-                // ถ้าเป็น Guest ให้แสดงฟอร์ม
                 document.getElementById('guest-screen').classList.remove('hidden');
             }
 
@@ -184,10 +168,8 @@
             const phone = document.getElementById('guest-phone').value;
             if(!name || !phone) return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
             
-            const btn = document.getElementById('btn-start-chat');
-            btn.innerHTML = `<i class="ph ph-spinner animate-spin text-lg"></i> กำลังเข้าสู่ระบบ...`;
-            
-            chatUser = { uid: 'G_' + Date.now().toString().slice(-6), fname: name, phone: phone };
+            document.getElementById('btn-start-chat').innerHTML = `<i class="ph ph-spinner animate-spin text-lg"></i> กำลังเข้าสู่ระบบ...`;
+            chatUser = { uid: 'GUEST', fname: name, phone: phone };
             setTimeout(startSession, 500);
         }
 
@@ -195,12 +177,11 @@
             document.getElementById('guest-screen').classList.add('hidden');
             document.getElementById('chat-room').classList.remove('hidden');
             fetchMessages();
-            chatInterval = setInterval(fetchMessages, 3000); // Polling ทุก 3 วินาที
+            chatInterval = setInterval(fetchMessages, 4000); 
         }
 
         function autoResize(el) {
-            el.style.height = 'auto';
-            el.style.height = (el.scrollHeight < 96 ? el.scrollHeight : 96) + 'px';
+            el.style.height = 'auto'; el.style.height = (el.scrollHeight < 96 ? el.scrollHeight : 96) + 'px';
             updateSendButton();
         }
 
@@ -211,10 +192,7 @@
             else { icon.classList.add('text-gray-300'); icon.classList.remove('text-[#e43a3d]'); }
         }
 
-        // === UI Helpers ===
-        function scrollToBottom() {
-            document.getElementById('chat-bottom-anchor').scrollIntoView({ behavior: 'smooth' });
-        }
+        function scrollToBottom() { document.getElementById('chat-bottom-anchor').scrollIntoView({ behavior: 'smooth' }); }
 
         function toggleEmojiPanel() {
             const panel = document.getElementById('emoji-panel');
@@ -232,13 +210,11 @@
             if(tab === 'emoji') {
                 document.getElementById('tab-emoji').className = "flex-1 py-2 text-sm font-bold text-[#e43a3d] border-b-2 border-[#e43a3d]";
                 document.getElementById('tab-sticker').className = "flex-1 py-2 text-sm font-bold text-gray-400 hover:text-gray-600";
-                document.getElementById('grid-emoji').classList.remove('hidden');
-                document.getElementById('grid-sticker').classList.add('hidden');
+                document.getElementById('grid-emoji').classList.remove('hidden'); document.getElementById('grid-sticker').classList.add('hidden');
             } else {
                 document.getElementById('tab-sticker').className = "flex-1 py-2 text-sm font-bold text-[#e43a3d] border-b-2 border-[#e43a3d]";
                 document.getElementById('tab-emoji').className = "flex-1 py-2 text-sm font-bold text-gray-400 hover:text-gray-600";
-                document.getElementById('grid-sticker').classList.remove('hidden');
-                document.getElementById('grid-emoji').classList.add('hidden');
+                document.getElementById('grid-sticker').classList.remove('hidden'); document.getElementById('grid-emoji').classList.add('hidden');
             }
         }
         function insertEmoji(emoji) {
@@ -246,18 +222,20 @@
             inp.value += emoji; inp.focus(); updateSendButton();
         }
 
-        // === Message Handling ===
-        function renderBubble(type, content) {
+        function renderBubble(type, content, time) {
             const isUser = type === 'user';
-            const timeStr = new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
+            const timeStr = time || new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
             
             let contentHtml = '';
             if (content.startsWith('[IMG]')) {
                 let url = content.replace('[IMG]', '');
-                contentHtml = `<div class="p-1"><img src="${url}" class="rounded-xl max-w-full max-h-48 object-cover cursor-pointer" onclick="window.open('${url}')"></div>`;
+                contentHtml = `<div class="p-1"><img src="${url}" class="chat-media-obj object-cover" onclick="window.open('${url}')"></div>`;
+            } else if (content.startsWith('[VID]')) {
+                let url = content.replace('[VID]', '');
+                contentHtml = `<div class="p-1"><video src="${url}" controls class="chat-media-obj object-cover max-h-48 bg-black"></video></div>`;
             } else if (content.startsWith('[FILE]')) {
                 let url = content.replace('[FILE]', '');
-                contentHtml = `<a href="${url}" target="_blank" class="flex items-center gap-2 p-1 hover:underline text-sm"><i class="ph-fill ph-file-text text-2xl"></i> ไฟล์แนบ (คลิกเพื่อเปิด)</a>`;
+                contentHtml = `<a href="${url}" target="_blank" class="flex items-center gap-2 p-1 hover:underline text-sm"><i class="ph-fill ph-file-text text-2xl"></i> ไฟล์แนบ (เปิด)</a>`;
             } else if (content.startsWith('http') && content.includes('iconify')) {
                 contentHtml = `<img src="${content}" class="w-24 h-24 object-contain">`;
                 return `<div class="flex flex-col ${isUser ? 'items-end' : 'items-start'} mt-2 mb-1"><div class="sticker-bubble">${contentHtml}</div></div>`;
@@ -280,57 +258,46 @@
             }
         }
 
-        function appendMessageUI(type, content) {
-            const list = document.getElementById('messages-list');
-            list.innerHTML += renderBubble(type, content);
-            scrollToBottom();
-        }
-
         function showTyping(show) {
             document.getElementById('typing-indicator').style.display = show ? 'flex' : 'none';
             if(show) scrollToBottom();
         }
 
-        // === Network Requests ===
         function sendMessage() {
             const inp = document.getElementById('message-input');
             const text = inp.value.trim();
             if(!text) return;
 
-            appendMessageUI('user', text);
-            inp.value = ''; inp.style.height = 'auto'; updateSendButton(); closePanels();
-            showTyping(true);
+            document.getElementById('messages-list').innerHTML += renderBubble('user', text, '');
+            inp.value = ''; inp.style.height = 'auto'; updateSendButton(); closePanels(); scrollToBottom(); showTyping(true);
 
             fetch(GAS_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action: 'sendChatMessage', uid: chatUser.uid, phone: chatUser.phone, message: text, type: 'user' })
-            }).then(r=>r.json()).then(res => {
-                if(res.status === 'success') { setTimeout(fetchMessages, 1000); }
-            }).catch(e => { showTyping(false); alert('ส่งไม่สำเร็จ ตรวจสอบอินเทอร์เน็ต'); });
+                body: JSON.stringify({ action: 'sendChatMessage', uid: chatUser.uid, phone: chatUser.phone || chatUser.fname, message: text, type: 'user' })
+            }).then(() => { setTimeout(fetchMessages, 1500); }).catch(() => { showTyping(false); });
         }
 
         function sendSticker(url) {
-            appendMessageUI('user', url); closePanels(); showTyping(true);
+            document.getElementById('messages-list').innerHTML += renderBubble('user', url, '');
+            closePanels(); scrollToBottom(); showTyping(true);
             fetch(GAS_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action: 'sendChatMessage', uid: chatUser.uid, phone: chatUser.phone, message: url, type: 'user' })
-            }).then(() => setTimeout(fetchMessages, 1000));
+                body: JSON.stringify({ action: 'sendChatMessage', uid: chatUser.uid, phone: chatUser.phone || chatUser.fname, message: url, type: 'user' })
+            }).then(() => setTimeout(fetchMessages, 1500));
         }
 
         function uploadFile(e) {
             const file = e.target.files[0]; if(!file) return;
-            appendMessageUI('user', '[IMG]https://i.gifer.com/ZKZg.gif'); // Loading dummy
-            showTyping(true);
+            document.getElementById('messages-list').innerHTML += renderBubble('user', '[IMG]https://i.gifer.com/ZKZg.gif', ''); 
+            scrollToBottom(); showTyping(true);
 
             const reader = new FileReader();
             reader.onload = function(evt) {
                 const base64 = evt.target.result.split(',')[1];
                 fetch(GAS_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ action: 'uploadChatFile', filename: file.name, mimeType: file.type, base64: base64, uid: chatUser.uid, phone: chatUser.phone })
-                }).then(r=>r.json()).then(res => {
-                    if(res.status === 'success') { fetchMessages(); }
-                });
+                    body: JSON.stringify({ action: 'uploadChatFile', filename: file.name, mimeType: file.type, base64: base64, uid: chatUser.uid, phone: chatUser.phone || chatUser.fname, type: 'user' })
+                }).then(() => fetchMessages());
             };
             reader.readAsDataURL(file);
         }
@@ -338,21 +305,20 @@
         function fetchMessages() {
             fetch(GAS_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action: 'getChatMessages', uid: chatUser.uid, phone: chatUser.phone })
+                body: JSON.stringify({ action: 'getChatMessages', uid: chatUser.uid, phone: chatUser.phone || chatUser.fname })
             }).then(r=>r.json()).then(res => {
                 if(res.status === 'success' && res.messages) {
-                    const list = document.getElementById('messages-list');
-                    list.innerHTML = ''; // Clear and redraw
-                    let latestMsgFromAdmin = false;
-                    
-                    res.messages.forEach(msg => {
-                        if (msg.userMsg) list.innerHTML += renderBubble('user', msg.userMsg);
-                        if (msg.adminMsg) { list.innerHTML += renderBubble('admin', msg.adminMsg); latestMsgFromAdmin = true; }
-                    });
-                    
-                    if(latestMsgFromAdmin) showTyping(false);
-                    // auto scroll only if new messages arrived
-                    if(res.messages.length > 0) { scrollToBottom(); }
+                    if (res.messages.length !== lastMsgCount) {
+                        const list = document.getElementById('messages-list');
+                        list.innerHTML = ''; 
+                        res.messages.forEach(msg => {
+                            if (msg.userMsg) list.innerHTML += renderBubble('user', msg.userMsg, msg.time);
+                            if (msg.adminMsg) list.innerHTML += renderBubble('admin', msg.adminMsg, msg.time);
+                        });
+                        lastMsgCount = res.messages.length;
+                        showTyping(false);
+                        scrollToBottom();
+                    }
                 }
             });
         }
