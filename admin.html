@@ -748,6 +748,7 @@
             document.getElementById('ep-title').value = mTitle;
             document.getElementById('ep-img').value = mImg;
             
+            // หา detail เดิม
             let mDesc = "";
             let f = state.movies.find(m => m.cols[0] === mId);
             if(f) mDesc = f.cols[3];
