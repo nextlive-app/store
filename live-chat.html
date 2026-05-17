@@ -61,7 +61,7 @@
             <p class="text-sm text-gray-500 mb-6">กรุณาระบุชื่อและเบอร์โทรศัพท์เพื่อเริ่มสนทนากับเจ้าหน้าที่</p>
             <form onsubmit="startGuestChat(event)" class="space-y-4">
                 <div><input type="text" id="guest-name" required placeholder="ชื่อของคุณ" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#e43a3d] transition"></div>
-                <div><input type="tel" id="guest-phone" required placeholder="เบอร์โทรศัพท์" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#e43a3d] transition"></div>
+                <div><input type="tel" id="guest-phone" required placeholder="เบอร์โทรศัพท์ (10 หลัก)" pattern="[0-9]{10}" maxlength="10" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#e43a3d] transition"></div>
                 <button type="submit" id="btn-start-chat" class="w-full bg-[#e43a3d] hover:bg-red-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition-colors flex justify-center items-center gap-2">
                     <i class="ph-fill ph-chat-circle-dots text-lg"></i> เริ่มสนทนา
                 </button>
@@ -166,6 +166,12 @@
         let messagesArray = []; 
         let isUploading = false;
         let uploadingType = ''; 
+        let isSendingMessage = false;
+
+        // Adaptive Polling Logic ป้องกันการโหลดหนัก
+        let pollInterval = 3000;
+        let idleTime = 0;
+        let chatLoopId = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             const savedUser = localStorage.getItem('nextLiveUser');
@@ -176,20 +182,57 @@
                 document.getElementById('guest-screen').classList.remove('hidden');
             }
 
+            // Input handlers
             document.getElementById('message-input').addEventListener('keydown', (e) => {
+                resetIdleTimer();
                 if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
             });
             document.getElementById('message-input').addEventListener('input', updateSendButton);
+
+            // Activity trackers for Adaptive Polling
+            document.addEventListener('mousemove', resetIdleTimer);
+            document.addEventListener('touchstart', resetIdleTimer);
         });
+
+        // XSS Protection Function
+        function escapeHtml(unsafe) {
+            return (unsafe || "").toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Adaptive Polling Timer
+        function resetIdleTimer() {
+            idleTime = 0;
+            if (pollInterval !== 3000) {
+                pollInterval = 3000;
+                managePolling(); // รีเซ็ตการดึงข้อมูลกลับมาเร็ว
+            }
+        }
+        setInterval(() => {
+            idleTime++;
+            if (idleTime > 60 && pollInterval === 3000) { // หากไม่ขยับเลยเกิน 1 นาที
+                pollInterval = 10000; // ดึงช้าลงเป็นทุก 10 วินาที ช่วยลดภาระ GAS ได้มาก
+                managePolling();
+            }
+        }, 1000);
+
+        function managePolling() {
+            if (chatLoopId) clearInterval(chatLoopId);
+            chatLoopId = setInterval(fetchMessages, pollInterval);
+        }
 
         function startGuestChat(e) {
             e.preventDefault();
-            const name = document.getElementById('guest-name').value;
-            const phone = document.getElementById('guest-phone').value;
+            const name = document.getElementById('guest-name').value.trim();
+            const phone = document.getElementById('guest-phone').value.trim();
             if(!name || !phone) return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
             
             document.getElementById('btn-start-chat').innerHTML = `<i class="ph ph-spinner animate-spin text-lg"></i> กำลังเข้าสู่ระบบ...`;
-            chatUser = { uid: 'GUEST_' + Date.now().toString().slice(-4), fname: name, phone: phone };
+            chatUser = { uid: 'GUEST_' + Date.now().toString().slice(-4), fname: name, phone: phone, token: null };
             setTimeout(startSession, 500);
         }
 
@@ -197,7 +240,7 @@
             document.getElementById('guest-screen').classList.add('hidden');
             document.getElementById('chat-room').classList.remove('hidden');
             fetchMessages();
-            setInterval(fetchMessages, 3000); 
+            managePolling(); 
         }
 
         function autoResize(el) {
@@ -261,7 +304,7 @@
             return `<div class="w-8 h-8 rounded-full avatar-left bg-red-100 text-[#e43a3d] shadow-sm flex items-center justify-center"><i class="ph-fill ph-headset text-lg"></i></div>`;
         }
         function renderClientAvatar() {
-            return `<img src="https://ui-avatars.com/api/?name=${chatUser ? chatUser.fname : 'U'}&background=random" class="w-8 h-8 rounded-full avatar-right object-cover shadow-sm">`;
+            return `<img src="https://ui-avatars.com/api/?name=${chatUser ? escapeHtml(chatUser.fname) : 'U'}&background=random" class="w-8 h-8 rounded-full avatar-right object-cover shadow-sm">`;
         }
 
         function renderBubble(type, content, time) {
@@ -272,14 +315,14 @@
             let isMediaBox = false;
 
             if (content.startsWith('[IMG]')) {
-                let rawUrl = content.replace('[IMG]', '');
+                let rawUrl = escapeHtml(content.replace('[IMG]', ''));
                 let previewUrl = getDirectImageUrl(rawUrl); 
-                contentHtml = `<img src="${previewUrl}" class="w-40 h-40 sm:w-48 sm:h-48 object-cover rounded-2xl shadow-sm cursor-pointer border border-gray-200" onclick="window.open('${rawUrl}')" onerror="this.onerror=null; this.src='https://via.placeholder.com/150?text=Image+Error';">`;
+                contentHtml = `<img src="${previewUrl}" class="w-40 h-40 sm:w-48 sm:h-48 object-cover rounded-2xl shadow-sm cursor-pointer border border-gray-200" onclick="window.open('${rawUrl}', '_blank', 'noopener,noreferrer')" onerror="this.onerror=null; this.src='https://via.placeholder.com/150?text=Image+Error';">`;
                 isMediaBox = true;
             } else if (content.startsWith('[VID]')) {
-                let url = content.replace('[VID]', '');
+                let url = escapeHtml(content.replace('[VID]', ''));
                 contentHtml = `
-                    <div class="flex items-center gap-3 cursor-pointer p-2" onclick="window.open('${url}')">
+                    <div class="flex items-center gap-3 cursor-pointer p-2" onclick="window.open('${url}', '_blank', 'noopener,noreferrer')">
                         <div class="w-12 h-12 ${isUser ? 'bg-white/20 text-white' : 'bg-red-100 text-[#e43a3d]'} rounded-full flex items-center justify-center shrink-0">
                             <i class="ph-fill ph-video-camera text-2xl"></i>
                         </div>
@@ -289,9 +332,9 @@
                         </div>
                     </div>`;
             } else if (content.startsWith('[FILE]')) {
-                let url = content.replace('[FILE]', '');
+                let url = escapeHtml(content.replace('[FILE]', ''));
                 contentHtml = `
-                    <div class="flex items-center gap-3 cursor-pointer p-2" onclick="window.open('${url}')">
+                    <div class="flex items-center gap-3 cursor-pointer p-2" onclick="window.open('${url}', '_blank', 'noopener,noreferrer')">
                         <div class="w-12 h-12 ${isUser ? 'bg-white/20 text-white' : 'bg-red-100 text-[#e43a3d]'} rounded-full flex items-center justify-center shrink-0">
                             <i class="ph-fill ph-file-text text-2xl"></i>
                         </div>
@@ -301,11 +344,12 @@
                         </div>
                     </div>`;
             } else if (content.startsWith('http') && content.includes('iconify')) {
-                contentHtml = `<img src="${content}" class="w-24 h-24 object-contain">`;
+                let safeUrl = escapeHtml(content);
+                contentHtml = `<img src="${safeUrl}" class="w-24 h-24 object-contain">`;
                 return `<div class="flex flex-col ${isUser ? 'items-end' : 'items-start'} mt-2 mb-1"><div class="sticker-bubble">${isUser ? renderClientAvatar() : renderAdminAvatar()}${contentHtml}</div></div>`;
             } else {
-                contentHtml = content.replace(/\n/g, '<br>');
-                contentHtml = contentHtml.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="underline hover:opacity-80">$1</a>');
+                contentHtml = escapeHtml(content).replace(/\n/g, '<br>');
+                contentHtml = contentHtml.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="underline hover:opacity-80">$1</a>');
             }
 
             if (isUser) {
@@ -392,35 +436,71 @@
 
         // === การส่งข้อมูลไป Backend ===
         function sendMessage() {
+            if (isSendingMessage) return; // Prevent double submit
             const inp = document.getElementById('message-input');
             const text = inp.value.trim();
             if(!text) return;
 
-            messagesArray.push({ userMsg: text, time: new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) });
+            isSendingMessage = true;
+            messagesArray.push({ userMsg: text, time: 'กำลังส่ง...' }); // Optimistic UI
             renderAllMessages();
 
             inp.value = ''; inp.style.height = 'auto'; updateSendButton(); closePanels(); showTyping(true);
 
             fetch(GAS_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action: 'sendChatMessage', uid: chatUser.uid, phone: chatUser.phone || chatUser.fname, message: text, type: 'user' })
-            }).then(() => { setTimeout(fetchMessages, 1000); }).catch(() => { showTyping(false); });
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ 
+                    action: 'sendChatMessage', 
+                    uid: chatUser.uid, 
+                    phone: chatUser.phone || chatUser.fname, 
+                    message: text, 
+                    type: 'user',
+                    token: chatUser.token || '' // แนบ Token ส่งไปยืนยัน
+                })
+            }).then(() => { 
+                isSendingMessage = false;
+                setTimeout(fetchMessages, 1000); 
+            }).catch(() => { 
+                isSendingMessage = false;
+                showTyping(false); 
+            });
         }
 
         function sendSticker(url) {
-            messagesArray.push({ userMsg: url, time: new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) });
+            if (isSendingMessage) return;
+            isSendingMessage = true;
+            messagesArray.push({ userMsg: url, time: 'กำลังส่ง...' });
             renderAllMessages();
             closePanels(); showTyping(true);
 
             fetch(GAS_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action: 'sendChatMessage', uid: chatUser.uid, phone: chatUser.phone || chatUser.fname, message: url, type: 'user' })
-            }).then(() => setTimeout(fetchMessages, 1000));
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ 
+                    action: 'sendChatMessage', 
+                    uid: chatUser.uid, 
+                    phone: chatUser.phone || chatUser.fname, 
+                    message: url, 
+                    type: 'user',
+                    token: chatUser.token || ''
+                })
+            }).then(() => {
+                isSendingMessage = false;
+                setTimeout(fetchMessages, 1000);
+            }).catch(() => isSendingMessage = false);
         }
 
         function uploadFile(e) {
             const file = e.target.files[0]; if(!file) return;
             
+            // XSS & Security: จำกัดขนาดไฟล์ฝั่ง Client ห้ามเกิน 8MB ลดภาระเซิร์ฟเวอร์
+            if (file.size > 8 * 1024 * 1024) {
+                alert("ไฟล์มีขนาดใหญ่เกินไป (จำกัดไม่เกิน 8MB) กรุณาเลือกไฟล์ใหม่ค่ะ");
+                e.target.value = ''; // Reset input
+                return;
+            }
+
             let mime = file.type;
             const ext = file.name.split('.').pop().toLowerCase();
             if (['jpg','jpeg','png','gif','webp','heic'].includes(ext)) { mime = 'image/'+ext; uploadingType = 'image'; }
@@ -435,9 +515,23 @@
                 const base64 = evt.target.result.split(',')[1];
                 fetch(GAS_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ action: 'uploadChatFile', filename: file.name, mimeType: mime, base64: base64, uid: chatUser.uid, phone: chatUser.phone || chatUser.fname, type: 'user' })
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ 
+                        action: 'uploadChatFile', 
+                        filename: file.name, 
+                        mimeType: mime, 
+                        base64: base64, 
+                        uid: chatUser.uid, 
+                        phone: chatUser.phone || chatUser.fname, 
+                        type: 'user',
+                        token: chatUser.token || '' 
+                    })
                 }).then(() => {
                     isUploading = false;
+                    fetchMessages();
+                }).catch(() => {
+                    isUploading = false;
+                    alert("เกิดข้อผิดพลาดในการอัปโหลดไฟล์");
                     fetchMessages();
                 });
             };
@@ -447,15 +541,24 @@
         function fetchMessages() {
             fetch(GAS_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action: 'getChatMessages', uid: chatUser.uid, phone: chatUser.phone || chatUser.fname })
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ 
+                    action: 'getChatMessages', 
+                    uid: chatUser.uid, 
+                    phone: chatUser.phone || chatUser.fname,
+                    token: chatUser.token || ''
+                })
             }).then(r=>r.json()).then(res => {
                 if(res.status === 'success' && res.messages) {
-                    if (res.messages.length !== messagesArray.length || isUploading) {
+                    // Render ใหม่เฉพาะเมื่อมีข้อความใหม่เข้ามา หรือกำลังอัปโหลดเสร็จ
+                    if (res.messages.length !== messagesArray.length || isUploading || messagesArray.some(m => m.time === 'กำลังส่ง...')) {
                         messagesArray = res.messages;
                         renderAllMessages();
                         showTyping(false);
                     }
                 }
+            }).catch(e => {
+                // Ignore silent errors from polling
             });
         }
     </script>
