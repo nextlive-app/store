@@ -99,7 +99,7 @@
                 <img id="preview-img-src" src="" class="max-w-full max-h-full object-contain rounded-md drop-shadow-lg">
             </div>
             <div class="w-full mt-4 flex justify-center pb-2">
-                <a id="preview-img-link" href="#" target="_blank" class="bg-[#222] border border-[#333] hover:border-primary hover:bg-primary/20 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg transition-all flex items-center gap-2">
+                <a id="preview-img-link" href="#" target="_blank" rel="noopener noreferrer" class="bg-[#222] border border-[#333] hover:border-primary hover:bg-primary/20 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg transition-all flex items-center gap-2">
                     <i data-lucide="external-link" class="w-4 h-4 text-primary"></i> เปิดรูปภาพต้นฉบับ
                 </a>
             </div>
@@ -197,7 +197,6 @@
                     <i data-lucide="calendar" class="w-5 h-5 mr-3"></i> Booking
                     <span id="nav-badge-booking" class="ml-auto text-[10px] bg-[#FFC107] text-black px-2 py-0.5 rounded-full font-bold hidden">0</span>
                 </a>
-                <!-- อัปเดตไอคอน Affiliate เป็น share-2 ตามที่ลูกค้าต้องการให้ถูกต้อง ไม่หาย -->
                 <a href="#" data-target="affiliate" class="menu-btn flex items-center px-4 py-3 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors">
                     <i data-lucide="share-2" class="w-5 h-5 mr-3"></i> Affiliate
                 </a>
@@ -640,6 +639,17 @@
 
         lucide.createIcons();
 
+        // Security Function: แปลงข้อความป้องกัน XSS ก่อนแสดงผลหน้าแอดมิน
+        function escapeHtml(unsafe) {
+            if(typeof unsafe !== 'string') return unsafe;
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+
         function showLoader(show) { document.getElementById('global-loader').classList.toggle('active', show); }
         function safeSetText(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
         
@@ -725,7 +735,11 @@
         function closeAddModal() { document.getElementById('add-data-modal').classList.remove('active'); document.getElementById('add-data-form').reset(); }
         
         async function submitAddData(e) {
-            e.preventDefault(); let data = [];
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true; btn.innerText = "กำลังบันทึก...";
+            
+            let data = [];
             if(currentAddSheet === 'products') { data = [ document.getElementById('p_id').value, document.getElementById('p_cat').value, document.getElementById('p_name').value, document.getElementById('p_desc').value, document.getElementById('p_price').value, document.getElementById('p_img').value, document.getElementById('p_dllink').value, document.getElementById('p_manual').value, document.getElementById('p_stock').value ]; } 
             else if (currentAddSheet === 'users') { data = [ document.getElementById('u_fname').value, document.getElementById('u_lname').value, document.getElementById('u_email').value, document.getElementById('u_phone').value, document.getElementById('u_pass').value ]; } 
             else if (currentAddSheet === 'options') { data = [ document.getElementById('o_pid').value, document.getElementById('o_name').value, document.getElementById('o_price').value, document.getElementById('o_dllink').value, document.getElementById('o_manual').value ]; } 
@@ -733,13 +747,14 @@
             else if (currentAddSheet === 'network') { data = [ document.getElementById('nw_email').value, document.getElementById('nw_phone').value, document.getElementById('nw_inviter').value ]; }
             else if (currentAddSheet === 'settings') { data = [ document.getElementById('s_key').value, document.getElementById('s_val').value, document.getElementById('s_desc').value ]; }
             
-            closeAddModal(); showLoader(true);
+            showLoader(true);
             try {
                 const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'adminAddRow', sheet: currentAddSheet, data: data, adminToken: adminToken }) });
                 const resData = await res.json();
-                if(resData.status === 'success') { showPopup("Success", "เพิ่มข้อมูลสำเร็จ", fetchDataSilent); } else { showPopup("Error", resData.message); }
+                if(resData.status === 'success') { closeAddModal(); showPopup("Success", "เพิ่มข้อมูลสำเร็จ", fetchDataSilent); } else { showPopup("Error", resData.message); }
             } catch(err) { showPopup("Error", "Connection failed."); }
             showLoader(false);
+            btn.disabled = false; btn.innerText = "บันทึกข้อมูล";
         }
 
         // ================== Add Episode (Movie) ==================
@@ -750,7 +765,7 @@
             document.getElementById('ep-img').value = mImg;
             
             let mDesc = "";
-            let f = state.movies.find(m => m.cols[0] === mId);
+            let f = state.movies.find(m => String(m.cols[0]) === String(mId));
             if(f) mDesc = f.cols[3];
             document.getElementById('ep-desc').value = mDesc;
 
@@ -761,6 +776,9 @@
         function closeAddEpisodeModal() { document.getElementById('add-episode-modal').classList.remove('active'); }
         async function submitAddEpisode(e) {
             e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true; btn.innerText = "กำลังบันทึก...";
+            
             let data = [
                 document.getElementById('ep-mid').value,
                 document.getElementById('ep-cat').value,
@@ -770,13 +788,14 @@
                 document.getElementById('ep-vid').value,
                 document.getElementById('ep-epnum').value
             ];
-            closeAddEpisodeModal(); showLoader(true);
+            showLoader(true);
             try {
                 const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'adminAddRow', sheet: 'movies', data: data, adminToken: adminToken }) });
                 const resData = await res.json();
-                if(resData.status === 'success') { showPopup("Success", "เพิ่มตอนใหม่สำเร็จ", fetchDataSilent); } else { showPopup("Error", resData.message); }
+                if(resData.status === 'success') { closeAddEpisodeModal(); showPopup("Success", "เพิ่มตอนใหม่สำเร็จ", fetchDataSilent); } else { showPopup("Error", resData.message); }
             } catch(err) { showPopup("Error", "Connection failed."); }
             showLoader(false);
+            btn.disabled = false; btn.innerText = "บันทึกตอนใหม่";
         }
 
 
@@ -813,6 +832,9 @@
 
         async function handleLogin(e) {
             e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true; btn.innerText = "กำลังดำเนินการ...";
+            
             const email = document.getElementById('login-email').value; const phone = document.getElementById('login-phone').value;
             showLoader(true);
             try {
@@ -827,7 +849,9 @@
                 } else { showPopup("Error", data.message); }
             } catch(err) { showPopup("Error", "Connection failed."); }
             showLoader(false);
+            btn.disabled = false; btn.innerText = "LOGIN";
         }
+        
         function logout() { localStorage.removeItem('nextLiveAdmin'); localStorage.removeItem('nextLiveAdminToken'); location.reload(); }
 
         // ================== CHAT SYSTEM ==================
@@ -955,7 +979,7 @@
                             ${html}
                             <button onclick="deleteChatMessage(${msg.timestamp})" class="absolute top-1/2 -right-8 transform -translate-y-1/2 text-gray-600 hover:text-danger opacity-0 group-hover:opacity-100 transition"><i data-lucide="trash" class="w-4 h-4"></i></button>
                         </div>
-                        <span class="text-[10px] text-gray-500 mt-1 ml-1">${msg.time}</span>
+                        <span class="text-[10px] text-gray-500 mt-1 ml-1">${escapeHtml(msg.time)}</span>
                     </div>`;
                 }
                 if (msg.adminMsg) {
@@ -966,7 +990,7 @@
                             ${html}
                             <button onclick="deleteChatMessage(${msg.timestamp})" class="absolute top-1/2 -left-8 transform -translate-y-1/2 text-gray-400 hover:text-danger opacity-0 group-hover:opacity-100 transition"><i data-lucide="trash" class="w-4 h-4"></i></button>
                         </div>
-                        <span class="text-[10px] text-gray-500 mt-1 mr-1">${msg.time}</span>
+                        <span class="text-[10px] text-gray-500 mt-1 mr-1">${escapeHtml(msg.time)}</span>
                     </div>`;
                 }
             });
@@ -974,19 +998,20 @@
         }
 
         function formatAdminMsgContent(content, isAdmin) {
+            let safeContent = escapeHtml(content);
             if (content.startsWith('[IMG]')) {
                 let rawUrl = content.replace('[IMG]', ''); let previewUrl = getDirectImageUrl(rawUrl);
                 return `<img src="${previewUrl}" class="chat-media-obj max-h-48" onclick="window.open('${rawUrl}')" onerror="this.src='https://via.placeholder.com/150?text=Error';">`;
             } else if (content.startsWith('[VID]')) {
                 let url = content.replace('[VID]', '');
-                return `<div class="flex items-center gap-2 cursor-pointer" onclick="window.open('${url}')"><div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><i class="ph-fill ph-video-camera"></i></div><span>คลิปวิดีโอ (เปิด)</span></div>`;
+                return `<div class="flex items-center gap-2 cursor-pointer" onclick="window.open('${url}')"><div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><i data-lucide="video" class="w-5 h-5"></i></div><span>คลิปวิดีโอ (เปิด)</span></div>`;
             } else if (content.startsWith('[FILE]')) {
                 let url = content.replace('[FILE]', '');
-                return `<div class="flex items-center gap-2 cursor-pointer" onclick="window.open('${url}')"><div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><i class="ph-fill ph-file-text"></i></div><span>ไฟล์เอกสาร (เปิด)</span></div>`;
+                return `<div class="flex items-center gap-2 cursor-pointer" onclick="window.open('${url}')"><div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><i data-lucide="file" class="w-5 h-5"></i></div><span>ไฟล์เอกสาร (เปิด)</span></div>`;
             } else if (content.startsWith('http') && content.includes('iconify')) {
                 return `<img src="${content}" class="w-20 h-20 object-contain">`;
             } else {
-                let c = content.replace(/\n/g, '<br>'); return c.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="underline">$1</a>');
+                let c = safeContent.replace(/\n/g, '<br>'); return c.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="underline">$1</a>');
             }
         }
 
@@ -999,7 +1024,7 @@
             renderAdminMessages();
             const box = document.getElementById('admin-chat-messages'); box.scrollTop = box.scrollHeight;
 
-            fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'sendChatMessage', uid: activeChatUID, phone: activeChatPhone, message: text, type: 'admin' }) })
+            fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'sendChatMessage', uid: activeChatUID, phone: activeChatPhone, message: text, type: 'admin', adminToken: adminToken }) })
             .then(() => fetchAdminChatMessagesSilent(true));
         }
 
@@ -1013,7 +1038,7 @@
             const reader = new FileReader();
             reader.onload = function(evt) {
                 const base64 = evt.target.result.split(',')[1];
-                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'uploadChatFile', filename: file.name, mimeType: mime, base64: base64, uid: activeChatUID, phone: activeChatPhone, type: 'admin' }) })
+                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'uploadChatFile', filename: file.name, mimeType: mime, base64: base64, uid: activeChatUID, phone: activeChatPhone, type: 'admin', adminToken: adminToken }) })
                 .then(() => fetchAdminChatMessagesSilent(true));
             };
             reader.readAsDataURL(file);
@@ -1067,7 +1092,7 @@
 
             if(!isEditing) {
                 renderAllTables(); updateSummaryBoxes(); updateDashboard();
-                updateSettingsUI(); // เพิ่มตรงนี้เพื่อเช็คการซ่อนปุ่มโบนัส
+                updateSettingsUI(); 
             }
         }
 
@@ -1132,42 +1157,65 @@
 
                 let html = '';
                 mapping.forEach((origIdx, currentMapIdx) => {
-                    let val = item.cols[origIdx] === undefined ? '' : item.cols[origIdx]; 
+                    let rawVal = item.cols[origIdx] === undefined ? '' : item.cols[origIdx]; 
+                    let val = escapeHtml(String(rawVal));
                     let displayVal = val;
                     
-                    // แปลงชื่อธนาคารจาก bank-xxx เป็นภาษาไทยให้แอดมินอ่านง่าย
                     if (typeof displayVal === 'string') {
                         Object.keys(bankMap).forEach(key => {
                             if (displayVal.includes(key)) {
-                                displayVal = displayVal.replace(key, bankMap[key]);
+                                displayVal = displayVal.replace(new RegExp(key, 'g'), bankMap[key]);
                             }
                         });
                     }
                     
-                    if(typeof val === 'string' && val.startsWith('http')) {
-                        let isImage = val.match(/\.(jpeg|jpg|gif|png)$/i) != null || (sheet === 'products' && origIdx === 5) || (sheet === 'movies' && origIdx === 4) || origIdx === 8;
-                        if(isImage || val.includes('drive.google') || val.includes('slipok')) {
-                            displayVal = `<div class="cursor-pointer bg-[#222] hover:bg-primary/20 border border-[#333] hover:border-primary text-gray-400 hover:text-primary rounded-lg w-10 h-10 flex items-center justify-center transition-all shadow-sm mx-auto" onclick="openImagePreview('${val}')"><i data-lucide="image" class="w-5 h-5"></i></div>`;
-                            html += `<td class="text-center w-20">${displayVal}</td>`; return; 
-                        } else { displayVal = `<a href="${val}" target="_blank" class="text-primary underline"><i data-lucide="link" class="w-4 h-4 inline"></i> Link</a>`; }
+                    let isImageCol = false;
+                    if(typeof rawVal === 'string' && rawVal.startsWith('http')) {
+                        let isImage = rawVal.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null || (sheet === 'products' && origIdx === 5) || (sheet === 'movies' && origIdx === 4) || origIdx === 8;
+                        if(isImage || rawVal.includes('drive.google') || rawVal.includes('slipok')) {
+                            isImageCol = true;
+                            let iconHtml = `<div class="cursor-pointer bg-[#222] hover:bg-primary/20 border border-[#333] hover:border-primary text-gray-400 hover:text-primary rounded-lg w-10 h-10 flex items-center justify-center transition-all shadow-sm shrink-0" onclick="openImagePreview('${val}')"><i data-lucide="image" class="w-5 h-5"></i></div>`;
+                            let canEdit = editCols.includes(origIdx) && !isFinal;
+                            
+                            if(canEdit) {
+                                html += `<td><div class="flex items-center gap-2">${iconHtml}<input type="text" id="input-${sheet}-${item.row}-${origIdx}" class="form-input bg-transparent border-transparent px-0 py-0 focus:bg-main focus:border-[#333] focus:px-2 focus:py-1 transition-all w-full text-[11px]" value="${val}" oninput="markDirty('${sheet}', ${item.row})"></div></td>`;
+                            } else {
+                                html += `<td class="text-center w-20"><div class="flex justify-center">${iconHtml}</div></td>`;
+                            }
+                        } else { 
+                            displayVal = `<a href="${val}" target="_blank" rel="noopener noreferrer" class="text-primary underline flex items-center gap-1"><i data-lucide="link" class="w-3 h-3"></i> Link</a>`; 
+                        }
                     }
 
-                    if(currentMapIdx === mappedStatusColIndex) {
-                        if(isFinal) {
-                            let color = 'text-gray-400 border-[#333]';
-                            if(val.includes('สำเร็จ') || val.includes('โอนแล้ว')) color = 'text-[#10B981] border-[#10B981]/30 bg-[#10B981]/10';
-                            if(val.includes('ยกเลิก') || val.includes('ไม่สำเร็จ') || val.includes('สลิปซ้ำ')) color = 'text-[#EF4444] border-[#EF4444]/30 bg-[#EF4444]/10';
-                            html += `<td><span class="px-2 py-1 rounded text-xs font-bold border ${color} whitespace-nowrap">${val}</span></td>`;
+                    if(!isImageCol) {
+                        if(currentMapIdx === mappedStatusColIndex) {
+                            if(isFinal) {
+                                let color = 'text-gray-400 border-[#333]';
+                                if(val.includes('สำเร็จ') || val.includes('โอนแล้ว')) color = 'text-[#10B981] border-[#10B981]/30 bg-[#10B981]/10';
+                                if(val.includes('ยกเลิก') || val.includes('ไม่สำเร็จ') || val.includes('สลิปซ้ำ')) color = 'text-[#EF4444] border-[#EF4444]/30 bg-[#EF4444]/10';
+                                html += `<td><span class="px-2 py-1 rounded text-xs font-bold border ${color} whitespace-nowrap">${val}</span></td>`;
+                            } else {
+                                let optionsHtml = statusArray.map(opt => `<option value="${opt}" ${val.indexOf(opt)>-1?'selected':''}>${opt}</option>`).join('');
+                                html += `<td><select id="input-${sheet}-${item.row}-${origIdx}" class="form-select bg-main" onchange="markDirty('${sheet}', ${item.row})">${optionsHtml}</select></td>`;
+                            }
                         } else {
-                            let optionsHtml = statusArray.map(opt => `<option value="${opt}" ${val.indexOf(opt)>-1?'selected':''}>${opt}</option>`).join('');
-                            html += `<td><select id="input-${sheet}-${item.row}-${origIdx}" class="form-select bg-main" onchange="markDirty('${sheet}', ${item.row})">${optionsHtml}</select></td>`;
+                            let canEdit = editCols.includes(origIdx) && !isFinal;
+                            html += `<td class="max-w-[200px] truncate" title="${val}">`;
+                            if(canEdit) { 
+                                if (sheet === 'users' && origIdx === 8) {
+                                    let bankOptions = '<option value="">ไม่มีบัญชี</option>';
+                                    Object.keys(bankMap).forEach(k => {
+                                        let sel = (rawVal === k) ? 'selected' : '';
+                                        bankOptions += `<option value="${k}" ${sel}>${bankMap[k]}</option>`;
+                                    });
+                                    html += `<select id="input-${sheet}-${item.row}-${origIdx}" class="form-select bg-transparent border-transparent px-0 py-0 focus:bg-main focus:border-[#333] transition-all w-full text-sm" onchange="markDirty('${sheet}', ${item.row})">${bankOptions}</select>`;
+                                } else {
+                                    html += `<input type="text" id="input-${sheet}-${item.row}-${origIdx}" class="form-input bg-transparent border-transparent px-0 py-0 focus:bg-main focus:border-[#333] focus:px-2 focus:py-1 transition-all w-full" value="${val}" oninput="markDirty('${sheet}', ${item.row})">`; 
+                                }
+                            } 
+                            else { html += displayVal; }
+                            html += `</td>`;
                         }
-                    } else {
-                        let canEdit = editCols.includes(origIdx) && !isFinal;
-                        html += `<td class="max-w-[200px] truncate" title="${displayVal}">`;
-                        if(canEdit) { html += `<input type="text" id="input-${sheet}-${item.row}-${origIdx}" class="form-input bg-transparent border-transparent px-0 py-0 focus:bg-main focus:border-[#333] focus:px-2 focus:py-1 transition-all w-full" value="${val}" oninput="markDirty('${sheet}', ${item.row})">`; } 
-                        else { html += displayVal; }
-                        html += `</td>`;
                     }
                 });
 
@@ -1178,7 +1226,7 @@
                         html += `
                             <td class="text-center">
                                 <div class="flex justify-center items-center gap-3">
-                                    ${sheet === 'movies' ? `<button onclick="openAddEpisodeModal('${item.cols[0]}', '${item.cols[1]}', '${item.cols[2]}', '${item.cols[4]}')" class="text-xs bg-gray-800 hover:bg-[#D4AF37] hover:text-black text-gray-300 px-2 py-1 rounded transition border border-[#444] whitespace-nowrap"><i data-lucide="plus" class="w-3 h-3 inline"></i> ตอน</button>` : ''}
+                                    ${sheet === 'movies' ? `<button onclick="openAddEpisodeModal('${escapeHtml(String(item.cols[0]))}', '${escapeHtml(String(item.cols[1]))}', '${escapeHtml(String(item.cols[2]))}', '${escapeHtml(String(item.cols[4]))}')" class="text-xs bg-gray-800 hover:bg-[#D4AF37] hover:text-black text-gray-300 px-2 py-1 rounded transition border border-[#444] whitespace-nowrap"><i data-lucide="plus" class="w-3 h-3 inline"></i> ตอน</button>` : ''}
                                     <button id="btn-save-${sheet}-${item.row}" onclick="saveRow('${sheet}', ${item.row})" class="text-gray-600 hover:text-success hidden"><i data-lucide="save" class="w-4 h-4"></i></button>
                                     <button onclick="confirmDelete('${sheet}', ${item.row})" class="text-gray-600 hover:text-danger"><i data-lucide="trash" class="w-4 h-4"></i></button>
                                 </div>
@@ -1196,13 +1244,13 @@
             if(!state.booking || state.booking.length === 0) return;
             state.booking.forEach(item => {
                 const tr = document.createElement('tr'); tr.id = `row-${sheet}-${item.row}`;
-                let st = String(item.cols[14]).trim(); let isFinal = FINAL_STATUSES.some(f => st.indexOf(f) > -1);
-                let displayBookStr = `${item.cols[9]}<br><span class="text-xs text-textMuted">${item.cols[10]}</span>`;
-                let qStr = `${item.cols[11]}<br><span class="text-xs text-textMuted">Seq: ${item.cols[12]}</span>`;
-                let nameStr = `${item.cols[3]} ${item.cols[4]}`;
-                let topicStr = `<b>${item.cols[7]}</b><br><span class="text-xs text-textMuted">${item.cols[8]}</span>`;
+                let st = escapeHtml(String(item.cols[14]).trim()); let isFinal = FINAL_STATUSES.some(f => st.indexOf(f) > -1);
+                let displayBookStr = `${escapeHtml(String(item.cols[9]))}<br><span class="text-xs text-textMuted">${escapeHtml(String(item.cols[10]))}</span>`;
+                let qStr = `${escapeHtml(String(item.cols[11]))}<br><span class="text-xs text-textMuted">Seq: ${escapeHtml(String(item.cols[12]))}</span>`;
+                let nameStr = `${escapeHtml(String(item.cols[3]))} ${escapeHtml(String(item.cols[4]))}`;
+                let topicStr = `<b>${escapeHtml(String(item.cols[7]))}</b><br><span class="text-xs text-textMuted">${escapeHtml(String(item.cols[8]))}</span>`;
 
-                let html = `<td class="whitespace-nowrap">${displayBookStr}</td><td class="whitespace-nowrap font-bold text-primary">${qStr}</td><td class="whitespace-nowrap">${nameStr}</td><td class="min-w-[200px]">${topicStr}</td><td>${item.cols[13]}</td>`;
+                let html = `<td class="whitespace-nowrap">${displayBookStr}</td><td class="whitespace-nowrap font-bold text-primary">${qStr}</td><td class="whitespace-nowrap">${nameStr}</td><td class="min-w-[200px]">${topicStr}</td><td>${escapeHtml(String(item.cols[13]))}</td>`;
 
                 if(isFinal) {
                     let color = 'text-gray-400 border-[#333]';
@@ -1215,11 +1263,11 @@
                 }
 
                 html += `<td>`;
-                if(!isFinal) html += `<input type="text" id="input-${sheet}-${item.row}-15" class="form-input bg-transparent border-transparent px-0 py-0 focus:bg-main focus:border-[#333] focus:px-2 focus:py-1 transition-all w-full" value="${item.cols[15] || ''}" oninput="markDirty('${sheet}', ${item.row})">`;
-                else html += item.cols[15] || '-';
+                if(!isFinal) html += `<input type="text" id="input-${sheet}-${item.row}-15" class="form-input bg-transparent border-transparent px-0 py-0 focus:bg-main focus:border-[#333] focus:px-2 focus:py-1 transition-all w-full" value="${escapeHtml(String(item.cols[15] || ''))}" oninput="markDirty('${sheet}', ${item.row})">`;
+                else html += escapeHtml(String(item.cols[15])) || '-';
                 html += `</td><td class="text-center"><div class="flex justify-center gap-3">`;
                 if(!isFinal) {
-                    html += `<button onclick="callQueue(${item.row}, '${item.cols[5]}')" class="text-gray-400 hover:text-primary"><i data-lucide="bell" class="w-4 h-4"></i></button>`;
+                    html += `<button onclick="callQueue(${item.row}, '${escapeHtml(String(item.cols[5]))}')" class="text-gray-400 hover:text-primary"><i data-lucide="bell" class="w-4 h-4"></i></button>`;
                     html += `<button id="btn-save-${sheet}-${item.row}" onclick="saveRow('${sheet}', ${item.row})" class="text-gray-600 hover:text-success hidden"><i data-lucide="save" class="w-4 h-4"></i></button>`;
                 }
                 html += `<button onclick="confirmDelete('${sheet}', ${item.row})" class="text-gray-600 hover:text-danger"><i data-lucide="trash" class="w-4 h-4"></i></button></div></td>`;
@@ -1280,6 +1328,9 @@
 
         async function handleBroadcast(e) {
             e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true; btn.innerText = "กำลังส่ง...";
+            
             showPopup("ส่ง Broadcast", "ระบบจะส่งอีเมลหาผู้ใช้ 'ทุกคน' ยืนยันหรือไม่?", async () => {
                 showLoader(true);
                 try {
@@ -1289,6 +1340,8 @@
                     if(data.status === 'success') { showPopup("Success", "ส่ง Broadcast สำเร็จ"); document.getElementById('bc-subject').value = ''; document.getElementById('bc-image').value = ''; document.getElementById('bc-message').value = ''; } else { showPopup("Error", data.message); }
                 } catch(err) { showPopup("Error", "Failed to send."); }
                 showLoader(false);
+                btn.disabled = false; btn.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i> Send to All Users`;
+                lucide.createIcons();
             }, true);
         }
 
