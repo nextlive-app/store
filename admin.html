@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NextLive Admin Dashboard</title>
+    <title>NextLive Admin Server</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -197,8 +197,9 @@
                     <i data-lucide="calendar" class="w-5 h-5 mr-3"></i> Booking
                     <span id="nav-badge-booking" class="ml-auto text-[10px] bg-[#FFC107] text-black px-2 py-0.5 rounded-full font-bold hidden">0</span>
                 </a>
+                <!-- อัปเดตไอคอน Affiliate เป็น share-2 ตามที่ลูกค้าต้องการให้ถูกต้อง ไม่หาย -->
                 <a href="#" data-target="affiliate" class="menu-btn flex items-center px-4 py-3 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors">
-                    <i data-lucide="share-network" class="w-5 h-5 mr-3"></i> Affiliate
+                    <i data-lucide="share-2" class="w-5 h-5 mr-3"></i> Affiliate
                 </a>
                 <a href="#" data-target="network" class="menu-btn flex items-center px-4 py-3 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors">
                     <i data-lucide="git-merge" class="w-5 h-5 mr-3"></i> Network Tree
@@ -537,8 +538,19 @@
             <div id="view-settings" class="view-section animate-fade-in hidden">
                 <div class="flex justify-between items-end mb-4">
                     <h2 class="text-xl font-bold">System Settings</h2>
-                    <button onclick="openAddModal('settings')" class="bg-primary hover:bg-primaryDark text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg transition-colors flex items-center gap-1"><i data-lucide="plus" class="w-4 h-4"></i> Add Setting</button>
+                    <button id="btn-add-setting" onclick="openAddModal('settings')" class="bg-primary hover:bg-primaryDark text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg transition-colors flex items-center gap-1"><i data-lucide="plus" class="w-4 h-4"></i> Add Setting</button>
                 </div>
+                
+                <!-- กล่องข้อความแนะนำการใส่โบนัส -->
+                <div id="bonus-instruction" class="mb-4 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg text-sm text-gray-300 hidden">
+                    <h4 class="text-blue-400 font-bold mb-1 flex items-center"><i data-lucide="info" class="w-4 h-4 mr-1"></i> คำแนะนำการตั้งค่าโบนัสเติมเงิน</h4>
+                    กรุณากดปุ่ม <b>Add Setting</b> ด้านบนและกรอกข้อมูลดังนี้:<br>
+                    <ul class="list-disc ml-5 mt-1">
+                        <li><b>Key:</b> <span class="text-yellow-400 font-mono">DepositBonusPercent</span></li>
+                        <li><b>Value:</b> <span class="text-green-400 font-mono">ใส่ตัวเลข (เช่น 50 หมายถึง 50%)</span></li>
+                    </ul>
+                </div>
+
                 <div class="card p-0 overflow-hidden max-w-4xl border border-[#2A2A2A]">
                     <div class="table-container">
                         <table class="admin-table" id="table-settings">
@@ -569,6 +581,43 @@
         // ⚠️ แก้ไขให้เป็น URL GAS ของคุณ
         const GAS_URL = "https://script.google.com/macros/s/AKfycbx8Zw7yc9QlPrU9PeaJ6koVbk9UqAZhRIDUSxKvqhQnyc5sp27V0rkxb5FbNKivIfhi/exec";
         
+        // --- Bank Mapping สำหรับแสดงผลเป็นภาษาไทยแบบสวยงาม ---
+        const bankMap = {
+            'bank-bbl': 'ธนาคารกรุงเทพ',
+            'bank-kbank': 'ธนาคารกสิกรไทย',
+            'bank-rbs': 'ธนาคารรอยัลแบงก์ออฟสก็อตแลนด์',
+            'bank-ktb': 'ธนาคารกรุงไทย',
+            'bank-jpm': 'เจ.พี. มอร์แกน',
+            'bank-mufg': 'ธนาคารแห่งโตเกียว-มิตซูบิชิ ยูเอฟเจ',
+            'bank-tmb': 'ธนาคารทหารไทย (ทีทีบี)',
+            'bank-scb': 'ธนาคารไทยพาณิชย์',
+            'bank-citi': 'ธนาคารซิตี้แบงก์',
+            'bank-smbc': 'ธนาคารซูมิโตโม มิตซุย แบงกิ้ง คอร์ปอเรชั่น',
+            'bank-sc': 'ธนาคารสแตนดาร์ดชาร์เตอร์ด (ไทย)',
+            'bank-cimb': 'ธนาคารซีไอเอ็มบี ไทย',
+            'bank-uob': 'ธนาคารยูโอบี',
+            'bank-bay': 'ธนาคารกรุงศรีอยุธยา',
+            'bank-mega': 'ธนาคารเมกะ สากลพาณิชย์',
+            'bank-boa': 'ธนาคารแบงก์ออฟอเมริกา',
+            'bank-cacib': 'เครดิต อะกริโคล',
+            'bank-gsb': 'ธนาคารออมสิน',
+            'bank-hsbc': 'ธนาคารฮ่องกงและเซี่ยงไฮ้แบงกิ้งคอร์ปอเรชั่น',
+            'bank-db': 'ธนาคารดอยซ์แบงก์',
+            'bank-ghb': 'ธนาคารอาคารสงเคราะห์',
+            'bank-baac': 'ธนาคารเพื่อการเกษตรและสหกรณ์การเกษตร',
+            'bank-mb': 'ธนาคารมิซูโฮ',
+            'bank-bnp': 'บีเอ็นพี พารีบาส์',
+            'bank-tbank': 'ธนาคารธนชาต',
+            'bank-ibank': 'ธนาคารอิสลามแห่งประเทศไทย',
+            'bank-tisco': 'ธนาคารทิสโก้',
+            'bank-kk': 'ธนาคารเกียรตินาคินภัทร',
+            'bank-icbc': 'ธนาคารไอซีบีซี (ไทย)',
+            'bank-tcrb': 'ธนาคารไทยเครดิต',
+            'bank-lhb': 'ธนาคารแลนด์ แอนด์ เฮ้าส์',
+            'bank-tmn': 'ทรูมันนี่ วอลเล็ท',
+            'bank-pp': 'พร้อมเพย์'
+        };
+
         let state = { users: [], orders: [], deposits: [], withdraws: [], booking: [], products: [], options: [], settings: [], affiliate: [], movies: [], movie_downloads: [], network: [] };
         let chartInstanceStat = null;
         let chartInstanceTrend = null;
@@ -700,7 +749,6 @@
             document.getElementById('ep-title').value = mTitle;
             document.getElementById('ep-img').value = mImg;
             
-            // หา detail เดิม
             let mDesc = "";
             let f = state.movies.find(m => m.cols[0] === mId);
             if(f) mDesc = f.cols[3];
@@ -1019,6 +1067,23 @@
 
             if(!isEditing) {
                 renderAllTables(); updateSummaryBoxes(); updateDashboard();
+                updateSettingsUI(); // เพิ่มตรงนี้เพื่อเช็คการซ่อนปุ่มโบนัส
+            }
+        }
+
+        // --- ส่วนควบคุม UI หน้า Settings ---
+        function updateSettingsUI() {
+            if (!state.settings) return;
+            const hasBonus = state.settings.some(s => s.cols[0] === 'DepositBonusPercent');
+            const btnAdd = document.getElementById('btn-add-setting');
+            const instruct = document.getElementById('bonus-instruction');
+            
+            if (hasBonus) {
+                if (btnAdd) btnAdd.style.display = 'none';
+                if (instruct) instruct.style.display = 'none';
+            } else {
+                if (btnAdd) btnAdd.style.display = 'flex';
+                if (instruct) instruct.style.display = 'block';
             }
         }
 
@@ -1067,7 +1132,17 @@
 
                 let html = '';
                 mapping.forEach((origIdx, currentMapIdx) => {
-                    let val = item.cols[origIdx] === undefined ? '' : item.cols[origIdx]; let displayVal = val;
+                    let val = item.cols[origIdx] === undefined ? '' : item.cols[origIdx]; 
+                    let displayVal = val;
+                    
+                    // แปลงชื่อธนาคารจาก bank-xxx เป็นภาษาไทยให้แอดมินอ่านง่าย
+                    if (typeof displayVal === 'string') {
+                        Object.keys(bankMap).forEach(key => {
+                            if (displayVal.includes(key)) {
+                                displayVal = displayVal.replace(key, bankMap[key]);
+                            }
+                        });
+                    }
                     
                     if(typeof val === 'string' && val.startsWith('http')) {
                         let isImage = val.match(/\.(jpeg|jpg|gif|png)$/i) != null || (sheet === 'products' && origIdx === 5) || (sheet === 'movies' && origIdx === 4) || origIdx === 8;
@@ -1082,14 +1157,14 @@
                             let color = 'text-gray-400 border-[#333]';
                             if(val.includes('สำเร็จ') || val.includes('โอนแล้ว')) color = 'text-[#10B981] border-[#10B981]/30 bg-[#10B981]/10';
                             if(val.includes('ยกเลิก') || val.includes('ไม่สำเร็จ') || val.includes('สลิปซ้ำ')) color = 'text-[#EF4444] border-[#EF4444]/30 bg-[#EF4444]/10';
-                            html += `<td><span class="px-2 py-1 rounded text-xs font-bold border ${color}">${val}</span></td>`;
+                            html += `<td><span class="px-2 py-1 rounded text-xs font-bold border ${color} whitespace-nowrap">${val}</span></td>`;
                         } else {
                             let optionsHtml = statusArray.map(opt => `<option value="${opt}" ${val.indexOf(opt)>-1?'selected':''}>${opt}</option>`).join('');
                             html += `<td><select id="input-${sheet}-${item.row}-${origIdx}" class="form-select bg-main" onchange="markDirty('${sheet}', ${item.row})">${optionsHtml}</select></td>`;
                         }
                     } else {
                         let canEdit = editCols.includes(origIdx) && !isFinal;
-                        html += `<td class="max-w-[200px] truncate" title="${val}">`;
+                        html += `<td class="max-w-[200px] truncate" title="${displayVal}">`;
                         if(canEdit) { html += `<input type="text" id="input-${sheet}-${item.row}-${origIdx}" class="form-input bg-transparent border-transparent px-0 py-0 focus:bg-main focus:border-[#333] focus:px-2 focus:py-1 transition-all w-full" value="${val}" oninput="markDirty('${sheet}', ${item.row})">`; } 
                         else { html += displayVal; }
                         html += `</td>`;
@@ -1133,7 +1208,7 @@
                     let color = 'text-gray-400 border-[#333]';
                     if(st.includes('เข้ารับบริการ')) color = 'text-[#10B981] border-[#10B981]/30 bg-[#10B981]/10';
                     if(st.includes('ยกเลิก')) color = 'text-[#EF4444] border-[#EF4444]/30 bg-[#EF4444]/10';
-                    html += `<td><span class="px-2 py-1 rounded text-xs font-bold border ${color}">${st}</span></td>`;
+                    html += `<td><span class="px-2 py-1 rounded text-xs font-bold border ${color} whitespace-nowrap">${st}</span></td>`;
                 } else {
                     let optionsHtml = STATUS_OPTIONS.booking.map(opt => `<option value="${opt}" ${st.indexOf(opt)>-1?'selected':''}>${opt}</option>`).join('');
                     html += `<td><select id="input-${sheet}-${item.row}-14" class="form-select bg-main" onchange="markDirty('${sheet}', ${item.row})">${optionsHtml}</select></td>`;
@@ -1226,7 +1301,6 @@
             safeSetText('sum-bk-total', state.booking.length); let bkPen = 0; let bkDone = 0; state.booking.forEach(b => { let st = String(b.cols[14]); if(st.includes('รอ')) bkPen++; else if(st.includes('เข้า')) bkDone++; }); safeSetText('sum-bk-pen', bkPen); safeSetText('sum-bk-done', bkDone); updateNavBadge('badge-booking', bkPen);
             safeSetText('sum-aff-tx', state.affiliate.length); let aGiven = 0; let aNet = new Set(); state.affiliate.forEach(a => { if(!String(a.cols[3]).includes('ถอนรายได้')) aGiven+=parseFloat(a.cols[5]||0); if(a.cols[1]) aNet.add(a.cols[1]); }); safeSetText('sum-aff-given', `฿${aGiven.toLocaleString()}`); safeSetText('sum-aff-net', aNet.size);
             safeSetText('sum-mov-total', state.movies ? state.movies.length : 0); let movieTitles = new Set(); if (state.movies) state.movies.forEach(m => movieTitles.add(m.cols[2])); safeSetText('sum-mov-titles', movieTitles.size); safeSetText('sum-mov-dl', state.movie_downloads ? state.movie_downloads.length : 0);
-            // safeSetText('sum-opt-total', state.options.length);
         }
 
         function updateNavBadge(id, count) { const badge = document.getElementById(`nav-${id}`); if(!badge) return; if (count > 0) { badge.innerText = count; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); } }
