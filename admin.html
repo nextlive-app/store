@@ -535,7 +535,14 @@
 
             <!-- SETTINGS -->
             <div id="view-settings" class="view-section animate-fade-in hidden">
-                <div class="mb-4"><h2 class="text-xl font-bold">System Settings</h2></div>
+                <div class="flex justify-between items-end mb-4">
+                    <h2 class="text-xl font-bold">System Settings</h2>
+                    <p class="text-xs text-textMuted mt-1">สามารถเพิ่ม หรือ แก้ไขค่าระบบต่างๆ เช่น โบนัสเติมเงิน</p>
+                </div>
+                <!-- Note: Add Settings ไม่ได้ทำผ่าน API ใน Code.gs แต่เราเปิดให้แก้แถวที่ว่าง/มีอยู่แล้ว หรือสามารถไปแอดแถวใหม่ที่ Google Sheet โดยตรงได้ -->
+                <div class="bg-blue-500/10 border border-blue-500/20 text-blue-400 p-3 rounded-lg text-sm mb-4">
+                    <i data-lucide="info" class="inline w-4 h-4 mr-1"></i> หากต้องการเพิ่มค่าใหม่ที่ยังไม่มี เช่น โบนัสเติมเงิน สามารถระบุ <b>Key = DepositBonusPercent</b> และใส่ค่าเช่น <b>Value = 50</b> ลงในแถวว่างได้เลย
+                </div>
                 <div class="card p-0 overflow-hidden max-w-4xl border border-[#2A2A2A]">
                     <div class="table-container">
                         <table class="admin-table" id="table-settings">
@@ -563,9 +570,10 @@
     </main>
 
     <script>
-        // ⚠️ แก้ไขให้เป็น URL GAS ของคุณ
+        // ⚠️ อย่าลืมแก้ไขให้เป็น URL ของคุณ
         const GAS_URL = "https://script.google.com/macros/s/AKfycbx8Zw7yc9QlPrU9PeaJ6koVbk9UqAZhRIDUSxKvqhQnyc5sp27V0rkxb5FbNKivIfhi/exec";
         
+        let adminToken = localStorage.getItem('nextLiveAdminToken') || '';
         let state = { users: [], orders: [], deposits: [], withdraws: [], booking: [], products: [], options: [], settings: [], affiliate: [], movies: [], movie_downloads: [], network: [] };
         let chartInstanceStat = null;
         let chartInstanceTrend = null;
@@ -678,7 +686,8 @@
             
             closeAddModal(); showLoader(true);
             try {
-                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'adminAddRow', sheet: currentAddSheet, data: data }) });
+                // แนบ Admin Token ในการส่งข้อมูล
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'adminAddRow', sheet: currentAddSheet, data: data, adminToken: adminToken }) });
                 const resData = await res.json();
                 if(resData.status === 'success') { showPopup("Success", "เพิ่มข้อมูลสำเร็จ", fetchDataSilent); } else { showPopup("Error", resData.message); }
             } catch(err) { showPopup("Error", "Connection failed."); }
@@ -692,7 +701,6 @@
             document.getElementById('ep-title').value = mTitle;
             document.getElementById('ep-img').value = mImg;
             
-            // หา detail เดิม
             let mDesc = "";
             let f = state.movies.find(m => m.cols[0] === mId);
             if(f) mDesc = f.cols[3];
@@ -716,7 +724,7 @@
             ];
             closeAddEpisodeModal(); showLoader(true);
             try {
-                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'adminAddRow', sheet: 'movies', data: data }) });
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'adminAddRow', sheet: 'movies', data: data, adminToken: adminToken }) });
                 const resData = await res.json();
                 if(resData.status === 'success') { showPopup("Success", "เพิ่มตอนใหม่สำเร็จ", fetchDataSilent); } else { showPopup("Error", resData.message); }
             } catch(err) { showPopup("Error", "Connection failed."); }
@@ -746,12 +754,12 @@
 
         window.onload = () => {
             const isLogged = localStorage.getItem('nextLiveAdmin');
-            if(isLogged) {
+            if(isLogged && adminToken) {
                 document.getElementById('login-overlay').style.display = 'none';
                 fetchData();
                 document.body.addEventListener('click', () => { window.audioInit = true; }, {once:true});
                 setInterval(fetchDataSilent, 15000);
-                chatLoopInterval = setInterval(fetchAdminChatListSilent, 5000); // สำหรับ Live Chat
+                chatLoopInterval = setInterval(fetchAdminChatListSilent, 5000);
             }
         };
 
@@ -763,18 +771,22 @@
                 const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: 'adminLogin', email, phone}) });
                 const data = await res.json();
                 if(data.status === 'success') {
-                    localStorage.setItem('nextLiveAdmin', 'true'); document.getElementById('login-overlay').style.display = 'none'; window.audioInit = true;
+                    localStorage.setItem('nextLiveAdmin', 'true'); 
+                    localStorage.setItem('nextLiveAdminToken', data.token); // จัดเก็บ Token ที่หลังบ้านส่งกลับมา
+                    adminToken = data.token;
+                    document.getElementById('login-overlay').style.display = 'none'; window.audioInit = true;
                     showPopup("Welcome", "เข้าสู่ระบบสำเร็จ"); fetchData(); setInterval(fetchDataSilent, 15000); chatLoopInterval = setInterval(fetchAdminChatListSilent, 5000);
                 } else { showPopup("Error", data.message); }
             } catch(err) { showPopup("Error", "Connection failed."); }
             showLoader(false);
         }
-        function logout() { localStorage.removeItem('nextLiveAdmin'); location.reload(); }
+        function logout() { localStorage.removeItem('nextLiveAdmin'); localStorage.removeItem('nextLiveAdminToken'); location.reload(); }
 
         // ================== CHAT SYSTEM ==================
         async function fetchAdminChatListSilent() {
             try {
-                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: 'adminGetChatList'}) });
+                // แนบ Admin Token ในการดึงรายชื่อแชทด้วย (ถ้าตั้งค่าในหลังบ้านให้ต้องการ Token)
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: 'adminGetChatList', adminToken: adminToken}) });
                 const data = await res.json();
                 if(data.status === 'success') {
                     adminChatList = data.chatList;
@@ -791,7 +803,6 @@
             const container = document.getElementById('admin-chat-list');
             const q = document.getElementById('chat-search').value.toLowerCase();
             
-            // รวมคนใน state.users ที่ไม่เคยแชทเข้ามาด้วย
             let mergedList = [...adminChatList];
             state.users.forEach(u => {
                 if(!mergedList.find(c => c.uid === u.cols[2])) {
@@ -845,7 +856,7 @@
             // Mark as read immediately
             let chatObj = adminChatList.find(c => c.uid === uid);
             if(chatObj && chatObj.unreadCount > 0) {
-                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: 'adminMarkChatRead', uid: uid}) }).then(()=>fetchAdminChatListSilent());
+                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: 'adminMarkChatRead', uid: uid, adminToken: adminToken}) }).then(()=>fetchAdminChatListSilent());
             }
 
             fetchAdminChatMessages();
@@ -861,14 +872,16 @@
 
         function fetchAdminChatMessages() {
             if(!activeChatUID) return;
-            document.getElementById('admin-chat-messages').innerHTML = '<div class="flex items-center justify-center h-full"><i class="ph ph-spinner animate-spin text-2xl text-primary"></i></div>';
+            document.getElementById('admin-chat-messages').innerHTML = '<div class="flex items-center justify-center h-full"><i data-lucide="loader-2" class="animate-spin text-2xl text-primary"></i></div>';
+            lucide.createIcons();
             fetchAdminChatMessagesSilent(true);
         }
 
         async function fetchAdminChatMessagesSilent(forceScroll = false) {
             if(!activeChatUID) return;
             try {
-                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getChatMessages', uid: activeChatUID }) });
+                // getChatMessages เป็น API สาธารณะสำหรับดึงข้อความ จึงอาจจะไม่ต้องแนบ Token แต่แนบไปเพื่อความปลอดภัย
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getChatMessages', uid: activeChatUID, adminToken: adminToken }) });
                 const data = await res.json();
                 if(data.status === 'success') {
                     if (data.messages.length !== activeChatMsgs.length || forceScroll) {
@@ -920,10 +933,10 @@
                 return `<img src="${previewUrl}" class="chat-media-obj max-h-48" onclick="window.open('${rawUrl}')" onerror="this.src='https://via.placeholder.com/150?text=Error';">`;
             } else if (content.startsWith('[VID]')) {
                 let url = content.replace('[VID]', '');
-                return `<div class="flex items-center gap-2 cursor-pointer" onclick="window.open('${url}')"><div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><i class="ph-fill ph-video-camera"></i></div><span>คลิปวิดีโอ (เปิด)</span></div>`;
+                return `<div class="flex items-center gap-2 cursor-pointer" onclick="window.open('${url}')"><div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><i data-lucide="video" class="w-4 h-4"></i></div><span>คลิปวิดีโอ (เปิด)</span></div>`;
             } else if (content.startsWith('[FILE]')) {
                 let url = content.replace('[FILE]', '');
-                return `<div class="flex items-center gap-2 cursor-pointer" onclick="window.open('${url}')"><div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><i class="ph-fill ph-file-text"></i></div><span>ไฟล์เอกสาร (เปิด)</span></div>`;
+                return `<div class="flex items-center gap-2 cursor-pointer" onclick="window.open('${url}')"><div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><i data-lucide="file-text" class="w-4 h-4"></i></div><span>ไฟล์เอกสาร (เปิด)</span></div>`;
             } else if (content.startsWith('http') && content.includes('iconify')) {
                 return `<img src="${content}" class="w-20 h-20 object-contain">`;
             } else {
@@ -940,7 +953,7 @@
             renderAdminMessages();
             const box = document.getElementById('admin-chat-messages'); box.scrollTop = box.scrollHeight;
 
-            fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'sendChatMessage', uid: activeChatUID, phone: activeChatPhone, message: text, type: 'admin' }) })
+            fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'sendChatMessage', uid: activeChatUID, phone: activeChatPhone, message: text, type: 'admin', adminToken: adminToken }) })
             .then(() => fetchAdminChatMessagesSilent(true));
         }
 
@@ -954,7 +967,7 @@
             const reader = new FileReader();
             reader.onload = function(evt) {
                 const base64 = evt.target.result.split(',')[1];
-                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'uploadChatFile', filename: file.name, mimeType: mime, base64: base64, uid: activeChatUID, phone: activeChatPhone, type: 'admin' }) })
+                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'uploadChatFile', filename: file.name, mimeType: mime, base64: base64, uid: activeChatUID, phone: activeChatPhone, type: 'admin', adminToken: adminToken }) })
                 .then(() => fetchAdminChatMessagesSilent(true));
             };
             reader.readAsDataURL(file);
@@ -962,7 +975,7 @@
 
         function deleteChatMessage(timestamp) {
             showPopup("ยืนยัน", "ต้องการลบข้อความนี้?", () => {
-                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: 'adminDeleteChatMessage', uid: activeChatUID, timestamp: timestamp}) })
+                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: 'adminDeleteChatMessage', uid: activeChatUID, timestamp: timestamp, adminToken: adminToken}) })
                 .then(()=> fetchAdminChatMessagesSilent());
             }, true);
         }
@@ -972,7 +985,8 @@
         async function fetchData() {
             showLoader(true);
             try {
-                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: 'adminGetData'}) });
+                // แนบ Admin Token ในการขอดึงข้อมูลหลังบ้าน
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: 'adminGetData', adminToken: adminToken}) });
                 const data = await res.json();
                 if(data.status === 'success') { processFetchedData(data.data, true); } 
             } catch(err) { }
@@ -982,7 +996,7 @@
 
         async function fetchDataSilent() {
             try {
-                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: 'adminGetData'}) });
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: 'adminGetData', adminToken: adminToken}) });
                 const data = await res.json();
                 if(data.status === 'success') { processFetchedData(data.data, false); }
             } catch(err) {}
@@ -1160,7 +1174,8 @@
         async function proceedSave(sheet, rowId, updateData) {
             showLoader(true);
             try {
-                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'adminUpdateRow', sheet: sheet, row: rowId, data: updateData }) });
+                // แนบ Admin Token
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'adminUpdateRow', sheet: sheet, row: rowId, data: updateData, adminToken: adminToken }) });
                 const data = await res.json();
                 if(data.status === 'success') { isEditing = false; showPopup("Success", "อัปเดตข้อมูลสำเร็จ", fetchDataSilent); } else { showPopup("Error", data.message); fetchDataSilent(); }
             } catch(e) { showPopup("Error", "Failed to save."); }
@@ -1171,7 +1186,8 @@
             showPopup("ยืนยันการลบ", "คุณต้องการลบข้อมูลนี้ใช่หรือไม่?", async () => {
                 showLoader(true);
                 try {
-                    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'adminDeleteRow', sheet: sheet, row: rowId }) });
+                    // แนบ Admin Token
+                    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'adminDeleteRow', sheet: sheet, row: rowId, adminToken: adminToken }) });
                     const data = await res.json();
                     if(data.status === 'success') { fetchDataSilent(); } else { showPopup("Error", data.message); }
                 } catch(e) { showPopup("Error", "Failed to delete."); }
@@ -1183,7 +1199,8 @@
             showPopup("เรียกคิว", `ส่งอีเมลแจ้งคิวไปที่:\n${email}?`, async () => {
                 showLoader(true);
                 try {
-                    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'adminCallQueue', row: rowId, email: email }) });
+                    // แนบ Admin Token
+                    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'adminCallQueue', row: rowId, email: email, adminToken: adminToken }) });
                     const data = await res.json();
                     if(data.status === 'success') fetchDataSilent(); else { showPopup("Error", "Failed to call."); }
                 } catch(e) {}
@@ -1196,7 +1213,8 @@
             showPopup("ส่ง Broadcast", "ระบบจะส่งอีเมลหาผู้ใช้ 'ทุกคน' ยืนยันหรือไม่?", async () => {
                 showLoader(true);
                 try {
-                    const payload = { action: 'adminBroadcast', subject: document.getElementById('bc-subject').value, imgUrl: document.getElementById('bc-image').value, message: document.getElementById('bc-message').value };
+                    // แนบ Admin Token
+                    const payload = { action: 'adminBroadcast', subject: document.getElementById('bc-subject').value, imgUrl: document.getElementById('bc-image').value, message: document.getElementById('bc-message').value, adminToken: adminToken };
                     const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
                     const data = await res.json();
                     if(data.status === 'success') { showPopup("Success", "ส่ง Broadcast สำเร็จ"); document.getElementById('bc-subject').value = ''; document.getElementById('bc-image').value = ''; document.getElementById('bc-message').value = ''; } else { showPopup("Error", data.message); }
