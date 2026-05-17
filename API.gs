@@ -15,6 +15,7 @@ var SHEET_NETWORK = "Network";
 var SHEET_MOVIES = "Movies";
 var SHEET_MOVIE_DOWNLOADS = "MovieDownloads";
 var SHEET_MOVIE_HISTORY = "MovieHistory";
+var SHEET_CHAT = "LiveChat"; 
 
 // =============================================================
 //                    FIREBASE ENGINE 
@@ -83,10 +84,51 @@ function fbGetValue(sheetName, row, col) {
 function fbDeleteRow(sheetName, row) {
   var arrRow = row - 1;
   var data = fbGetValues(sheetName);
-  data.splice(arrRow, 1); 
+  // แก้บัคการลบข้อมูล (เพื่อไม่ให้ Index เลื่อนจนข้อมูลพัง)
+  data[arrRow] = []; 
   var url = _getDbUrl("/" + sheetName);
   UrlFetchApp.fetch(url, { method: 'put', contentType: 'application/json', payload: JSON.stringify(data) });
   if (FBDbCache) FBDbCache[sheetName] = data;
+}
+
+// =============================================================
+//                    SYSTEM TRIGGERS (Auto Reset Chat)
+// =============================================================
+function setupMidnightTrigger() {
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === "clearDailyChat") { ScriptApp.deleteTrigger(triggers[i]); }
+  }
+  ScriptApp.newTrigger("clearDailyChat").timeBased().atHour(0).nearMinute(0).everyDays(1).create();
+}
+
+function clearDailyChat() {
+  var db = getFBDb();
+  var chatData = db[SHEET_CHAT];
+  if(chatData && chatData.length > 1) {
+      var header = chatData[0];
+      var url = _getDbUrl("/" + SHEET_CHAT);
+      UrlFetchApp.fetch(url, { method: 'put', contentType: 'application/json', payload: JSON.stringify([header]) });
+  }
+}
+
+// =============================================================
+//                    SECURITY UTILS & ADMIN TOKEN
+// =============================================================
+function hashPassword(password) {
+  if (!password) return "";
+  var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, password);
+  var hashStr = digest.map(function(byte) { return ("0" + ((byte < 0) ? 256 + byte : byte).toString(16)).slice(-2); }).join("");
+  return hashStr;
+}
+
+function generateAdminToken(config) {
+  return hashPassword(config.AdminEmail + "_" + config.AdminPhone + "_SECRET_SECURE_SALT_2026");
+}
+
+function verifyAdminToken(payload, config) {
+  if (!payload.adminToken) return false;
+  return payload.adminToken === generateAdminToken(config);
 }
 
 // =============================================================
@@ -102,6 +144,16 @@ function doGet(e) {
   if (e.parameter.page === 'affiliate') {
     return HtmlService.createHtmlOutputFromFile('Affiliate')
         .setTitle('ระบบแนะนำเพื่อน | Next Live')
+        .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+  }
+  if (e.parameter.page === 'chat') {
+    return HtmlService.createHtmlOutputFromFile('LiveChat')
+        .setTitle('Live Support | Next Live')
+        .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no');
+  }
+  if (e.parameter.page === 'movie') {
+    return HtmlService.createHtmlOutputFromFile('Movie')
+        .setTitle('Movies | Next Live')
         .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
   }
   return HtmlService.createHtmlOutputFromFile('Index')
@@ -133,55 +185,7 @@ function maskPhone(phoneStr) {
 
 function cleanStr(str) {
   if (!str) return "";
-  return String(str).replace(/['\-\s]/g, "").trim();
-}
-
-function setupDatabase() {
-  var db = getFBDb();
-  var updates = {};
-  var needsUpdate = false;
-
-  if (!db[SHEET_SETTINGS]) {
-    updates[SHEET_SETTINGS] = [
-      ["หัวข้อการตั้งค่า", "ค่าที่ตั้ง (Value)", "คำอธิบาย"],
-      ["SiteName", "ร้านออนไลน์", "1 ชื่อเว็บไซต์"],
-      ["AdminEmail", "nextlive.ct@gmail.com", "2 อีเมล (แอดมิน)"],
-      ["LineLink", "https://line.me/ti/p/~@jpo3470r", "3 ลิงก์ไลน์"],
-      ["FacebookLink", "https://facebook.com/ไอดีเฟส", "4 ลิงก์เฟสบุ๊ค"],
-      ["SlipOkBranchId", "90OF6QG", "API SlipOK (Branch ID)"],
-      ["SlipOkApiKey", "SLIPOK90OF6QG", "API SlipOK (API Key)"],
-      ["AdminName", "NARINPAT MEECHAI", "5 ชื่อ นามสกุล แอดมิน"],
-      ["BankAccount", "140000621803299", "6 เลขที่บัญชีพร้อมเพย์"],
-      ["AdminPhone", "081-160-6998", "7 หมายเลขโทรศัพท์"],
-      ["Code1", "NEXTNEW50", "8 รหัสโค้ดที่ 1"],
-      ["Discount1", "50", "9 ส่วนลดรหัสที่ 1 (บาท)"],
-      ["Code2", "NEXTLIVE100", "รหัสโค้ดที่ 2"],
-      ["Discount2", "100", "ส่วนลดรหัสที่ 2 (บาท)"],
-      ["Code3", "NEXTLIVE-PRO300", "รหัสโค้ดที่ 3"],
-      ["Discount3", "300", "ส่วนลดรหัสที่ 3 (บาท)"],
-      ["SiteActive", "TRUE", "10 เปิด/ปิดเว็บไซต์"]
-    ];
-    needsUpdate = true;
-  }
-
-  if (!db[SHEET_PRODUCTS]) { updates[SHEET_PRODUCTS] = [["รหัสสินค้า", "หมวดหมู่", "ชื่อสินค้า", "รายละเอียด", "ราคา (บาท)", "ลิงก์รูปภาพ", "ลิงก์ดาวน์โหลดสินค้า", "ลิงก์คู่มือการใช้งาน", "สต๊อก"]]; needsUpdate = true; }
-  if (!db[SHEET_OPTIONS]) { updates[SHEET_OPTIONS] = [["รหัสสินค้า", "ชื่อตัวเลือก", "ราคา (+บาท)", "ไฟล์ดาวน์โหลด", "ไฟล์คู่มือ"]]; needsUpdate = true; }
-  
-  if (!db[SHEET_USERS]) { updates[SHEET_USERS] = [["วันที่", "เวลา", "ID User", "ชื่อ", "นามสกุล", "อีเมล์", "เบอร์โทรศัพท์", "รหัสผ่าน", "ธนาคาร", "เลขที่บัญชี", "จำนวนเงิน", "ที่อยู่"]]; needsUpdate = true; }
-  if (!db[SHEET_ORDERS]) { updates[SHEET_ORDERS] = [["วันที่", "Ref", "ชื่อ", "เบอร์", "รายการ", "ส่วนลด", "VAT", "ยอดสุทธิ", "สลิป", "สถานะ", "ช่องทางชำระ"]]; needsUpdate = true; }
-  if (!db[SHEET_TRANSACTIONS]) { updates[SHEET_TRANSACTIONS] = [["วันที่", "ID User", "ชื่อ-นามสกุล", "อีเมล", "เบอร์โทร", "ประเภท", "จำนวนเงิน", "สถานะ", "สลิป/หมายเหตุ"]]; needsUpdate = true; }
-  if (!db[SHEET_OTP]) { updates[SHEET_OTP] = [["วันที่/เวลา", "อีเมล", "OTP", "สถานะ", "Timestamp (ms)"]]; needsUpdate = true; }
-  if (!db[SHEET_BOOKING]) { updates[SHEET_BOOKING] = [["วันที่ทำรายการ", "เวลาทำรายการ", "ID User", "ชื่อ", "นามสกุล", "อีเมล์", "เบอร์โทรศัพท์", "หัวข้อการจอง", "รายละเอียด", "วันที่จอง", "เวลาจอง", "เลขที่คิว", "ลำดับคิว", "จำนวนคิวรอ", "สถานะ", "หมายเหตุ"]]; needsUpdate = true; }
-  if (!db[SHEET_AFFILIATE]) { updates[SHEET_AFFILIATE] = [["วันที่/เวลา", "UID ผู้แนะนำ", "อีเมล/เบอร์ ผู้ถูกแนะนำ", "ประเภทค่าคอม", "ยอดธุรกรรม (บาท)", "คอมมิชชั่นที่ได้ (บาท)", "สถานะการเบิก"]]; needsUpdate = true; }
-  if (!db[SHEET_NETWORK]) { updates[SHEET_NETWORK] = [["อีเมลผู้ถูกแนะนำ", "เบอร์ผู้ถูกแนะนำ", "UID ผู้แนะนำ"]]; needsUpdate = true; }
-  if (!db[SHEET_MOVIES]) { updates[SHEET_MOVIES] = [["รหัสหนัง", "หมวดหมู่", "ชื่อหนัง", "รายละเอียด", "ลิงก์รูปภาพ", "ลิงก์วิดีโอ", "ตอนที่"]]; needsUpdate = true; }
-  if (!db[SHEET_MOVIE_DOWNLOADS]) { updates[SHEET_MOVIE_DOWNLOADS] = [["วันที่/เวลา", "UID", "อีเมล/เบอร์", "รหัสหนัง", "ชื่อหนัง", "ตอนที่"]]; needsUpdate = true; }
-  if (!db[SHEET_MOVIE_HISTORY]) { updates[SHEET_MOVIE_HISTORY] = [["วันที่/เวลา", "UID", "อีเมล/เบอร์", "รหัสหนัง", "ชื่อหนัง"]]; needsUpdate = true; }
-
-  if(needsUpdate) {
-    var url = _getDbUrl("/");
-    UrlFetchApp.fetch(url, { method: 'patch', contentType: 'application/json', payload: JSON.stringify(updates) });
-  }
+  return String(str).replace(/['\-\s]/g, "").trim().toLowerCase(); 
 }
 
 function notifyAdmin(config, subject, detailsHtml, alertType = "info") {
@@ -230,6 +234,8 @@ function doPost(e) {
     else if (action === "resetPassword") return handleResetPassword(payload, config); 
     else if (action === "changePassword") return handleChangePassword(payload, config); 
     else if (action === "checkDiscountCode") return handleCheckDiscountCode(payload); 
+    
+    // --- Order / Deposit / Withdraw / Booking Actions ---
     else if (action === "submitOrder") return handleSubmitOrder(payload, config);
     else if (action === "deposit") return handleDeposit(payload, config);
     else if (action === "addBankAccount") return handleAddBankAccount(payload, config);
@@ -253,17 +259,34 @@ function doPost(e) {
     else if (action === "getUserDownloads") return handleGetUserDownloads(payload);
     else if (action === "recordMovieWatch") return handleRecordMovieWatch(payload, config);
     else if (action === "getUserMovieData") return handleGetUserMovieData(payload);
+
+    // --- Live Chat Actions ---
+    else if (action === "getChatMessages") return handleGetChatMessages(payload);
+    else if (action === "sendChatMessage") return handleSendChatMessage(payload);
+    else if (action === "uploadChatFile") return handleUploadChatFile(payload);
     
     // --- ADMIN API ACTIONS ---
     else if (action === "adminLogin") return handleAdminLogin(payload, config);
-    else if (action === "adminGetData") return handleAdminGetData(payload);
-    else if (action === "adminUpdateRow") return handleAdminUpdateRow(payload);
-    else if (action === "adminDeleteRow") return handleAdminDeleteRow(payload);
-    else if (action === "adminAddRow") return handleAdminAddRow(payload);
-    else if (action === "adminCallQueue") return handleAdminCallQueue(payload, config);
-    else if (action === "adminBroadcast") return handleAdminBroadcast(payload, config);
+    else {
+        // บังคับเช็ค Token สำหรับ Admin APIs ป้องกันการถูกแฮก
+        if (action.startsWith("admin")) {
+            if (!verifyAdminToken(payload, config)) {
+                return jsonResponse({status: "error", message: "Unauthorized: Invalid Admin Token"});
+            }
+        }
+        
+        if (action === "adminGetData") return handleAdminGetData(payload);
+        else if (action === "adminUpdateRow") return handleAdminUpdateRow(payload);
+        else if (action === "adminDeleteRow") return handleAdminDeleteRow(payload);
+        else if (action === "adminAddRow") return handleAdminAddRow(payload);
+        else if (action === "adminCallQueue") return handleAdminCallQueue(payload, config);
+        else if (action === "adminBroadcast") return handleAdminBroadcast(payload, config);
+        else if (action === "adminGetChatList") return handleAdminGetChatList(payload);
+        else if (action === "adminMarkChatRead") return handleAdminMarkChatRead(payload);
+        else if (action === "adminDeleteChatMessage") return handleAdminDeleteChatMessage(payload);
+    }
     
-    else return jsonResponse({ status: "error", message: "Invalid action" });
+    return jsonResponse({ status: "error", message: "Invalid action" });
   } catch (error) {
     return jsonResponse({ status: "error", message: error.toString() });
   }
@@ -274,25 +297,141 @@ function jsonResponse(data) {
 }
 
 // =============================================================
+//                    LIVE CHAT SYSTEM
+// =============================================================
+function handleGetChatMessages(payload) {
+    var data = fbGetValues(SHEET_CHAT);
+    var uid = payload.uid; 
+    var result = [];
+    
+    for (var i = 1; i < data.length; i++) {
+        if (!data[i] || data[i].length === 0) continue;
+        if (data[i][2] === uid) {
+            result.push({
+                date: data[i][0], time: data[i][1], uid: data[i][2], phone: data[i][3],
+                userMsg: data[i][4], adminMsg: data[i][5], timestamp: data[i][6]
+            });
+        }
+    }
+    result.sort((a, b) => a.timestamp - b.timestamp);
+    return jsonResponse({ status: "success", messages: result });
+}
+
+function handleSendChatMessage(payload) {
+    var d = new Date(); 
+    var dateStr = Utilities.formatDate(d, "GMT+7", "dd/MM/yyyy"); 
+    var timeStr = Utilities.formatDate(d, "GMT+7", "HH:mm:ss");
+    var timestamp = d.getTime();
+    
+    var uid = payload.uid || "GUEST";
+    var info = payload.phone || "0000000000"; 
+    var msg = payload.message || "";
+    var isAdmin = payload.type === 'admin';
+    var isRead = isAdmin ? 1 : 0; 
+    
+    if (!isAdmin) {
+        fbAppendRow(SHEET_CHAT, [dateStr, timeStr, uid, info, msg, "", timestamp, isRead]);
+    } else {
+        fbAppendRow(SHEET_CHAT, [dateStr, timeStr, uid, info, "", msg, timestamp, isRead]);
+    }
+    return jsonResponse({ status: "success" });
+}
+
+function handleUploadChatFile(payload) {
+    var decodedData = Utilities.base64Decode(payload.base64); 
+    var blob = Utilities.newBlob(decodedData, payload.mimeType || 'image/jpeg', payload.filename || 'chatfile.jpg');
+    var folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    var newFile = folder.createFile(blob); 
+    newFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    var fileLink = newFile.getUrl(); 
+    
+    var msgStr = fileLink;
+    if (payload.mimeType.indexOf('image/') > -1) { msgStr = "[IMG]" + fileLink; }
+    else if (payload.mimeType.indexOf('video/') > -1) { msgStr = "[VID]" + fileLink; }
+    else { msgStr = "[FILE]" + fileLink; }
+    
+    var payloadForMsg = { uid: payload.uid, phone: payload.phone, message: msgStr, type: payload.type };
+    handleSendChatMessage(payloadForMsg);
+    
+    return jsonResponse({ status: "success", url: fileLink });
+}
+
+function handleAdminGetChatList(payload) {
+    var data = fbGetValues(SHEET_CHAT);
+    var chatMap = {}; 
+    var totalUnread = 0;
+    
+    for (var i = 1; i < data.length; i++) {
+        if (!data[i] || data[i].length === 0) continue;
+        var uid = data[i][2];
+        var info = data[i][3];
+        var isUserMsg = data[i][4] !== "";
+        var isRead = parseInt(data[i][7]) === 1;
+        var ts = parseFloat(data[i][6]);
+        
+        if (!chatMap[uid]) {
+            chatMap[uid] = { uid: uid, info: info, latestMsg: '', timestamp: 0, unreadCount: 0 };
+        }
+        
+        if (ts > chatMap[uid].timestamp) {
+            chatMap[uid].timestamp = ts;
+            chatMap[uid].latestMsg = isUserMsg ? data[i][4] : data[i][5];
+            chatMap[uid].info = info; 
+        }
+        
+        if (isUserMsg && !isRead) {
+            chatMap[uid].unreadCount++;
+            totalUnread++;
+        }
+    }
+    var chatList = Object.values(chatMap).sort((a, b) => b.timestamp - a.timestamp);
+    return jsonResponse({ status: "success", chatList: chatList, totalUnread: totalUnread });
+}
+
+function handleAdminMarkChatRead(payload) {
+    var data = fbGetValues(SHEET_CHAT);
+    var uid = payload.uid;
+    for (var i = 1; i < data.length; i++) {
+        if (data[i] && data[i].length > 0 && data[i][2] === uid && data[i][4] !== "") {
+            if (parseInt(data[i][7]) !== 1) {
+                fbSetValue(SHEET_CHAT, i+1, 8, 1); 
+            }
+        }
+    }
+    return jsonResponse({ status: "success" });
+}
+
+function handleAdminDeleteChatMessage(payload) {
+    var data = fbGetValues(SHEET_CHAT);
+    var rowToDelete = -1;
+    for (var i = 1; i < data.length; i++) {
+        if (data[i] && data[i].length > 0 && data[i][2] === payload.uid && parseFloat(data[i][6]) === payload.timestamp) {
+            rowToDelete = i + 1; break;
+        }
+    }
+    if (rowToDelete > -1) {
+        fbDeleteRow(SHEET_CHAT, rowToDelete);
+        return jsonResponse({ status: "success" });
+    }
+    return jsonResponse({ status: "error", message: "Message not found" });
+}
+
+// =============================================================
 //                    ADDRESS SYSTEM
 // =============================================================
 function handleSaveAddress(payload, config) {
     var uData = fbGetValues(SHEET_USERS);
     var rowIndex = -1;
-    for (var i = 1; i < uData.length; i++) {
-        if (uData[i] && (cleanStr(uData[i][5]) === cleanStr(payload.email) || cleanStr(uData[i][6]) === cleanStr(payload.phone))) { 
-            rowIndex = i + 1; 
-            break; 
+    for (var i = uData.length - 1; i >= 1; i--) {
+        if (uData[i] && uData[i].length > 0 && (cleanStr(uData[i][5]) === cleanStr(payload.email) || cleanStr(uData[i][6]) === cleanStr(payload.phone))) { 
+            rowIndex = i + 1; break; 
         }
     }
-    
     if (rowIndex > -1) {
         var nameParts = String(payload.name).split(' ');
         fbSetValue(SHEET_USERS, rowIndex, 4, nameParts[0] || "");
         fbSetValue(SHEET_USERS, rowIndex, 5, nameParts.slice(1).join(' ') || "");
-        
         fbSetValue(SHEET_USERS, rowIndex, 12, JSON.stringify(payload.address));
-        
         return jsonResponse({ status: "success", message: "บันทึกที่อยู่เรียบร้อยแล้ว" });
     } else {
         return jsonResponse({ status: "error", message: "ไม่พบข้อมูลผู้ใช้ในระบบ" });
@@ -341,14 +480,14 @@ function handleGetUserMovieData(payload) {
   if (identifier) {
       var hMap = {};
       for(var i=1; i<hData.length; i++) {
-          if(!hData[i]) continue;
+          if(!hData[i] || hData[i].length === 0) continue;
           if(cleanStr(hData[i][2]) === cleanStr(identifier)) hMap[hData[i][3]] = true; 
       }
       history = Object.keys(hMap); 
       
       var dlSet = new Set();
       for(var j=1; j<dlData.length; j++) {
-          if(!dlData[j]) continue;
+          if(!dlData[j] || dlData[j].length === 0) continue;
           if(cleanStr(dlData[j][2]) === cleanStr(identifier)) dlSet.add(String(dlData[j][3]));
       }
       downloads = Array.from(dlSet);
@@ -360,7 +499,7 @@ function handleGetUserDownloads(payload) {
   var data = fbGetValues(SHEET_MOVIE_DOWNLOADS);
   var downloads = []; var identifier = payload.email || payload.phone;
   for(var i=1; i<data.length; i++) {
-    if(!data[i]) continue;
+    if(!data[i] || data[i].length === 0) continue;
     if(cleanStr(data[i][2]) === cleanStr(identifier)) {
         downloads.push({ date: data[i][0], uid: data[i][1], movieId: data[i][3], movieTitle: data[i][4], episode: data[i][5] });
     }
@@ -375,23 +514,54 @@ function handleGetUserDownloads(payload) {
 function processAffiliateCommission(buyerEmail, buyerPhone, transactionAmount, isGuest, inviterFromGuestPayload) {
   var netData = fbGetValues(SHEET_NETWORK);
   var uData = fbGetValues(SHEET_USERS);
-  var currentInviterUID = inviterFromGuestPayload || "";
+  
+  var cBuyerEmail = cleanStr(buyerEmail);
+  var cBuyerPhone = cleanStr(buyerPhone);
+
+  var buyerUID = "";
+  if (!isGuest) {
+      for (var u = uData.length - 1; u >= 1; u--) {
+          if (uData[u] && uData[u].length > 0 && (cleanStr(uData[u][5]) === cBuyerEmail || cleanStr(uData[u][6]) === cBuyerPhone)) {
+              buyerUID = uData[u][2];
+              break;
+          }
+      }
+  }
+
+  var currentInviterUID = String(inviterFromGuestPayload || "").trim();
   
   if (!currentInviterUID) {
-    for (var i = 1; i < netData.length; i++) {
-      if(!netData[i]) continue;
-      if (cleanStr(netData[i][0]) === cleanStr(buyerEmail) || cleanStr(netData[i][1]) === cleanStr(buyerPhone)) { currentInviterUID = netData[i][2]; break; }
+    for (var i = netData.length - 1; i >= 1; i--) {
+      if (!netData[i] || netData[i].length === 0) continue;
+      if ((cBuyerEmail && cleanStr(netData[i][0]) === cBuyerEmail) || (cBuyerPhone && cleanStr(netData[i][1]) === cBuyerPhone)) { 
+          currentInviterUID = String(netData[i][2]).trim(); break; 
+      }
     }
   }
+  
   if (!currentInviterUID) return; 
+
+  var isInviterValid = false;
+  for (var v = uData.length - 1; v >= 1; v--) {
+      if (uData[v] && uData[v].length > 0 && String(uData[v][2]).trim() === currentInviterUID) {
+         var invEmail = cleanStr(uData[v][5]); var invPhone = cleanStr(uData[v][6]);
+         var isSelf = false;
+         if (cBuyerEmail && invEmail === cBuyerEmail) isSelf = true;
+         if (cBuyerPhone && invPhone === cBuyerPhone) isSelf = true;
+
+         if (isSelf) return; 
+         isInviterValid = true; break;
+      }
+  }
+
+  if (!isInviterValid) return; 
+  if (buyerUID && currentInviterUID === buyerUID) return;
 
   var isNewUser = false;
   if (!isGuest) {
-    var ordSheet = fbGetValues(SHEET_ORDERS);
-    var txSheet = fbGetValues(SHEET_TRANSACTIONS);
-    var count = 0;
-    for(var o=1; o<ordSheet.length; o++) { if(ordSheet[o] && (cleanStr(ordSheet[o][2]) === cleanStr(buyerEmail) || cleanStr(ordSheet[o][3]) === cleanStr(buyerPhone))) count++; }
-    for(var t=1; t<txSheet.length; t++) { if(txSheet[t] && (cleanStr(txSheet[t][3]) === cleanStr(buyerEmail) || cleanStr(txSheet[t][4]) === cleanStr(buyerPhone)) && txSheet[t][5] === "ฝากเงิน") count++; }
+    var ordSheet = fbGetValues(SHEET_ORDERS); var txSheet = fbGetValues(SHEET_TRANSACTIONS); var count = 0;
+    for(var o=1; o<ordSheet.length; o++) { if(ordSheet[o] && ordSheet[o].length > 0 && (cleanStr(ordSheet[o][2]) === cBuyerEmail || cleanStr(ordSheet[o][3]) === cBuyerPhone)) count++; }
+    for(var t=1; t<txSheet.length; t++) { if(txSheet[t] && txSheet[t].length > 0 && (cleanStr(txSheet[t][3]) === cBuyerEmail || cleanStr(txSheet[t][4]) === cBuyerPhone) && txSheet[t][5] === "ฝากเงิน") count++; }
     if (count <= 1) isNewUser = true; 
   }
 
@@ -409,14 +579,24 @@ function processAffiliateCommission(buyerEmail, buyerPhone, transactionAmount, i
     if (amount > 0) { fbAppendRow(SHEET_AFFILIATE, [timestamp, currentInviterUID, buyerEmail || buyerPhone, typeText, transactionAmount, amount, "ได้รับแล้ว"]); }
 
     var nextInviterUID = ""; var currentInviterEmail = ""; var currentInviterPhone = "";
-    for(var u=1; u<uData.length; u++) {
-      if(uData[u] && uData[u][2] === currentInviterUID) { currentInviterEmail = uData[u][5]; currentInviterPhone = cleanStr(uData[u][6]); break; }
-    }
-    if (currentInviterEmail || currentInviterPhone) {
-      for (var n = 1; n < netData.length; n++) {
-        if (netData[n] && (cleanStr(netData[n][0]) === cleanStr(currentInviterEmail) || cleanStr(netData[n][1]) === cleanStr(currentInviterPhone))) { nextInviterUID = netData[n][2]; break; }
+    var foundCurrent = false;
+    for(var u = uData.length - 1; u >= 1; u--) {
+      if(uData[u] && uData[u].length > 0 && String(uData[u][2]).trim() === currentInviterUID) { 
+          currentInviterEmail = cleanStr(uData[u][5]); currentInviterPhone = cleanStr(uData[u][6]); foundCurrent = true; break; 
       }
     }
+    
+    if (!foundCurrent) break; 
+    
+    if (currentInviterEmail || currentInviterPhone) {
+      for (var n = netData.length - 1; n >= 1; n--) {
+        if (netData[n] && netData[n].length > 0 && ((currentInviterEmail && cleanStr(netData[n][0]) === currentInviterEmail) || (currentInviterPhone && cleanStr(netData[n][1]) === currentInviterPhone))) { 
+            nextInviterUID = String(netData[n][2]).trim(); break; 
+        }
+      }
+    }
+    
+    if(nextInviterUID === currentInviterUID || (cBuyerEmail && currentInviterEmail === cBuyerEmail) || (cBuyerPhone && currentInviterPhone === cBuyerPhone)) break;
     currentInviterUID = nextInviterUID; level++;
   }
 }
@@ -435,7 +615,7 @@ function handleGetAffiliateData(payload) {
   var yesterdayTotalComm = 0;
 
   for (var i = data.length - 1; i >= 1; i--) {
-    if (!data[i]) continue;
+    if (!data[i] || data[i].length === 0) continue;
     if (data[i][1] === uid) {
       var dateStr = String(data[i][0]).split(' |')[0].trim();
       var type = String(data[i][3]); var buyerIdentifier = String(data[i][2]).trim();
@@ -480,7 +660,7 @@ function handleTransferAffiliateCredit(payload, config) {
   
   var availableBalance = 0;
   for (var i = 1; i < affData.length; i++) {
-    if (affData[i] && affData[i][1] === uid) {
+    if (affData[i] && affData[i].length > 0 && affData[i][1] === uid) {
       var type = String(affData[i][3]); var amt = parseFloat(String(affData[i][5]).replace(/,/g, '')) || 0;
       if (type === "ถอนรายได้" || String(affData[i][6]) === "ได้รับแล้ว" || String(affData[i][6]) === "รอย้ายเข้าเป๋า") { availableBalance += amt; }
     }
@@ -489,8 +669,8 @@ function handleTransferAffiliateCredit(payload, config) {
   if (withdrawAmount > availableBalance) return jsonResponse({ status: "error", message: "ยอดเงินไม่เพียงพอ (ยอดที่ถอนได้: " + availableBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ")" });
   
   var rowIndex = -1; var currentBalance = 0;
-  for (var u = 1; u < uData.length; u++) {
-    if (uData[u] && uData[u][2] === uid) { rowIndex = u + 1; currentBalance = parseFloat(uData[u][10]) || 0; break; }
+  for (var u = uData.length - 1; u >= 1; u--) {
+    if (uData[u] && uData[u].length > 0 && uData[u][2] === uid) { rowIndex = u + 1; currentBalance = parseFloat(uData[u][10]) || 0; break; }
   }
   
   if (rowIndex > -1) {
@@ -512,14 +692,14 @@ function handleInit(config) {
   var pData = fbGetValues(SHEET_PRODUCTS);
   var products = []; var categoriesSet = new Set();
   for (var i = 1; i < pData.length; i++) {
-    if(!pData[i]) continue;
+    if(!pData[i] || pData[i].length === 0) continue;
     if(pData[i][1]) categoriesSet.add(pData[i][1]); 
-    products.push({ id: String(pData[i][0]), category: pData[i][1], name: pData[i][2], desc: pData[i][3], price: pData[i][4], image: pData[i][5], stock: parseInt(pData[i][8]) || 0 });
+    products.push({ id: String(pData[i][0]), category: pData[i][1], name: pData[i][2], desc: pData[i][3], price: parseFloat(pData[i][4])||0, image: pData[i][5], stock: parseInt(pData[i][8]) || 0 });
   }
   var oData = fbGetValues(SHEET_OPTIONS);
   var options = [];
   for (var j = 1; j < oData.length; j++) {
-    if(!oData[j]) continue;
+    if(!oData[j] || oData[j].length === 0) continue;
     options.push({ productId: String(oData[j][0]), id: String(oData[j][0])+"-"+String(oData[j][1]), name: oData[j][1], price: parseFloat(oData[j][2]) || 0 });
   }
   return jsonResponse({ status: "success", settings: config, categories: Array.from(categoriesSet), products: products, options: options });
@@ -527,8 +707,8 @@ function handleInit(config) {
 
 function handleGetUserData(data) {
   var uData = fbGetValues(SHEET_USERS);
-  for (var i = 1; i < uData.length; i++) {
-    if(!uData[i]) continue;
+  for (var i = uData.length - 1; i >= 1; i--) {
+    if(!uData[i] || uData[i].length === 0) continue;
     if (cleanStr(uData[i][5]) === cleanStr(data.email) || cleanStr(uData[i][6]) === cleanStr(data.phone)) {
       var currentBalance = parseFloat(uData[i][10]) || 0; 
       var addressObj = null;
@@ -548,22 +728,43 @@ function handleGetUserData(data) {
 function handleRegister(data, config) {
   var records = fbGetValues(SHEET_USERS);
   for (var i = 1; i < records.length; i++) {
-    if(!records[i]) continue;
+    if(!records[i] || records[i].length === 0) continue;
     if (cleanStr(records[i][5]) === cleanStr(data.email) || cleanStr(records[i][6]) === cleanStr(data.phone)) {
       notifyAdmin(config, "การสมัครสมาชิก ไม่สำเร็จ (ข้อมูลซ้ำ)", `<p><b>ความพยายามสมัครด้วย:</b></p><p>ชื่อ: ${data.fname} ${data.lname}</p><p>อีเมล: ${data.email}</p><p>เบอร์โทร: ${data.phone}</p>`, "error");
       return jsonResponse({ status: "error", message: "อีเมล์หรือเบอร์โทรศัพท์นี้ถูกใช้งานแล้ว" });
     }
   }
 
+  var validInviterUID = "";
+  if (data.inviterUID && String(data.inviterUID).trim() !== "") {
+    var reqInviter = String(data.inviterUID).trim();
+    var cNewEmail = cleanStr(data.email);
+    var cNewPhone = cleanStr(data.phone);
+    
+    for (var u = records.length - 1; u >= 1; u--) {
+      if (records[u] && records[u].length > 0 && String(records[u][2]).trim() === reqInviter) {
+         var invEmail = cleanStr(records[u][5]);
+         var invPhone = cleanStr(records[u][6]);
+         var isSelf = false;
+         if (cNewEmail && invEmail === cNewEmail) isSelf = true;
+         if (cNewPhone && invPhone === cNewPhone) isSelf = true;
+
+         if (!isSelf) { validInviterUID = reqInviter; }
+         break;
+      }
+    }
+  }
+
   var d = new Date(); var dateStr = Utilities.formatDate(d, "GMT+7", "dd-MM-yyyy"); var timeStr = Utilities.formatDate(d, "GMT+7", "HH:mm");
   var fullTimestamp = dateStr + " / " + timeStr; var newUid = "U" + Math.floor(Date.now() / 1000);
   
-  fbAppendRow(SHEET_USERS, [dateStr, timeStr, newUid, data.fname, data.lname, data.email, data.phone, data.password, "", "", 0, ""]);
+  var hashedPass = hashPassword(data.password);
+  fbAppendRow(SHEET_USERS, [dateStr, timeStr, newUid, data.fname, data.lname, data.email, data.phone, hashedPass, "", "", 0, ""]);
   
-  if (data.inviterUID) {
-    fbAppendRow(SHEET_NETWORK, [data.email, data.phone, data.inviterUID]);
+  if (validInviterUID !== "") {
+    fbAppendRow(SHEET_NETWORK, [data.email, data.phone, validInviterUID]);
     var affTimestamp = Utilities.formatDate(d, "GMT+7", "dd/MM/yyyy | HH:mm:ss");
-    fbAppendRow(SHEET_AFFILIATE, [affTimestamp, data.inviterUID, data.email || data.phone, "เพื่อนใหม่ (สมัครบัญชี)", 0, 0, "เข้าสู่ระบบแล้ว"]);
+    fbAppendRow(SHEET_AFFILIATE, [affTimestamp, validInviterUID, data.email || data.phone, "เพื่อนใหม่ (สมัครบัญชี)", 0, 0, "เข้าสู่ระบบแล้ว"]);
   }
   
   var userObj = { uid: newUid, fname: data.fname, lname: data.lname, email: data.email, phone: data.phone, balance: 0, bankName: "", bankAcc: "", regDate: fullTimestamp, address: null };
@@ -575,18 +776,22 @@ function handleRegister(data, config) {
 
 function handleLogin(data, config) {
   var records = fbGetValues(SHEET_USERS);
-  for (var i = 1; i < records.length; i++) {
-    if(!records[i]) continue;
-    if ((cleanStr(records[i][5]) === cleanStr(data.username) || cleanStr(records[i][6]) === cleanStr(data.username)) && (String(records[i][7]) === String(data.password))) {
-      var currentBalance = parseFloat(records[i][10]) || 0;
-      var addressObj = null;
-      try { if(records[i][11]) addressObj = JSON.parse(records[i][11]); } catch(e){}
+  var hashedInput = hashPassword(String(data.password).trim());
+  for (var i = records.length - 1; i >= 1; i--) {
+    if(!records[i] || records[i].length === 0) continue;
+    if ((cleanStr(records[i][5]) === cleanStr(data.username) || cleanStr(records[i][6]) === cleanStr(data.username))) {
+      var storedPass = String(records[i][7]);
+      if (storedPass === String(data.password).trim() || storedPass === hashedInput) {
+        var currentBalance = parseFloat(records[i][10]) || 0;
+        var addressObj = null;
+        try { if(records[i][11]) addressObj = JSON.parse(records[i][11]); } catch(e){}
 
-      var userObj = { regDate: records[i][0] + " / " + records[i][1], uid: records[i][2], fname: records[i][3], lname: records[i][4], email: records[i][5], phone: records[i][6], balance: currentBalance, bankName: records[i][8] ? String(records[i][8]) : "", bankAcc: records[i][9] ? String(records[i][9]) : "", address: addressObj };
-      var timestamp = formatThaiDateTime(new Date()); 
-      sendSystemEmail(userObj.email, "แจ้งผลการทำรายการ", userObj, config, timestamp, "-", "เข้าสู่ระบบ สำเร็จ");
-      notifyAdmin(config, "รายการเข้าสู่ระบบ สำเร็จ", `<p><b>ผู้ใช้:</b> ${userObj.fname} ${userObj.lname} (${userObj.phone})</p><p><b>เวลา:</b> ${timestamp}</p>`, "info");
-      return jsonResponse({ status: "success", user: userObj });
+        var userObj = { regDate: records[i][0] + " / " + records[i][1], uid: records[i][2], fname: records[i][3], lname: records[i][4], email: records[i][5], phone: records[i][6], balance: currentBalance, bankName: records[i][8] ? String(records[i][8]) : "", bankAcc: records[i][9] ? String(records[i][9]) : "", address: addressObj };
+        var timestamp = formatThaiDateTime(new Date()); 
+        sendSystemEmail(userObj.email, "แจ้งผลการทำรายการ", userObj, config, timestamp, "-", "เข้าสู่ระบบ สำเร็จ");
+        notifyAdmin(config, "รายการเข้าสู่ระบบ สำเร็จ", `<p><b>ผู้ใช้:</b> ${userObj.fname} ${userObj.lname} (${userObj.phone})</p><p><b>เวลา:</b> ${timestamp}</p>`, "info");
+        return jsonResponse({ status: "success", user: userObj });
+      }
     }
   }
   var ts = formatThaiDateTime(new Date());
@@ -607,7 +812,7 @@ function handleSendOtp(data, config) {
   var records = fbGetValues(SHEET_USERS);
   var found = false; var userFname = "";
   for(var i=1; i<records.length; i++) {
-    if(records[i] && cleanStr(records[i][5]) === email) { found = true; userFname = records[i][3]; break; }
+    if(records[i] && records[i].length > 0 && cleanStr(records[i][5]) === email) { found = true; userFname = records[i][3]; break; }
   }
   if(!found) return jsonResponse({status: "error", message: "ไม่พบอีเมล์นี้ในระบบ"});
 
@@ -635,7 +840,7 @@ function handleResetPassword(data, config) {
   var isValid = false; var otpRowIndex = -1;
   
   for(var j = otpData.length - 1; j >= 1; j--) {
-      if(!otpData[j]) continue;
+      if(!otpData[j] || otpData[j].length === 0) continue;
       if(cleanStr(otpData[j][1]) === email && String(otpData[j][2]) === otp && otpData[j][3] === "รอใช้งาน") {
           var createdTimeMs = parseFloat(otpData[j][4]);
           if(!isNaN(createdTimeMs)) {
@@ -651,9 +856,9 @@ function handleResetPassword(data, config) {
   fbSetValue(SHEET_OTP, otpRowIndex, 4, "ใช้งานแล้ว");
 
   var records = fbGetValues(SHEET_USERS);
-  for(var i=1; i<records.length; i++) {
-    if(records[i] && cleanStr(records[i][5]) === email) {
-      fbSetValue(SHEET_USERS, i+1, 8, newPass); 
+  for (var i = records.length - 1; i >= 1; i--) {
+    if(records[i] && records[i].length > 0 && cleanStr(records[i][5]) === email) {
+      fbSetValue(SHEET_USERS, i+1, 8, hashPassword(newPass)); 
       var timestamp = formatThaiDateTime(new Date());
       var userObj = { uid: records[i][2], fname: records[i][3], lname: records[i][4], email: email, phone: records[i][6] };
       sendSystemEmail(email, "แจ้งผลการทำรายการ", userObj, config, timestamp, "-", "เปลี่ยนรหัสผ่าน สำเร็จ");
@@ -665,10 +870,12 @@ function handleResetPassword(data, config) {
 
 function handleChangePassword(data, config) {
   var records = fbGetValues(SHEET_USERS);
-  for(var i=1; i<records.length; i++) {
-    if(records[i] && cleanStr(records[i][5]) === cleanStr(data.email)) {
-      if(String(records[i][7]) === String(data.oldPass).trim()) {
-        fbSetValue(SHEET_USERS, i+1, 8, String(data.newPass).trim());
+  var hashedOldPass = hashPassword(String(data.oldPass).trim());
+  for (var i = records.length - 1; i >= 1; i--) {
+    if(records[i] && records[i].length > 0 && cleanStr(records[i][5]) === cleanStr(data.email)) {
+      var storedPass = String(records[i][7]);
+      if(storedPass === String(data.oldPass).trim() || storedPass === hashedOldPass) {
+        fbSetValue(SHEET_USERS, i+1, 8, hashPassword(String(data.newPass).trim()));
         var timestamp = formatThaiDateTime(new Date());
         var userObj = { uid: records[i][2], fname: records[i][3], lname: records[i][4], email: cleanStr(data.email), phone: records[i][6] };
         sendSystemEmail(cleanStr(data.email), "แจ้งผลการทำรายการ", userObj, config, timestamp, "-", "แก้ไขรหัสผ่าน สำเร็จ");
@@ -683,7 +890,7 @@ function handleCheckDiscountCode(data) {
   var oData = fbGetValues(SHEET_ORDERS);
   var appliedCode = String(data.code).trim().toUpperCase(); var bName = String(data.name).trim(); var bPhone = cleanStr(data.phone);
   for (var k = 1; k < oData.length; k++) {
-    if(!oData[k]) continue;
+    if(!oData[k] || oData[k].length === 0) continue;
     var rowStr = String(oData[k][4] || ""); 
     if (rowStr.indexOf("[Code: " + appliedCode + "]") > -1) {
       var orderName = String(oData[k][2] || "").trim(); var orderPhone = cleanStr(oData[k][3] || "");
@@ -700,15 +907,15 @@ function handleAddBankAccount(data, config) {
   var rowIndex = -1; var cleanInputBankAcc = cleanStr(data.bankAcc);
 
   for (var j = 1; j < uData.length; j++) {
-      if(!uData[j]) continue;
+      if(!uData[j] || uData[j].length === 0) continue;
       if (cleanStr(uData[j][5]) !== cleanStr(data.email) && cleanStr(uData[j][6]) !== cleanStr(data.phone)) { 
           if (cleanStr(uData[j][9] || "") === cleanInputBankAcc && cleanInputBankAcc !== "") {
               return jsonResponse({ status: "error", message: "เลขที่บัญชีนี้ถูกใช้งานโดยผู้ใช้อื่นในระบบแล้ว ไม่สามารถใช้ซ้ำได้" });
           }
       }
   }
-  for (var i = 1; i < uData.length; i++) {
-    if (uData[i] && (cleanStr(uData[i][5]) === cleanStr(data.email) || cleanStr(uData[i][6]) === cleanStr(data.phone))) { rowIndex = i + 1; break; }
+  for (var i = uData.length - 1; i >= 1; i--) {
+    if (uData[i] && uData[i].length > 0 && (cleanStr(uData[i][5]) === cleanStr(data.email) || cleanStr(uData[i][6]) === cleanStr(data.phone))) { rowIndex = i + 1; break; }
   }
   if (rowIndex > -1) {
     fbSetValue(SHEET_USERS, rowIndex, 9, data.bankName);
@@ -728,7 +935,7 @@ function handleEmailStatement(data, config) {
 
 function handleDepositTimeout(data, config) {
     var uData = fbGetValues(SHEET_USERS); var userId = "GUEST"; 
-    for (var i = 1; i < uData.length; i++) { if (uData[i] && (cleanStr(uData[i][5]) === cleanStr(data.email) || cleanStr(uData[i][6]) === cleanStr(data.phone))) { userId = uData[i][2]; break; } }
+    for (var i = uData.length - 1; i >= 1; i--) { if (uData[i] && uData[i].length > 0 && (cleanStr(uData[i][5]) === cleanStr(data.email) || cleanStr(uData[i][6]) === cleanStr(data.phone))) { userId = uData[i][2]; break; } }
     var timestamp = formatThaiDateTime(new Date());
     fbAppendRow(SHEET_TRANSACTIONS, [timestamp, userId, data.fullname, data.email, data.phone, "ฝากเงิน", parseFloat(data.expectedPrice), "รหัสชำระเงินไม่ถูกต้อง ER 102", "-"]);
     return jsonResponse({ status: "success" });
@@ -747,7 +954,7 @@ function handleGetBookingList(data) {
   var bData = fbGetValues(SHEET_BOOKING);
   var bookings = [];
   for (var i = 1; i < bData.length; i++) {
-    if (bData[i] && cleanStr(bData[i][6]) === cleanStr(data.phone)) {
+    if (bData[i] && bData[i].length > 0 && cleanStr(bData[i][6]) === cleanStr(data.phone)) {
       bookings.push({ createDate: bData[i][0], topic: bData[i][7], detail: bData[i][8], bookDate: bData[i][9], bookTime: bData[i][10], queueNo: bData[i][11], sequence: bData[i][12], waitCount: bData[i][13], status: bData[i][14], note: bData[i][15], rowId: i + 1 });
     }
   }
@@ -759,7 +966,7 @@ function handleGetBookedSlots(data) {
     var bData = fbGetValues(SHEET_BOOKING);
     var bookedTimes = []; var hasUserBookedToday = false;
     for (var i = 1; i < bData.length; i++) {
-        if (bData[i] && bData[i][14] === "รอเรียกคิว" && bData[i][9] === data.date) {
+        if (bData[i] && bData[i].length > 0 && bData[i][14] === "รอเรียกคิว" && bData[i][9] === data.date) {
             bookedTimes.push(bData[i][10]);
             if (cleanStr(bData[i][6]) === cleanStr(data.phone)) { hasUserBookedToday = true; }
         }
@@ -772,9 +979,12 @@ function handleCancelBooking(data, config) {
   var bookDateStr = fbGetValue(SHEET_BOOKING, rowId, 10); 
   var bookTimeStr = fbGetValue(SHEET_BOOKING, rowId, 11); 
   
-  var parts = String(bookDateStr).split('-');
+  var parts = String(bookDateStr).split(/[-/]/);
   if(parts.length === 3) {
-    var bDate = new Date(parts[2] + "-" + parts[1] + "-" + parts[0] + "T" + bookTimeStr + ":00+07:00");
+    var y = parts[2].length === 4 ? parts[2] : parts[0];
+    var m = parts[1];
+    var d = parts[0].length === 2 && parts[0] <= 31 ? parts[0] : parts[2];
+    var bDate = new Date(y + "-" + m + "-" + d + "T" + bookTimeStr + ":00+07:00");
     if((bDate - new Date()) / (1000 * 60 * 60) < 3) {
       return jsonResponse({ status: "error", message: "ไม่สามารถยกเลิกคิวได้ ต้องยกเลิกล่วงหน้าอย่างน้อย 3 ชั่วโมง" });
     }
@@ -801,7 +1011,7 @@ function sendSystemEmail(toEmail, subjectTitle, user, config, timestamp, orderRe
 
 
 // =============================================================
-//                    ORDER & DEPOSIT Logic (With Exact ER Errors)
+//                    ORDER & DEPOSIT Logic 
 // =============================================================
 
 function verifySlipWithSlipOK(blob, expectedPrice, branchId, apiKey) {
@@ -817,8 +1027,16 @@ function verifySlipWithSlipOK(blob, expectedPrice, branchId, apiKey) {
     
     if (responseCode === 200 && jsonResponse.success === true) {
       var actual = parseFloat(jsonResponse.data.amount);
-      if (actual >= expectedPrice - 0.01) { return { isValid: true, actualAmount: actual }; } 
-      else { return { isValid: false, isAmountMismatch: true, actualAmount: actual }; }
+      
+      // CRITICAL FIX: ยอดสลิปต้องตรงกับที่กรอกเป๊ะๆ เท่านั้น
+      if (Math.abs(actual - expectedPrice) < 0.001) { 
+          return { isValid: true, actualAmount: actual }; 
+      } else if (actual < expectedPrice) { 
+          return { isValid: false, isAmountMismatchUnder: true, actualAmount: actual }; 
+      } else {
+          return { isValid: false, isAmountMismatchOver: true, actualAmount: actual }; 
+      }
+
     } else {
       var msg = jsonResponse.message || "ไม่สามารถตรวจสอบสลิปได้"; 
       var code = jsonResponse.code || responseCode;
@@ -830,7 +1048,6 @@ function verifySlipWithSlipOK(blob, expectedPrice, branchId, apiKey) {
           return { isValid: false, isWrongAccount: true, message: msg }; 
       }
       
-      // ส่งคืนข้อความ Error จาก API ของ SlipOK ไปให้ผู้ใช้เห็น
       return { isValid: false, isFake: true, message: "SlipOK Error: " + msg + " (Code: " + code + ")" }; 
     }
   } catch (e) { 
@@ -840,9 +1057,46 @@ function verifySlipWithSlipOK(blob, expectedPrice, branchId, apiKey) {
 
 function getErrorReason(verificationResult, expectedPrice) {
   if (verificationResult.isDuplicate) return "รหัสชำระเงินซ้ำกับในระบบ (ER 109)\nสลิปนี้ถูกใช้งานไปแล้ว";
-  if (verificationResult.isWrongAccount) return "บัญชีรับเงินไม่ถูกต้อง (ER 101)\nบัญชีรับเงินในสลิปไม่ตรงกับที่ตั้งค่าไว้ในระบบ SlipOK";
-  if (verificationResult.isAmountMismatch) return "ยอดชำระเงินไม่ถูกต้อง\nคุณโอนมา " + verificationResult.actualAmount + " แต่ระบบต้องการ " + expectedPrice;
+  if (verificationResult.isWrongAccount) return "ไม่พบบัญชีในระบบ (ER 101)\nบัญชีไม่ตรง หรือไม่ใช่บัญชีร้าน";
+  if (verificationResult.isAmountMismatchUnder) return "ยอดชำระเงินไม่ถูกต้อง\nกรุณาติดต่อทีมงานเพื่อตรวจสอบ";
+  if (verificationResult.isAmountMismatchOver) return "ยอดชำระไม่สอดคล้องกับรหัสชำระเงิน\nกรุณาติดต่อทีมงานเพื่อตรวจสอบ";
   return "ตรวจสอบไม่ผ่าน (ER 102)\n" + (verificationResult.message || "สลิปปลอมหรือระบบอ่าน QR Code ไม่ได้ กรุณาใช้สลิปตัวเต็ม");
+}
+
+function calculateOrderPriceBackend(cart, discountCode, config) {
+  var pData = fbGetValues(SHEET_PRODUCTS);
+  var oData = fbGetValues(SHEET_OPTIONS);
+  var subtotal = 0;
+
+  for (var c = 0; c < cart.length; c++) {
+      var pPrice = 0;
+      for (var p = 1; p < pData.length; p++) {
+          if (pData[p] && pData[p].length > 0 && pData[p][2] === cart[c].product.name) {
+              pPrice = parseFloat(pData[p][4]) || 0; break;
+          }
+      }
+      var optPrice = 0;
+      if (cart[c].options && cart[c].options.length > 0) {
+          for (var o = 0; o < cart[c].options.length; o++) {
+              for (var od = 1; od < oData.length; od++) {
+                  if (oData[od] && oData[od].length > 0 && oData[od][1] === cart[c].options[o].name) {
+                      optPrice += parseFloat(oData[od][2]) || 0; break;
+                  }
+              }
+          }
+      }
+      subtotal += (pPrice + optPrice) * cart[c].qty;
+  }
+
+  var discount = 0;
+  if (discountCode) {
+      if (discountCode === config.Code1) discount = parseFloat(config.Discount1) || 0;
+      else if (discountCode === config.Code2) discount = parseFloat(config.Discount2) || 0;
+      else if (discountCode === config.Code3) discount = parseFloat(config.Discount3) || 0;
+  }
+  discount = Math.min(discount, subtotal);
+  var vat = (subtotal - discount) * 0.07;
+  return (subtotal - discount) + vat;
 }
 
 function handleSubmitOrder(data, config) {
@@ -851,20 +1105,28 @@ function handleSubmitOrder(data, config) {
   var expectedPrice = parseFloat(data.expectedPrice); var creditUsed = parseFloat(data.creditUsed) || 0; 
   var paymentMethod = data.paymentMethod || 'qr'; var appliedCode = data.discountCode || "";
 
+  var realBackendNetTotal = calculateOrderPriceBackend(cart, appliedCode, config);
+  var amountToPay = realBackendNetTotal - creditUsed;
+  
+  if (Math.abs(expectedPrice - amountToPay) > 2) {
+      return jsonResponse({ status: "error", message: "ยอดชำระเงินไม่ตรงกับราคาสินค้าในระบบ กรุณาทำรายการใหม่" });
+  }
+
   var pData = fbGetValues(SHEET_PRODUCTS);
   for (var c = 0; c < cart.length; c++) {
     for (var p = 1; p < pData.length; p++) {
-      if (pData[p] && pData[p][2] === cart[c].product.name) {
+      if (pData[p] && pData[p].length > 0 && pData[p][2] === cart[c].product.name) {
         var currentStock = parseInt(pData[p][8]) || 0;
         if (currentStock < cart[c].qty) { return jsonResponse({ status: "error", message: "ขออภัย สินค้า '" + cart[c].product.name + "' มีสต๊อกไม่เพียงพอ" }); }
         break;
       }
     }
   }
+
   function deductStock() {
     for (var c = 0; c < cart.length; c++) {
       for (var p = 1; p < pData.length; p++) {
-        if (pData[p] && pData[p][2] === cart[c].product.name) {
+        if (pData[p] && pData[p].length > 0 && pData[p][2] === cart[c].product.name) {
           var currentStock = parseInt(pData[p][8]) || 0;
           var newStock = Math.max(0, currentStock - cart[c].qty);
           fbSetValue(SHEET_PRODUCTS, p + 1, 9, newStock); 
@@ -878,8 +1140,8 @@ function handleSubmitOrder(data, config) {
   var orderRef = "NX" + Utilities.formatDate(new Date(), "GMT+7", "yyMMdd") + Math.floor(Math.random() * 10000);
   var uData = fbGetValues(SHEET_USERS);
   var userId = "GUEST"; var rowIndex = -1; var currentBalance = 0;
-  for (var i = 1; i < uData.length; i++) {
-    if (uData[i] && (cleanStr(uData[i][5]) === cleanStr(buyemail) || cleanStr(uData[i][6]) === cleanStr(phone))) { userId = uData[i][2]; rowIndex = i + 1; currentBalance = parseFloat(uData[i][10]) || 0; break; }
+  for (var i = uData.length - 1; i >= 1; i--) {
+    if (uData[i] && uData[i].length > 0 && (cleanStr(uData[i][5]) === cleanStr(buyemail) || cleanStr(uData[i][6]) === cleanStr(phone))) { userId = uData[i][2]; rowIndex = i + 1; currentBalance = parseFloat(uData[i][10]) || 0; break; }
   }
   var userObj = { uid: userId, fname: buyname.split(' ')[0], lname: buyname.split(' ')[1] || '', email: buyemail, phone: phone };
 
@@ -893,7 +1155,7 @@ function handleSubmitOrder(data, config) {
   if (paymentMethod === 'free' || (expectedPrice === 0 && creditUsed === 0)) {
     deductStock();
     fbAppendRow(SHEET_ORDERS, [timestamp, orderRef, buyname, phone, cartSummary, discount, vat, 0, "-", "สำเร็จ (ฟรี)", "Free"]);
-    sendOrderEmail(buyemail, userObj, config, orderRef, 0, currentBalance, "สำเร็จ");
+    sendOrderEmail(buyemail, userObj, config, orderRef, 0, currentBalance, "สำเร็จ", "", cart, discount, vat, "");
     if(data.guestInviterUID) { processAffiliateCommission(buyemail, phone, 0, true, data.guestInviterUID); }
     return jsonResponse({ status: "success", message: "ชำระเงินสำเร็จ", orderRef: orderRef });
   }
@@ -905,7 +1167,7 @@ function handleSubmitOrder(data, config) {
     fbAppendRow(SHEET_TRANSACTIONS, [timestamp, userId, buyname, buyemail, phone, "สั่งซื้อสินค้า", expectedPrice, `สำเร็จ (Ref: ${orderRef})`, "-"]);
     fbAppendRow(SHEET_ORDERS, [timestamp, orderRef, buyname, phone, cartSummary, discount, vat, expectedPrice, "-", "การชำระเงินถูกต้อง", "Credit"]);
     
-    sendOrderEmail(buyemail, userObj, config, orderRef, expectedPrice, newBalance, "สำเร็จ");
+    sendOrderEmail(buyemail, userObj, config, orderRef, expectedPrice, newBalance, "สำเร็จ", "", cart, discount, vat, "");
     if(data.guestInviterUID) { processAffiliateCommission(buyemail, phone, expectedPrice, true, data.guestInviterUID); }
     else { processAffiliateCommission(buyemail, phone, expectedPrice, (userId === "GUEST")); }
     
@@ -922,7 +1184,7 @@ function handleSubmitOrder(data, config) {
     var verificationResult = verifySlipWithSlipOK(blob, expectedPrice, config.SlipOkBranchId, config.SlipOkApiKey);
     
     if (verificationResult.isValid) {
-      deductStock();
+      deductStock(); 
       var finalNewBalance = currentBalance;
       if (creditUsed > 0) {
         finalNewBalance = currentBalance - creditUsed;
@@ -932,7 +1194,7 @@ function handleSubmitOrder(data, config) {
       var totalValueRecorded = expectedPrice + creditUsed;
       fbAppendRow(SHEET_ORDERS, [timestamp, orderRef, buyname, phone, cartSummary, discount, vat, totalValueRecorded, fileLink, "การชำระเงินถูกต้อง", "QR Code"]);
       
-      sendOrderEmail(buyemail, userObj, config, orderRef, totalValueRecorded, finalNewBalance, "สำเร็จ");
+      sendOrderEmail(buyemail, userObj, config, orderRef, totalValueRecorded, finalNewBalance, "สำเร็จ", "", cart, discount, vat, fileLink);
       
       if(data.guestInviterUID) { processAffiliateCommission(buyemail, phone, totalValueRecorded, true, data.guestInviterUID); }
       else { processAffiliateCommission(buyemail, phone, totalValueRecorded, (userId === "GUEST")); }
@@ -942,7 +1204,7 @@ function handleSubmitOrder(data, config) {
       var errorMsg = getErrorReason(verificationResult, expectedPrice);
       fbAppendRow(SHEET_ORDERS, [timestamp, orderRef, buyname, phone, cartSummary, discount, vat, (expectedPrice + creditUsed), fileLink, errorMsg.split('\n')[0], "QR Code"]);
       
-      sendOrderEmail(buyemail, userObj, config, orderRef, expectedPrice, currentBalance, "ไม่สำเร็จ", errorMsg);
+      sendOrderEmail(buyemail, userObj, config, orderRef, expectedPrice, currentBalance, "ไม่สำเร็จ", errorMsg, cart, discount, vat, fileLink);
       return jsonResponse({ status: "error", message: errorMsg, orderRef: orderRef, newBalance: currentBalance });
     }
   }
@@ -950,6 +1212,19 @@ function handleSubmitOrder(data, config) {
 
 function handleDeposit(data, config) {
   var phone = data.phone; var email = data.email; var fullname = data.fullname; var expectedPrice = parseFloat(data.expectedPrice);
+  
+  var uData = fbGetValues(SHEET_USERS);
+  var userId = "GUEST"; var rowIndex = -1; var currentBalance = 0;
+  for (var i = uData.length - 1; i >= 1; i--) {
+    if (uData[i] && uData[i].length > 0 && (cleanStr(uData[i][5]) === cleanStr(email) || cleanStr(uData[i][6]) === cleanStr(phone))) { userId = uData[i][2]; rowIndex = i + 1; currentBalance = parseFloat(uData[i][10]) || 0; break; }
+  }
+  var userObj = { uid: userId, fname: fullname, lname: '', email: email, phone: phone };
+
+  // บังคับขั้นต่ำ
+  if (expectedPrice < 100) {
+      return jsonResponse({ status: "error", message: "ขั้นต่ำในการทำรายการคือ 100 บาท", newBalance: currentBalance });
+  }
+
   var decodedData = Utilities.base64Decode(data.base64); 
   var blob = Utilities.newBlob(decodedData, data.type || 'image/jpeg', data.name || 'slip.jpg');
   var folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
@@ -959,23 +1234,22 @@ function handleDeposit(data, config) {
   var verificationResult = verifySlipWithSlipOK(blob, expectedPrice, config.SlipOkBranchId, config.SlipOkApiKey);
   var timestamp = Utilities.formatDate(new Date(), "GMT+7", "dd/MM/yyyy | HH:mm:ss");
 
-  var uData = fbGetValues(SHEET_USERS);
-  var userId = "GUEST"; var rowIndex = -1; var currentBalance = 0;
-  for (var i = 1; i < uData.length; i++) {
-    if (uData[i] && (cleanStr(uData[i][5]) === cleanStr(email) || cleanStr(uData[i][6]) === cleanStr(phone))) { userId = uData[i][2]; rowIndex = i + 1; currentBalance = parseFloat(uData[i][10]) || 0; break; }
-  }
-  var userObj = { uid: userId, fname: fullname, lname: '', email: email, phone: phone };
-
   if (verificationResult.isValid) {
-    var depositAmount = verificationResult.actualAmount; 
-    var bonusOnly = depositAmount * 0.005; // 0.5%
-    var totalCreditAdded = depositAmount + bonusOnly;
+    // คำนวณโบนัสและบวกเครดิต
+    var depositAmount = expectedPrice; 
+    var bonusPercent = parseFloat(config.DepositBonusPercent) || 0;
+    var bonusAmount = depositAmount * (bonusPercent / 100);
+    var totalCreditAdded = depositAmount + bonusAmount; 
     var newBalance = currentBalance + totalCreditAdded;
 
     if(rowIndex > -1) { fbSetValue(SHEET_USERS, rowIndex, 11, newBalance); } 
-    fbAppendRow(SHEET_TRANSACTIONS, [timestamp, userId, fullname, email, phone, "ฝากเงิน", totalCreditAdded, "สำเร็จ", fileLink]);
     
-    sendDepositEmail(email, userObj, config, depositAmount, newBalance, "สำเร็จ");
+    var noteStr = "สำเร็จ";
+    if (bonusAmount > 0) { noteStr += " (+โบนัส " + bonusAmount.toFixed(2) + " บาท)"; }
+    
+    fbAppendRow(SHEET_TRANSACTIONS, [timestamp, userId, fullname, email, phone, "ฝากเงิน", totalCreditAdded, noteStr, fileLink]);
+    
+    sendDepositEmail(email, userObj, config, depositAmount, bonusAmount, newBalance, "สำเร็จ", "", fileLink);
     
     if(data.guestInviterUID) { processAffiliateCommission(email, phone, depositAmount, true, data.guestInviterUID); }
     else { processAffiliateCommission(email, phone, depositAmount, (userId === "GUEST")); }
@@ -984,7 +1258,7 @@ function handleDeposit(data, config) {
   } else {
     var errorStr = getErrorReason(verificationResult, expectedPrice);
     fbAppendRow(SHEET_TRANSACTIONS, [timestamp, userId, fullname, email, phone, "ฝากเงิน", expectedPrice, errorStr.split('\n')[0], fileLink]);
-    sendDepositEmail(email, userObj, config, expectedPrice, currentBalance, "ไม่สำเร็จ", errorStr);
+    sendDepositEmail(email, userObj, config, expectedPrice, 0, currentBalance, "ไม่สำเร็จ", errorStr, fileLink);
     return jsonResponse({ status: "error", message: errorStr, newBalance: currentBalance });
   }
 }
@@ -996,8 +1270,8 @@ function handleWithdraw(data, config) {
   var uData = fbGetValues(SHEET_USERS);
   var userId = "GUEST"; var rowIndex = -1; var currentBalance = 0; var bankName = ""; var bankAcc = "";
 
-  for (var i = 1; i < uData.length; i++) {
-    if (uData[i] && (cleanStr(uData[i][5]) === cleanStr(email) || cleanStr(uData[i][6]) === cleanStr(phone))) {
+  for (var i = uData.length - 1; i >= 1; i--) {
+    if (uData[i] && uData[i].length > 0 && (cleanStr(uData[i][5]) === cleanStr(email) || cleanStr(uData[i][6]) === cleanStr(phone))) {
       userId = uData[i][2]; rowIndex = i + 1; currentBalance = parseFloat(uData[i][10]) || 0;
       bankName = uData[i][8]; bankAcc = uData[i][9]; break;
     }
@@ -1005,7 +1279,7 @@ function handleWithdraw(data, config) {
   var userObj = { uid: userId, fname: fullname, lname: '', email: email, phone: phone };
 
   if (rowIndex === -1) return jsonResponse({ status: "error", message: "ไม่พบผู้ใช้งาน" });
-  if (amount < 100 || currentBalance < amount) return jsonResponse({ status: "error", message: "ยอดเงินไม่ถูกต้อง" });
+  if (amount < 100 || currentBalance < amount) return jsonResponse({ status: "error", message: "ยอดเงินไม่ถูกต้อง (ขั้นต่ำ 100 บาท)" });
 
   var newBalance = currentBalance - amount;
   fbSetValue(SHEET_USERS, rowIndex, 11, newBalance);
@@ -1021,13 +1295,19 @@ function handleSubmitBooking(data, config) {
   
   var countToday = 0; var waitCount = 0;
   for(var i=1; i<bData.length; i++){
-    if(!bData[i]) continue;
+    if(!bData[i] || bData[i].length === 0) continue;
     if(bData[i][14] === "รอเรียกคิว" && bData[i][9] === data.bookDate) { countToday++; waitCount++; } 
     else if (bData[i][9] === data.bookDate) { countToday++; }
   }
 
   var sequence = countToday + 1;
-  var queueNo = "Q" + Utilities.formatDate(new Date(data.bookDate.split('-').reverse().join('-')), "GMT+7", "yyMMdd") + ("00" + sequence).slice(-3);
+  var parts = String(data.bookDate).split(/[-/]/);
+  var y = parts[2].length === 4 ? parts[2] : parts[0];
+  var m = parts[1];
+  var day = parts[0].length === 2 && parts[0] <= 31 ? parts[0] : parts[2];
+  var qDate = new Date(y, m - 1, day);
+
+  var queueNo = "Q" + Utilities.formatDate(qDate, "GMT+7", "yyMMdd") + ("00" + sequence).slice(-3);
   
   fbAppendRow(SHEET_BOOKING, [dateStr, timeStr, data.uid, data.fname, data.lname, data.email, data.phone, data.topic, data.detail, data.bookDate, data.bookTime, queueNo, sequence, waitCount, "รอเรียกคิว", "-"]);
   
@@ -1038,7 +1318,7 @@ function handleSubmitBooking(data, config) {
 }
 
 // =============================================================
-//                    EXACT EMAIL TEMPLATES (K PLUS Style)
+//                    EXACT EMAIL TEMPLATES 
 // =============================================================
 
 function generateEmailHtml(bodyContent) {
@@ -1057,19 +1337,145 @@ function getEmailFooter(config) {
     `;
 }
 
-function sendOrderEmail(toEmail, user, config, orderRef, amount, newBalance, statusType, errorReason = "") {
+function generateStatementImageHtml(user, orderRef, timestamp, cart, discount, vat, amount, config) {
+    var pData = fbGetValues(SHEET_PRODUCTS);
+    var oData = fbGetValues(SHEET_OPTIONS);
+    
+    var tableHtml = `
+    <table width="100%" cellpadding="8" cellspacing="0" style="font-family: 'Tahoma', sans-serif; font-size: 12px; border-collapse: collapse; margin-bottom: 10px;">
+        <tr style="background-color: #f1f1f1; border-bottom: 2px solid #333;">
+            <th align="left" style="border-bottom: 2px solid #333;">รายการสินค้า (Description)</th>
+            <th align="center" style="border-bottom: 2px solid #333; width: 60px;">จำนวน</th>
+            <th align="right" style="border-bottom: 2px solid #333; width: 100px;">ราคารวม (Total)</th>
+        </tr>`;
+        
+    var totalSub = 0;
+    
+    for (var i=0; i<cart.length; i++) {
+        var item = cart[i];
+        var pName = item.product.name;
+        var pPrice = 0;
+        
+        for (var p=1; p<pData.length; p++) {
+            if (pData[p] && pData[p].length > 0 && pData[p][2] === pName) { pPrice = parseFloat(pData[p][4]) || 0; break; }
+        }
+        
+        var optPrice = 0;
+        var optNames = [];
+        if (item.options && item.options.length > 0) {
+            for (var o=0; o<item.options.length; o++) {
+                var optN = item.options[o].name;
+                optNames.push(optN);
+                for (var od=1; od<oData.length; od++) {
+                    if (oData[od] && oData[od].length > 0 && oData[od][1] === optN) { optPrice += parseFloat(oData[od][2]) || 0; break; }
+                }
+            }
+        }
+        
+        var rowTotal = (pPrice + optPrice) * item.qty;
+        totalSub += rowTotal;
+        
+        var optText = optNames.length > 0 ? `<br><span style="color: #666; font-size: 11px;">+ ${optNames.join(", ")}</span>` : "";
+        var borderStyle = (i === cart.length - 1) ? "border-bottom: 1px solid #ccc;" : "border-bottom: 1px dashed #eee;";
+        
+        tableHtml += `
+        <tr>
+            <td style="${borderStyle}">${pName}${optText}</td>
+            <td align="center" style="${borderStyle}">${item.qty}</td>
+            <td align="right" style="${borderStyle}">${rowTotal.toFixed(2)}</td>
+        </tr>`;
+    }
+    
+    tableHtml += `</table>`;
+    
+    var statementHtml = `
+    <div style="background-color: #ffffff; padding: 25px; border: 1px solid #ddd; max-width: 500px; margin: 20px auto; font-family: 'Tahoma', sans-serif;">
+        <div style="border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 15px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td align="left">
+                        <h2 style="color: #e43a3d; margin: 0; font-size: 24px;">Next Live</h2>
+                        <div style="font-size: 10px; font-weight: bold; letter-spacing: 1px;">RECEIPT / TAX INVOICE</div>
+                    </td>
+                    <td align="right" style="font-size: 11px; line-height: 1.4;">
+                        <b>ร้าน ${config.SiteName}</b><br>
+                        จำหน่ายสินค้าดิจิตอล และพรีเมี่ยม<br>
+                        <span style="color: #666;">วันที่ ${timestamp.split('  ')[0]} | ${timestamp.split('  ')[1]} น.</span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        
+        <div style="background-color: #fafafa; padding: 12px; border-radius: 4px; border: 1px solid #eee; margin-bottom: 15px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="font-size: 12px; line-height: 1.5;">
+                <tr>
+                    <td align="left">
+                        <b style="color: #e43a3d;">ข้อมูลลูกค้า (Customer)</b><br>
+                        <b>ชื่อ-สกุล:</b> ${user.fname} ${user.lname}<br>
+                        <b>อีเมล:</b> ${user.email}<br>
+                        <b>เบอร์โทร:</b> ${maskPhone(user.phone)}
+                    </td>
+                    <td align="right" valign="bottom">
+                        <div style="font-size: 10px; color: #888;">Order Reference</div>
+                        <div style="font-size: 14px; font-weight: bold; font-family: monospace;">${orderRef}</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        
+        ${tableHtml}
+        
+        <table width="100%" cellpadding="4" cellspacing="0" style="font-size: 12px; margin-bottom: 20px;">
+            <tr>
+                <td align="right" width="70%" style="color: #555;">ยอดรวม (Subtotal)</td>
+                <td align="right" width="30%">฿${totalSub.toFixed(2)}</td>
+            </tr>
+            <tr>
+                <td align="right" style="color: #dc3545;">ส่วนลด (Discount)</td>
+                <td align="right" style="color: #dc3545;">- ฿${parseFloat(discount).toFixed(2)}</td>
+            </tr>
+            <tr>
+                <td align="right" style="color: #555;">ภาษี (VAT 7%)</td>
+                <td align="right">฿${parseFloat(vat).toFixed(2)}</td>
+            </tr>
+            <tr>
+                <td align="right" style="border-top: 1px solid #ccc; padding-top: 8px;"><b>ยอดสุทธิ (Net)</b></td>
+                <td align="right" style="border-top: 1px solid #ccc; padding-top: 8px; font-size: 16px; font-weight: bold; color: #e43a3d;">฿${parseFloat(amount).toFixed(2)}</td>
+            </tr>
+        </table>
+        
+        <div style="border-top: 1px solid #eee; padding-top: 10px; font-size: 11px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td align="left">
+                        <b style="color: #e43a3d;">ข้อมูลอ้างอิงการรับเงิน</b><br>
+                        <span style="color: #888;">เอกสารนี้ออกโดยระบบอัตโนมัติ</span>
+                    </td>
+                    <td align="right">
+                        <b>ผู้รับเงิน: ${config.AdminName}</b>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    `;
+    return statementHtml;
+}
+
+
+function sendOrderEmail(toEmail, user, config, orderRef, amount, newBalance, statusType, errorReason = "", cart = [], discount = 0, vat = 0, fileLink = "") {
     var timestamp = formatThaiDateTime(new Date());
     var statusTitle = statusType === "สำเร็จ" ? "(สำเร็จ)" : "(ไม่สำเร็จ)";
-    var statusText = statusType === "สำเร็จ" ? "รหัสชำระเงินถูกต้อง" : errorReason.replace(/\n/g, ' ');
+    var statusText = statusType === "สำเร็จ" ? "ชำระเงินเรียบร้อย" : errorReason.replace(/\n/g, ' ');
 
     var body = `
 เรียน ผู้ใช้โทรศัพท์มือถือหมายเลข ${maskPhone(user.phone)}<br>
 เรื่อง แจ้งผลการทำรายการชำระค่าสินค้าและบริการ ${statusTitle}<br><br>
 ตามที่ คุณได้ทำรายการชำระค่าสินค้าและบริการผ่านบริการ ${config.SiteName} โดยมีรายละเอียด ดังนี้<br><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;วันที่ทำรายการ: ${timestamp}<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ชื่อ นามสกุล: ${user.fname} ${user.lname}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ชื่อ นามสกุล: ${user.fname} ${user.lname} (ผู้ใช้)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;รหัสผู้ใช้งาน: ${user.uid}<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;เพื่อเข้าบัญชีบริการ: ร้าน${config.SiteName} (${config.AdminName})<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;เพื่อเข้าบัญชีบริการ: ${config.AdminName} (แอดมิน)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;เลขที่บัญชีร้านค้า: ${config.BankAccount}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;รหัสธุรกรรมเลขที่: ${orderRef}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;จำนวนเงิน (บาท): ${amount.toFixed(2)}<br>
@@ -1085,10 +1491,68 @@ function sendOrderEmail(toEmail, user, config, orderRef, amount, newBalance, sta
     }
 
     body += getEmailFooter(config);
+    
+    if (statusType === "สำเร็จ" && cart && cart.length > 0) {
+        body += `<br><br><hr style="border: 0; border-top: 1px dashed #ccc; margin: 20px 0;">`;
+        body += `<p style="text-align: center; color: #666; font-size: 12px;">เอกสารแนบ: ใบเสร็จรับเงิน (Statement)</p>`;
+        
+        body += generateStatementImageHtml(user, orderRef, timestamp, cart, discount, vat, amount, config);
+        
+        var pData = fbGetValues(SHEET_PRODUCTS);
+        var oData = fbGetValues(SHEET_OPTIONS);
+        var hasLinks = false;
+        var linksHtml = `
+        <div style="background-color: #f1f8ff; padding: 20px; border-radius: 8px; border-left: 5px solid #0056b3; max-width: 500px; margin: 20px auto; font-family: 'Tahoma', sans-serif;">
+            <h3 style="color: #0056b3; margin-top: 0; margin-bottom: 15px;">📥 ลิงก์ดาวน์โหลดสินค้าและคู่มือการใช้งาน</h3>
+            <ul style="line-height: 2; margin: 0; padding-left: 20px;">
+        `;
+        
+        for(var i=0; i<cart.length; i++) {
+            var item = cart[i];
+            var pName = item.product.name;
+            var dlLink = ""; var mnLink = "";
+            for(var p=1; p<pData.length; p++) {
+                if(pData[p] && pData[p].length > 0 && pData[p][2] === pName) { dlLink = pData[p][6] || ""; mnLink = pData[p][7] || ""; break; }
+            }
+            
+            if (dlLink || mnLink) hasLinks = true;
+            
+            linksHtml += `<li><b>${pName}</b>: `;
+            if(dlLink) linksHtml += `<a href="${dlLink}" target="_blank" style="color: #0056b3; text-decoration: none; font-weight: bold;">[ดาวน์โหลดไฟล์]</a> `;
+            else linksHtml += `<span style="color: #999;">[ไม่มีไฟล์สินค้า]</span> `;
+            if(mnLink) linksHtml += ` | <a href="${mnLink}" target="_blank" style="color: #28a745; text-decoration: none; font-weight: bold;">[ดูคู่มือ]</a>`;
+            linksHtml += `</li>`;
+            
+            if (item.options && item.options.length > 0) {
+                for(var o=0; o<item.options.length; o++) {
+                    var optNameCheck = item.options[o].name;
+                    for(var od=1; od<oData.length; od++) {
+                        if(oData[od] && oData[od].length > 0 && oData[od][1] === optNameCheck) {
+                            var optDl = oData[od][3] || ""; var optMn = oData[od][4] || "";
+                            if(optDl || optMn) {
+                                hasLinks = true;
+                                linksHtml += `<li style="list-style-type: circle; margin-left: 20px; font-size: 13px;"><b>ส่วนเสริม: ${optNameCheck}</b>: `;
+                                if(optDl) linksHtml += `<a href="${optDl}" target="_blank" style="color: #0056b3; text-decoration: none; font-weight: bold;">[ดาวน์โหลดไฟล์]</a> `;
+                                if(optMn) linksHtml += ` | <a href="${optMn}" target="_blank" style="color: #28a745; text-decoration: none; font-weight: bold;">[ดูคู่มือ]</a>`;
+                                linksHtml += `</li>`;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        linksHtml += `</ul></div>`;
+        
+        if (hasLinks) {
+            body += linksHtml;
+        }
+    }
+
     try { MailApp.sendEmail({ to: toEmail, subject: `แจ้งผลการทำรายการชำระค่าสินค้าและบริการ ${statusTitle}`, htmlBody: generateEmailHtml(body) }); } catch(e) {}
 }
 
-function sendDepositEmail(toEmail, user, config, amount, newBalance, statusType, errorReason = "") {
+function sendDepositEmail(toEmail, user, config, amount, bonusAmount, newBalance, statusType, errorReason = "", fileLink = "") {
     var timestamp = formatThaiDateTime(new Date());
     var statusTitle = statusType === "สำเร็จ" ? "(สำเร็จ)" : "(ไม่สำเร็จ)";
     var statusText = statusType === "สำเร็จ" ? "รหัสชำระเงินถูกต้อง" : errorReason.replace(/\n/g, ' ');
@@ -1100,18 +1564,25 @@ function sendDepositEmail(toEmail, user, config, amount, newBalance, statusType,
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;วันที่ทำรายการ: ${timestamp}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ชื่อ นามสกุล: ${user.fname} ${user.lname}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;รหัสผู้ใช้: ${user.uid}<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;เข้าบัญชีรับเงิน: บัญชีแอดมิน<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;เข้าบัญชีรับเงิน: ${config.BankAccount}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ชื่อผู้รับเงิน: ${config.AdminName}<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;จำนวนเงิน (บาท): ${amount.toFixed(2)}<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ค่าธรรมเนียม (บาท): 0.00<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;จำนวนเงินฝาก (บาท): ${amount.toFixed(2)}<br>
+${bonusAmount > 0 ? `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;โบนัสที่ได้รับ (บาท): ${bonusAmount.toFixed(2)}<br>` : ''}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ยอดเครดิตที่ได้รับรวม (บาท): ${(amount + bonusAmount).toFixed(2)}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ยอดถอนได้ (บาท): ${newBalance.toFixed(2)}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;สถานะ: ${statusText}<br><br>
 `;
 
     if(statusType === "สำเร็จ") {
-        body += `บริการขอเรียนให้ทราบว่า ระบบได้ดำเนินการโอนเงินตามที่คุณได้ทำรายการไว้เรียบร้อยแล้ว ทั้งนี้ คุณสามารถตรวจสอบผลการทำรายการได้ที่เมนู "ประวัติ" และเลือก "ประวัติการฝากเงิน" เพื่อดูประวัติการทำรายการ`;
+        body += `บริการขอเรียนให้ทราบว่า ระบบได้ดำเนินการโอนเงินตามที่คุณได้ทำรายการไว้เรียบร้อยแล้ว ทั้งนี้ คุณสามารถตรวจสอบผลการทำรายการได้ที่เมนู "ประวัติ" และเลือก "ประวัติการฝากเงิน" เพื่อดูประวัติการทำรายการ<br>`;
+        if(fileLink !== "") {
+            body += `<br><div style="text-align:center;"><a href="${fileLink}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #e43a3d; color: white; text-decoration: none; border-radius: 5px; font-weight:bold;">ดูสลิปที่แนบมา</a></div><br>`;
+        }
     } else {
         body += `บริการขอเรียนให้ทราบว่า ระบบไม่สามารถดำเนินการโอนเงินตามที่คุณได้ทำรายการไว้ได้ ทั้งนี้ คุณสามารถตรวจสอบผลการทำรายการได้ที่เมนู "ประวัติ" และเลือก "ประวัติการฝากเงิน" เพื่อดูประวัติการทำรายการ`;
+        if(fileLink !== "") {
+            body += `<br><br><div style="text-align:center;"><a href="${fileLink}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #666; color: white; text-decoration: none; border-radius: 5px; font-weight:bold;">ดูสลิปที่มีปัญหา</a></div><br>`;
+        }
     }
 
     body += getEmailFooter(config);
@@ -1173,13 +1644,13 @@ function sendBookingEmail(toEmail, user, config, queueNo, topic, detail, waitCou
 function handleGetHistory(data) {
   var uData = fbGetValues(SHEET_USERS); var currentBalance = 0;
   for (var k = 1; k < uData.length; k++) {
-    if (uData[k] && (cleanStr(uData[k][5]) === cleanStr(data.email) || cleanStr(uData[k][6]) === cleanStr(data.phone))) { currentBalance = parseFloat(uData[k][10]) || 0; break; }
+    if (uData[k] && uData[k].length > 0 && (cleanStr(uData[k][5]) === cleanStr(data.email) || cleanStr(uData[k][6]) === cleanStr(data.phone))) { currentBalance = parseFloat(uData[k][10]) || 0; break; }
   }
 
   var orderRecords = fbGetValues(SHEET_ORDERS);
   var orderHistory = [];
   for (var i = 1; i < orderRecords.length; i++) {
-    if (orderRecords[i] && cleanStr(orderRecords[i][3]) === cleanStr(data.phone)) { 
+    if (orderRecords[i] && orderRecords[i].length > 0 && cleanStr(orderRecords[i][3]) === cleanStr(data.phone)) { 
       orderHistory.push({ 
         date: orderRecords[i][0], ref: orderRecords[i][1], items: orderRecords[i][4], 
         discount: orderRecords[i][5], vat: orderRecords[i][6], amount: orderRecords[i][7], status: orderRecords[i][9]
@@ -1190,10 +1661,11 @@ function handleGetHistory(data) {
   var txRecords = fbGetValues(SHEET_TRANSACTIONS);
   var txHistory = []; var wdHistory = [];
   for (var j = 1; j < txRecords.length; j++) {
-    if (txRecords[j] && cleanStr(txRecords[j][4]) === cleanStr(data.phone)) {
+    if (txRecords[j] && txRecords[j].length > 0 && cleanStr(txRecords[j][4]) === cleanStr(data.phone)) {
       var dt = txRecords[j][0];
       if (txRecords[j][5] === "ฝากเงิน" || String(txRecords[j][5]).indexOf("ปรับเครดิต") > -1) { 
-          txHistory.push({ date: dt, items: txRecords[j][5], amount: txRecords[j][6], status: txRecords[j][7] }); 
+          // เพิ่มการคืนค่า slipUrl ไปให้หน้าบ้าน (เพื่อแสดงปุ่มดูสลิป)
+          txHistory.push({ date: dt, items: txRecords[j][5], amount: txRecords[j][6], status: txRecords[j][7], slipUrl: txRecords[j][8] || "" }); 
       } 
       else if (txRecords[j][5] === "ถอนเงิน") { 
           wdHistory.push({ date: dt, items: txRecords[j][8], amount: txRecords[j][6], status: txRecords[j][7] }); 
@@ -1211,7 +1683,8 @@ function handleGetHistory(data) {
 
 function handleAdminLogin(payload, config) {
   if (cleanStr(payload.email) === cleanStr(config.AdminEmail) && cleanStr(payload.phone) === cleanStr(config.AdminPhone)) {
-    return jsonResponse({ status: "success", message: "เข้าสู่ระบบสำเร็จ" });
+    // ให้สร้าง Token ตอบกลับไปให้ Admin เพื่อใช้ในรอบต่อๆไป
+    return jsonResponse({ status: "success", message: "เข้าสู่ระบบสำเร็จ", adminToken: generateAdminToken(config) });
   } else { return jsonResponse({ status: "error", message: "อีเมลหรือเบอร์โทรศัพท์ไม่ถูกต้อง" }); }
 }
 
@@ -1219,12 +1692,13 @@ function getSheetNameByKey(key) {
     if(key === 'users') return SHEET_USERS; if(key === 'orders') return SHEET_ORDERS; if(key === 'booking') return SHEET_BOOKING; if(key === 'products') return SHEET_PRODUCTS;
     if(key === 'settings') return SHEET_SETTINGS; if(key === 'deposits') return SHEET_TRANSACTIONS; if(key === 'withdraws') return SHEET_TRANSACTIONS;
     if(key === 'options') return SHEET_OPTIONS; if(key === 'affiliate') return SHEET_AFFILIATE; if(key === 'movies') return SHEET_MOVIES; if(key === 'movie_downloads') return SHEET_MOVIE_DOWNLOADS;
+    if(key === 'network') return SHEET_NETWORK;
     return null;
 }
 
 function handleAdminGetData(payload) {
   var data = {};
-  var sheets = [ { key: 'users', name: SHEET_USERS }, { key: 'orders', name: SHEET_ORDERS }, { key: 'booking', name: SHEET_BOOKING }, { key: 'products', name: SHEET_PRODUCTS }, { key: 'settings', name: SHEET_SETTINGS }, { key: 'options', name: SHEET_OPTIONS }, { key: 'affiliate', name: SHEET_AFFILIATE }, { key: 'movies', name: SHEET_MOVIES }, { key: 'movie_downloads', name: SHEET_MOVIE_DOWNLOADS } ];
+  var sheets = [ { key: 'users', name: SHEET_USERS }, { key: 'orders', name: SHEET_ORDERS }, { key: 'booking', name: SHEET_BOOKING }, { key: 'products', name: SHEET_PRODUCTS }, { key: 'settings', name: SHEET_SETTINGS }, { key: 'options', name: SHEET_OPTIONS }, { key: 'affiliate', name: SHEET_AFFILIATE }, { key: 'network', name: SHEET_NETWORK }, { key: 'movies', name: SHEET_MOVIES }, { key: 'movie_downloads', name: SHEET_MOVIE_DOWNLOADS } ];
   
   sheets.forEach(function(sConfig) {
       var values = fbGetValues(sConfig.name);
@@ -1266,8 +1740,8 @@ function handleAdminUpdateRow(payload) {
                  var email = fbGetValue(sheetName, payload.row, 4); 
                  var amount = parseFloat(fbGetValue(sheetName, payload.row, 7)); 
                  var uData = fbGetValues(SHEET_USERS);
-                 for(var u=1; u<uData.length; u++) {
-                     if(uData[u] && cleanStr(uData[u][5]) === cleanStr(email)) {
+                 for (var u = uData.length - 1; u >= 1; u--) {
+                     if(uData[u] && uData[u].length > 0 && cleanStr(uData[u][5]) === cleanStr(email)) {
                          var curBal = parseFloat(uData[u][10]) || 0;
                          fbSetValue(SHEET_USERS, u+1, 11, curBal + amount);
                          break;
@@ -1282,8 +1756,8 @@ function handleAdminUpdateRow(payload) {
                  var emailWd = fbGetValue(sheetName, payload.row, 4); 
                  var amountWd = parseFloat(fbGetValue(sheetName, payload.row, 7)); 
                  var uDataWd = fbGetValues(SHEET_USERS);
-                 for(var uw=1; uw<uDataWd.length; uw++) {
-                     if(uDataWd[uw] && cleanStr(uDataWd[uw][5]) === cleanStr(emailWd)) {
+                 for(var uw=uDataWd.length-1; uw>=1; uw--) {
+                     if(uDataWd[uw] && uDataWd[uw].length > 0 && cleanStr(uDataWd[uw][5]) === cleanStr(emailWd)) {
                          var curBalWd = parseFloat(uDataWd[uw][10]) || 0;
                          fbSetValue(SHEET_USERS, uw+1, 11, curBalWd + amountWd);
                          break;
@@ -1291,7 +1765,6 @@ function handleAdminUpdateRow(payload) {
                  }
              }
           }
-          // บันทึกค่าลงฐานข้อมูลตามที่ผู้ใช้ส่งมาโดยตรง (ส่วน Front-end admin ควรส่งเป็น string)
           fbSetValue(sheetName, payload.row, colIndex, val);
       }
   }
@@ -1316,10 +1789,17 @@ function handleAdminAddRow(payload) {
     } else if (payload.sheet === 'users') {
         var d = new Date(); var dateStr = Utilities.formatDate(d, "GMT+7", "dd-MM-yyyy"); var timeStr = Utilities.formatDate(d, "GMT+7", "HH:mm");
         var newUid = "U" + Math.floor(Date.now() / 1000); var phone = data[3] ? String(data[3]).trim() : "";
-        fbAppendRow(SHEET_USERS, [dateStr, timeStr, newUid, data[0], data[1], data[2], phone, data[4], "", "", 0, ""]);
+        var hashedPass = hashPassword(data[4]);
+        fbAppendRow(SHEET_USERS, [dateStr, timeStr, newUid, data[0], data[1], data[2], phone, hashedPass, "", "", 0, ""]);
         return jsonResponse({status: "success"});
     } else if (payload.sheet === 'movies') {
         fbAppendRow(SHEET_MOVIES, [data[0], data[1], data[2], data[3], data[4]||"", data[5]||"", data[6]||""]);
+        return jsonResponse({status: "success"});
+    } else if (payload.sheet === 'network') {
+        fbAppendRow(SHEET_NETWORK, [data[0], data[1], data[2]]);
+        return jsonResponse({status: "success"});
+    } else if (payload.sheet === 'settings') {
+        fbAppendRow(SHEET_SETTINGS, [data[0], data[1], data[2]]);
         return jsonResponse({status: "success"});
     }
     return jsonResponse({status: "error", message: "Unsupported sheet for add"});
@@ -1334,7 +1814,7 @@ function handleAdminBroadcast(payload, config) {
     var uData = fbGetValues(SHEET_USERS);
     var emails = [];
     for(var i=1; i<uData.length; i++) {
-        if(!uData[i]) continue;
+        if(!uData[i] || uData[i].length === 0) continue;
         var email = String(uData[i][5]).trim();
         if(email && email.indexOf('@') > -1) { emails.push(email); }
     }
