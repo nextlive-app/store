@@ -48,7 +48,6 @@
                         pulseSkeleton: { '0%, 100%': { opacity: 1 }, '50%': { opacity: .5 } }
                     }
                 }
-            
             }
         }
     </script>
@@ -465,7 +464,7 @@
                 <div class="bg-white dark:bg-[#1e1e1e] p-6 border rounded-sm shadow-sm text-center">
                     <p class="text-sm text-gray-500 mb-6">เครดิตปัจจุบันของคุณ: <span class="font-bold text-lg text-green-600 dark:text-green-400" id="deposit-current-balance">฿0.00</span></p>
                     
-                    <label class="block text-sm font-semibold mb-2 text-left">ระบุจำนวนเงินที่ต้องการฝาก (โบนัส 0.5%) ขั้นต่ำ 100 บาท</label>
+                    <label id="deposit-bonus-label" class="block text-sm font-semibold mb-2 text-left">ระบุจำนวนเงินที่ต้องการฝาก ขั้นต่ำ 100 บาท</label>
                     <input type="number" id="deposit-amount-input" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#121212] outline-none text-2xl font-bold text-center rounded-sm mb-4 text-primary" placeholder="0.00">
                     
                     <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-6">
@@ -1217,7 +1216,6 @@
             </a>
         </div>
     </div>
-
     <!-- Application Logic -->
     <script>
         // ⚠️ อย่าลืมแก้ไข GAS_WEBAPP_URL ให้เป็นของคุณเอง
@@ -1273,7 +1271,8 @@
         let currentSubtotal = 0, currentDiscount = 0, currentVat = 0, currentCreditUsed = 0, currentNetTotal = 0;
         let appliedDiscountCode = "";
         let currentFlow = 'order'; 
-        let globalHistoryData = null;
+        let globalHistoryData = null; 
+
         const bannerData = [
             { img: "https://img1.pic.in.th/images/IMG_1083.png" },
             { img: "https://img2.pic.in.th/IMG_1086.png" }
@@ -1416,7 +1415,7 @@
         function populateBankOptions() {
             const select = document.getElementById('wd-bank-name'); if(!select) return;
             bankList.forEach(bank => {
-                const opt = document.createElement('option'); opt.value = bank.id; opt.textContent = bank.name; select.appendChild(opt); // ใช้ชื่อภาษาอังกฤษตามความต้องการล่าสุด
+                const opt = document.createElement('option'); opt.value = bank.id; opt.textContent = bank.thName || bank.name; select.appendChild(opt); 
             });
             select.addEventListener('change', function() {
                 const iconPreview = document.getElementById('wd-bank-icon-preview');
@@ -1432,6 +1431,7 @@
                 }
             }).catch(e => console.error("Refresh User Error"));
         }
+
         function applySettingsToUI() {
             document.title = siteSettings.SiteName + " | Next Live"; 
             let nameParts = siteSettings.SiteName.split(" ");
@@ -1446,6 +1446,14 @@
             let acc = String(siteSettings.BankAccount || "000-0-00000-0"); let cleanAcc = acc.replace(/[\s-]/g, ''); 
             if(cleanAcc.length >= 10) { let masked = cleanAcc.substring(0,3) + "-XXX-" + cleanAcc.substring(cleanAcc.length - 4); safeSetText('slip-admin-acc', masked); } 
             else { safeSetText('slip-admin-acc', acc); }
+
+            // ส่วนของโบนัสเติมเงิน
+            let bonusPct = parseFloat(siteSettings.DepositBonusPercent) || 0;
+            if (bonusPct > 0) {
+                safeSetText('deposit-bonus-label', `ระบุจำนวนเงินที่ต้องการฝาก (โบนัส ${bonusPct}%) ขั้นต่ำ 100 บาท`);
+            } else {
+                safeSetText('deposit-bonus-label', `ระบุจำนวนเงินที่ต้องการฝาก ขั้นต่ำ 100 บาท`);
+            }
         }
 
         function toggleTheme() { isDarkMode = !isDarkMode; document.documentElement.classList.toggle('dark', isDarkMode); }
@@ -2889,4 +2897,3 @@
     </script>
 </body>
 </html>
-        
