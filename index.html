@@ -2,18 +2,24 @@
 <html lang="th" class="scroll-smooth">
 <head>
     <!-- ==========================================
-    ตั้งค่าให้เป็น Web App และใส่ไอคอนเมื่อเพิ่มไปยังหน้าจอโฮม (Add to Home Screen)
-    =========================================== -->
-    <meta name="theme-color" content="#e43a3d"> 
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Next Live"> 
-    <link rel="apple-touch-icon" href="https://img.utdstc.com/icon/7d1/ed0/7d1ed0638c9ba8b26d220d305575548bdd444b3ca2e52735c4a3798826e6347f:200">
-    <meta name="mobile-web-app-capable" content="yes">
-    <link rel="icon" type="image/png" sizes="192x192" href="ใส่ลิงก์รูปภาพไอคอนของคุณตรงนี้.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="ใส่ลิงก์รูปภาพไอคอนของคุณตรงนี้.png">
-    <link rel="shortcut icon" href="https://img.utdstc.com/icon/7d1/ed0/7d1ed0638c9ba8b26d220d305575548bdd444b3ca2e52735c4a3798826e6347f:200">
-    
+ตั้งค่าให้เป็น Web App และใส่ไอคอนเมื่อเพิ่มไปยังหน้าจอโฮม (Add to Home Screen)
+ให้นำโค้ดส่วนนี้ไปวางไว้ภายในแท็ก <head> ... </head> ของทุกไฟล์ (Index, Admin, Affiliate)
+=========================================== -->
+
+<!-- สีธีมของเบราว์เซอร์และแถบสถานะด้านบน (สามารถเปลี่ยนสี hex ได้ตามต้องการ) -->
+<meta name="theme-color" content="#e43a3d"> 
+
+<!-- ตั้งค่าสำหรับ iOS (iPhone/iPad) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Next Live"> <!-- ชื่อแอปที่จะแสดงใต้ไอคอนบนหน้าจอ -->
+<link rel="apple-touch-icon" href="https://img.utdstc.com/icon/7d1/ed0/7d1ed0638c9ba8b26d220d305575548bdd444b3ca2e52735c4a3798826e6347f:200">
+
+<!-- ตั้งค่าสำหรับ Android (Chrome/Edge) -->
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" type="image/png" sizes="192x192" href="ใส่ลิงก์รูปภาพไอคอนของคุณตรงนี้.png">
+<link rel="icon" type="image/png" sizes="512x512" href="ใส่ลิงก์รูปภาพไอคอนของคุณตรงนี้.png">
+<link rel="shortcut icon" href="https://img.utdstc.com/icon/7d1/ed0/7d1ed0638c9ba8b26d220d305575548bdd444b3ca2e52735c4a3798826e6347f:200">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title id="page-title">Next Live Shop</title>
@@ -206,7 +212,7 @@
                         <a href="#" onclick="navigate('deposit')" class="text-gray-600 dark:text-gray-300 hover:text-primary text-sm font-medium">ฝากเงิน</a>
                         <a href="#" onclick="navigate('withdraw')" class="text-gray-600 dark:text-gray-300 hover:text-primary text-sm font-medium">ถอนเงิน</a>
                         <a href="#" onclick="navigate('booking')" class="text-gray-600 dark:text-gray-300 hover:text-primary text-sm font-medium"><i data-lucide="calendar-clock" class="w-4 h-4 inline mr-1 -mt-1"></i>จองคิวล่วงหน้า</a>
-                        <a href="affiliate.html" target="_blank" rel="noopener noreferrer" class="text-pink-600 dark:text-pink-400 hover:text-primary text-sm font-bold"><i data-lucide="share-2" class="w-4 h-4 inline mr-1 -mt-1"></i>แนะนำเพื่อน</a>
+                        <a href="affiliate.html" target="_blank" class="text-pink-600 dark:text-pink-400 hover:text-primary text-sm font-bold"><i data-lucide="share-2" class="w-4 h-4 inline mr-1 -mt-1"></i>แนะนำเพื่อน</a>
                     </div>
 
                     <!-- ช่องค้นหา Desktop -->
@@ -322,29 +328,29 @@
                     <h3 class="text-lg font-bold mb-6 border-b pb-2 uppercase text-gray-800 dark:text-white">ฟอร์มที่อยู่จัดส่ง</h3>
                     <form id="address-form" class="space-y-4">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-semibold mb-1">ชื่อ *</label><input type="text" id="addr-fname" required maxlength="100" class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"></div>
-                            <div><label class="block text-xs font-semibold mb-1">นามสกุล *</label><input type="text" id="addr-lname" required maxlength="100" class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"></div>
+                            <div><label class="block text-xs font-semibold mb-1">ชื่อ *</label><input type="text" id="addr-fname" required class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"></div>
+                            <div><label class="block text-xs font-semibold mb-1">นามสกุล *</label><input type="text" id="addr-lname" required class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"></div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-semibold mb-1">อีเมล *</label><input type="email" id="addr-email" required maxlength="100" class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all"></div>
-                            <div><label class="block text-xs font-semibold mb-1">เบอร์โทรศัพท์ *</label><input type="tel" id="addr-phone" required pattern="[0-9]{10}" maxlength="10" class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all"></div>
+                            <div><label class="block text-xs font-semibold mb-1">อีเมล *</label><input type="email" id="addr-email" required class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all"></div>
+                            <div><label class="block text-xs font-semibold mb-1">เบอร์โทรศัพท์ *</label><input type="tel" id="addr-phone" required class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all"></div>
                         </div>
                         <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-2"></div>
                         <div>
                             <label class="block text-xs font-semibold mb-1">บ้านเลขที่ / ห้อง / คอนโด / หอพัก * <span class="text-gray-400 font-normal">(ระบุให้ชัดเจน)</span></label>
-                            <input type="text" id="addr-house" required maxlength="200" class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all">
+                            <input type="text" id="addr-house" required class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all">
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-semibold mb-1">หมู่ที่ / หมู่บ้าน / อาคาร <span class="text-gray-400 font-normal">(ถ้ามี)</span></label><input type="text" id="addr-moo" maxlength="100" class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all"></div>
-                            <div><label class="block text-xs font-semibold mb-1">ซอย / ถนน</label><input type="text" id="addr-soi" maxlength="100" class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all"></div>
+                            <div><label class="block text-xs font-semibold mb-1">หมู่ที่ / หมู่บ้าน / อาคาร <span class="text-gray-400 font-normal">(ถ้ามี)</span></label><input type="text" id="addr-moo" class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all"></div>
+                            <div><label class="block text-xs font-semibold mb-1">ซอย / ถนน</label><input type="text" id="addr-soi" class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all"></div>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-semibold mb-1">ตำบล / แขวง *</label><input type="text" id="addr-subdistrict" required maxlength="50" class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all"></div>
-                            <div><label class="block text-xs font-semibold mb-1">อำเภอ / เขต *</label><input type="text" id="addr-district" required maxlength="50" class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all"></div>
+                            <div><label class="block text-xs font-semibold mb-1">ตำบล / แขวง *</label><input type="text" id="addr-subdistrict" required class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all"></div>
+                            <div><label class="block text-xs font-semibold mb-1">อำเภอ / เขต *</label><input type="text" id="addr-district" required class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all"></div>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-semibold mb-1">จังหวัด *</label><input type="text" id="addr-province" required maxlength="50" class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all"></div>
-                            <div><label class="block text-xs font-semibold mb-1">รหัสไปรษณีย์ *</label><input type="text" id="addr-zip" required pattern="[0-9]{5}" maxlength="5" class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all tracking-widest font-bold" placeholder="10xxx"></div>
+                            <div><label class="block text-xs font-semibold mb-1">จังหวัด *</label><input type="text" id="addr-province" required class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all"></div>
+                            <div><label class="block text-xs font-semibold mb-1">รหัสไปรษณีย์ *</label><input type="text" id="addr-zip" required pattern="[0-9]{5}" class="w-full px-4 py-2.5 border bg-gray-50 dark:bg-[#121212] text-sm rounded-sm focus:border-primary outline-none transition-all tracking-widest font-bold" placeholder="10xxx"></div>
                         </div>
                         <div class="flex gap-3 pt-4 mt-6 border-t border-gray-200 dark:border-gray-700">
                             <button type="button" onclick="toggleAddressForm(false)" id="btn-cancel-addr" class="hidden w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3.5 uppercase text-sm rounded-sm transition-colors shadow-sm">ยกเลิก</button>
@@ -397,11 +403,11 @@
                             <h3 class="text-lg font-bold mb-4 text-center">ข้อมูลผู้จอง</h3>
                             <div class="space-y-4">
                                 <div class="grid grid-cols-2 gap-4">
-                                    <div><label class="block text-xs font-semibold mb-1">ชื่อ *</label><input type="text" id="bk-fname" maxlength="100" class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
-                                    <div><label class="block text-xs font-semibold mb-1">นามสกุล *</label><input type="text" id="bk-lname" maxlength="100" class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
+                                    <div><label class="block text-xs font-semibold mb-1">ชื่อ *</label><input type="text" id="bk-fname" class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
+                                    <div><label class="block text-xs font-semibold mb-1">นามสกุล *</label><input type="text" id="bk-lname" class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
                                 </div>
-                                <div><label class="block text-xs font-semibold mb-1">อีเมล *</label><input type="email" id="bk-email" maxlength="100" class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
-                                <div><label class="block text-xs font-semibold mb-1">เบอร์โทรศัพท์ *</label><input type="tel" id="bk-phone" pattern="[0-9]{10}" maxlength="10" class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
+                                <div><label class="block text-xs font-semibold mb-1">อีเมล *</label><input type="email" id="bk-email" class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
+                                <div><label class="block text-xs font-semibold mb-1">เบอร์โทรศัพท์ *</label><input type="tel" id="bk-phone" class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
                                 <button onclick="nextBookingStep(2)" class="w-full bg-[#333333] hover:bg-black text-white font-bold py-3 mt-4 uppercase text-sm rounded-sm shadow-md">ถัดไป</button>
                             </div>
                         </div>
@@ -410,8 +416,8 @@
                         <div id="book-step-2" class="hidden max-w-lg mx-auto">
                             <h3 class="text-lg font-bold mb-4 text-center">รายละเอียดการจอง</h3>
                             <div class="space-y-4">
-                                <div><label class="block text-xs font-semibold mb-1">หัวข้อการจอง *</label><input type="text" id="bk-topic" maxlength="100" class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm" placeholder="เช่น ปรึกษา, รับบริการ"></div>
-                                <div><label class="block text-xs font-semibold mb-1">รายละเอียดการเข้ารับบริการ *</label><textarea id="bk-detail" rows="4" maxlength="500" class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm" placeholder="ระบุรายละเอียดเพิ่มเติม..."></textarea></div>
+                                <div><label class="block text-xs font-semibold mb-1">หัวข้อการจอง *</label><input type="text" id="bk-topic" class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm" placeholder="เช่น ปรึกษา, รับบริการ"></div>
+                                <div><label class="block text-xs font-semibold mb-1">รายละเอียดการเข้ารับบริการ *</label><textarea id="bk-detail" rows="4" class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm" placeholder="ระบุรายละเอียดเพิ่มเติม..."></textarea></div>
                                 <div class="flex gap-2 mt-4">
                                     <button onclick="prevBookingStep(1)" class="w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 uppercase text-sm rounded-sm">ก่อนหน้า</button>
                                     <button onclick="nextBookingStep(3)" class="w-2/3 bg-[#333333] hover:bg-black text-white font-bold py-3 uppercase text-sm rounded-sm shadow-md">ถัดไป</button>
@@ -465,6 +471,7 @@
                         <i data-lucide="info" class="w-5 h-5 mr-2 flex-shrink-0"></i> * หมายเหตุ: ผู้ใช้จะต้องทำการยกเลิกก่อนถึงคิวอย่างน้อย 3 ชั่วโมง
                     </div>
                     <div id="booking-cancel-container" class="space-y-3">
+                        <!-- Cards will be injected here via JS -->
                         <div class="text-center p-6 text-gray-400 border border-dashed rounded-md">ไม่มีคิวที่สามารถยกเลิกได้</div>
                     </div>
                 </div>
@@ -477,7 +484,7 @@
                     <p class="text-sm text-gray-500 mb-6">เครดิตปัจจุบันของคุณ: <span class="font-bold text-lg text-green-600 dark:text-green-400" id="deposit-current-balance">฿0.00</span></p>
                     
                     <label id="deposit-bonus-label" class="block text-sm font-semibold mb-2 text-left">ระบุจำนวนเงินที่ต้องการฝาก ขั้นต่ำ 100 บาท</label>
-                    <input type="number" id="deposit-amount-input" min="100" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#121212] outline-none text-2xl font-bold text-center rounded-sm mb-4 text-primary" placeholder="0.00">
+                    <input type="number" id="deposit-amount-input" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#121212] outline-none text-2xl font-bold text-center rounded-sm mb-4 text-primary" placeholder="0.00">
                     
                     <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-6">
                         <button onclick="setDepositAmount(100)" class="bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 py-2 rounded-sm text-sm font-bold border">100</button>
@@ -504,8 +511,8 @@
                     </div>
                     <form id="wd-bank-form" class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-semibold mb-1">ชื่อบัญชี *</label><input type="text" id="wd-fname" required maxlength="100" class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
-                            <div><label class="block text-xs font-semibold mb-1">นามสกุลบัญชี *</label><input type="text" id="wd-lname" required maxlength="100" class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
+                            <div><label class="block text-xs font-semibold mb-1">ชื่อบัญชี *</label><input type="text" id="wd-fname" required class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
+                            <div><label class="block text-xs font-semibold mb-1">นามสกุลบัญชี *</label><input type="text" id="wd-lname" required class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold mb-1">ธนาคาร *</label>
@@ -519,7 +526,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div><label class="block text-xs font-semibold mb-1">เลขที่บัญชี *</label><input type="text" id="wd-bank-acc" required pattern="[0-9]{10,12}" maxlength="12" class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm" placeholder="ระบุตัวเลขเท่านั้น"></div>
+                        <div><label class="block text-xs font-semibold mb-1">เลขที่บัญชี *</label><input type="text" id="wd-bank-acc" required pattern="\d+" class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm" placeholder="ระบุตัวเลขเท่านั้น"></div>
                         <button type="button" onclick="submitBankAccount()" id="btn-submit-bank" class="w-full bg-[#333333] hover:bg-black text-white font-bold py-3 px-4 uppercase text-sm rounded-sm shadow-md mt-4">บันทึกข้อมูลบัญชี</button>
                     </form>
                 </div>
@@ -552,7 +559,7 @@
 
                     <div class="bg-white dark:bg-[#1e1e1e] p-6 border rounded-sm shadow-sm text-center">
                         <label class="block text-sm font-semibold mb-2 text-left">ระบุจำนวนเงินที่ต้องการถอน (ขั้นต่ำ 100 บาท)</label>
-                        <input type="number" id="withdraw-amount-input" min="100" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#121212] outline-none text-2xl font-bold text-center rounded-sm mb-6 text-primary" placeholder="0.00">
+                        <input type="number" id="withdraw-amount-input" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#121212] outline-none text-2xl font-bold text-center rounded-sm mb-6 text-primary" placeholder="0.00">
                         <button onclick="requestWithdrawal()" id="btn-request-withdraw" class="w-full bg-primary hover:bg-primaryHover text-white font-bold py-4 px-4 uppercase text-sm rounded-sm shadow-md">ถอนเงิน</button>
                     </div>
                 </div>
@@ -582,21 +589,21 @@
                         <div>
                             <label class="block text-xs font-semibold mb-1">รหัสผ่านปัจจุบัน *</label>
                             <div class="relative">
-                                <input type="password" id="cp-old" required maxlength="32" class="w-full px-3 py-2 pr-10 border bg-white dark:bg-[#121212] text-sm rounded-sm">
+                                <input type="password" id="cp-old" required class="w-full px-3 py-2 pr-10 border bg-white dark:bg-[#121212] text-sm rounded-sm">
                                 <i data-lucide="eye" class="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-400 hover:text-primary" onclick="togglePasswordVisibility('cp-old', this)"></i>
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold mb-1">รหัสผ่านใหม่ *</label>
                             <div class="relative">
-                                <input type="password" id="cp-new" required minlength="6" maxlength="32" class="w-full px-3 py-2 pr-10 border bg-white dark:bg-[#121212] text-sm rounded-sm">
+                                <input type="password" id="cp-new" required class="w-full px-3 py-2 pr-10 border bg-white dark:bg-[#121212] text-sm rounded-sm">
                                 <i data-lucide="eye" class="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-400 hover:text-primary" onclick="togglePasswordVisibility('cp-new', this)"></i>
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold mb-1">ยืนยันรหัสผ่านใหม่ *</label>
                             <div class="relative">
-                                <input type="password" id="cp-confirm" required minlength="6" maxlength="32" class="w-full px-3 py-2 pr-10 border bg-white dark:bg-[#121212] text-sm rounded-sm">
+                                <input type="password" id="cp-confirm" required class="w-full px-3 py-2 pr-10 border bg-white dark:bg-[#121212] text-sm rounded-sm">
                                 <i data-lucide="eye" class="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-400 hover:text-primary" onclick="togglePasswordVisibility('cp-confirm', this)"></i>
                             </div>
                         </div>
@@ -613,7 +620,7 @@
                     <div class="flex flex-col sm:flex-row gap-3">
                         <div class="relative flex-grow">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i data-lucide="phone" class="w-5 h-5 text-gray-400"></i></div>
-                            <input type="tel" id="history-phone-input" pattern="[0-9]{10}" maxlength="10" class="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#121212] outline-none text-sm rounded-sm" placeholder="08X-XXX-XXXX">
+                            <input type="tel" id="history-phone-input" class="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#121212] outline-none text-sm rounded-sm" placeholder="08X-XXX-XXXX">
                         </div>
                         <button id="btn-search-history" onclick="searchHistory()" class="bg-primary hover:bg-primaryHover text-white font-bold py-3 px-8 rounded-sm flex items-center justify-center shadow-md">
                             <i data-lucide="search" class="w-4 h-4 mr-2"></i>ค้นหา
@@ -761,22 +768,22 @@
                         <h2 class="text-2xl font-bold mb-6 text-center text-primary">ข้อมูลส่วนตัว</h2>
                         <form class="space-y-4" id="reg-form-1">
                             <div class="grid grid-cols-2 gap-4">
-                                <div><label class="block text-xs font-semibold mb-1">ชื่อ *</label><input type="text" id="reg-fname" required maxlength="100" class="w-full px-4 py-3 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
-                                <div><label class="block text-xs font-semibold mb-1">นามสกุล *</label><input type="text" id="reg-lname" required maxlength="100" class="w-full px-4 py-3 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
+                                <div><label class="block text-xs font-semibold mb-1">ชื่อ *</label><input type="text" id="reg-fname" required class="w-full px-4 py-3 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
+                                <div><label class="block text-xs font-semibold mb-1">นามสกุล *</label><input type="text" id="reg-lname" required class="w-full px-4 py-3 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
                             </div>
-                            <div><label class="block text-xs font-semibold mb-1">อีเมล *</label><input type="email" id="reg-email" required maxlength="100" class="w-full px-4 py-3 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
-                            <div><label class="block text-xs font-semibold mb-1">เบอร์โทรศัพท์ *</label><input type="tel" id="reg-phone" required pattern="[0-9]{10}" maxlength="10" class="w-full px-4 py-3 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
+                            <div><label class="block text-xs font-semibold mb-1">อีเมล *</label><input type="email" id="reg-email" required class="w-full px-4 py-3 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
+                            <div><label class="block text-xs font-semibold mb-1">เบอร์โทรศัพท์ *</label><input type="tel" id="reg-phone" required class="w-full px-4 py-3 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
                             <div>
                                 <label class="block text-xs font-semibold mb-1">รหัสผ่าน *</label>
                                 <div class="relative">
-                                    <input type="password" id="reg-pass" required minlength="6" maxlength="32" class="w-full px-4 py-3 pr-10 border bg-white dark:bg-[#121212] text-sm rounded-sm">
+                                    <input type="password" id="reg-pass" required class="w-full px-4 py-3 pr-10 border bg-white dark:bg-[#121212] text-sm rounded-sm">
                                     <i data-lucide="eye" class="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-400 hover:text-primary" onclick="togglePasswordVisibility('reg-pass', this)"></i>
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold mb-1">ยืนยันรหัสผ่าน *</label>
                                 <div class="relative">
-                                    <input type="password" id="reg-pass-confirm" required minlength="6" maxlength="32" class="w-full px-4 py-3 pr-10 border bg-white dark:bg-[#121212] text-sm rounded-sm">
+                                    <input type="password" id="reg-pass-confirm" required class="w-full px-4 py-3 pr-10 border bg-white dark:bg-[#121212] text-sm rounded-sm">
                                     <i data-lucide="eye" class="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-400 hover:text-primary" onclick="togglePasswordVisibility('reg-pass-confirm', this)"></i>
                                 </div>
                             </div>
@@ -798,22 +805,22 @@
                         <div>
                             <label class="block text-xs font-semibold mb-1">อีเมลของคุณ *</label>
                             <div class="flex gap-2">
-                                <input type="email" id="fp-email" required maxlength="100" class="w-full px-4 py-3 border bg-white dark:bg-[#121212] text-sm rounded-sm">
+                                <input type="email" id="fp-email" required class="w-full px-4 py-3 border bg-white dark:bg-[#121212] text-sm rounded-sm">
                                 <button type="button" onclick="sendOtp()" id="btn-send-otp" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 text-xs rounded-sm whitespace-nowrap">ส่งรหัส</button>
                             </div>
                         </div>
-                        <div><label class="block text-xs font-semibold mb-1">รหัส OTP (ตรวจสอบในอีเมล) *</label><input type="text" id="fp-otp" required maxlength="6" class="w-full px-4 py-3 border bg-white dark:bg-[#121212] text-sm rounded-sm text-center tracking-widest text-lg font-bold"></div>
+                        <div><label class="block text-xs font-semibold mb-1">รหัส OTP (ตรวจสอบในอีเมล) *</label><input type="text" id="fp-otp" required class="w-full px-4 py-3 border bg-white dark:bg-[#121212] text-sm rounded-sm text-center tracking-widest text-lg font-bold"></div>
                         <div>
                             <label class="block text-xs font-semibold mb-1">รหัสผ่านใหม่ *</label>
                             <div class="relative">
-                                <input type="password" id="fp-new-pass" required minlength="6" maxlength="32" class="w-full px-4 py-3 pr-10 border bg-white dark:bg-[#121212] text-sm rounded-sm">
+                                <input type="password" id="fp-new-pass" required class="w-full px-4 py-3 pr-10 border bg-white dark:bg-[#121212] text-sm rounded-sm">
                                 <i data-lucide="eye" class="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-400 hover:text-primary" onclick="togglePasswordVisibility('fp-new-pass', this)"></i>
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold mb-1">ยืนยันรหัสผ่านใหม่ *</label>
                             <div class="relative">
-                                <input type="password" id="fp-confirm-pass" required minlength="6" maxlength="32" class="w-full px-4 py-3 pr-10 border bg-white dark:bg-[#121212] text-sm rounded-sm">
+                                <input type="password" id="fp-confirm-pass" required class="w-full px-4 py-3 pr-10 border bg-white dark:bg-[#121212] text-sm rounded-sm">
                                 <i data-lucide="eye" class="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-400 hover:text-primary" onclick="togglePasswordVisibility('fp-confirm-pass', this)"></i>
                             </div>
                         </div>
@@ -840,7 +847,7 @@
                                     <div><label class="block text-xs font-semibold mb-1">นามสกุล *</label><input type="text" id="chk-lname" required class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
                                 </div>
                                 <div><label class="block text-xs font-semibold mb-1">อีเมล *</label><input type="email" id="chk-email" required class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
-                                <div><label class="block text-xs font-semibold mb-1">เบอร์โทรศัพท์ *</label><input type="tel" id="chk-phone" required pattern="[0-9]{10}" maxlength="10" class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
+                                <div><label class="block text-xs font-semibold mb-1">เบอร์โทรศัพท์ *</label><input type="tel" id="chk-phone" required class="w-full px-3 py-2 border bg-white dark:bg-[#121212] text-sm rounded-sm"></div>
                             </form>
                         </div>
 
@@ -1066,8 +1073,8 @@
                     <div>
                         <h4 class="font-bold text-white mb-4 uppercase text-sm">Social Media</h4>
                         <ul class="space-y-2 text-sm">
-                            <li class="flex items-center"><a href="#" id="f-fb" target="_blank" rel="noopener noreferrer" class="hover:text-white flex items-center"><i data-lucide="facebook" class="w-4 h-4 mr-2"></i> Facebook</a></li>
-                            <li class="flex items-center"><a href="#" id="f-line" target="_blank" rel="noopener noreferrer" class="hover:text-white flex items-center"><i data-lucide="message-circle" class="w-4 h-4 mr-2"></i> LINE Official</a></li>
+                            <li class="flex items-center"><a href="#" id="f-fb" target="_blank" class="hover:text-white flex items-center"><i data-lucide="facebook" class="w-4 h-4 mr-2"></i> Facebook</a></li>
+                            <li class="flex items-center"><a href="#" id="f-line" target="_blank" class="hover:text-white flex items-center"><i data-lucide="message-circle" class="w-4 h-4 mr-2"></i> LINE Official</a></li>
                         </ul>
                     </div>
                 </div>
@@ -1107,7 +1114,7 @@
                     <li class="cursor-pointer px-4 py-3 flex items-center hover:bg-gray-50 font-medium text-primary" onclick="navigate('deposit'); toggleCategorySidebar()"><i data-lucide="plus-circle" class="w-4 h-4 mr-3"></i>ฝากเงิน / เติมเครดิต</li>
                     <li class="cursor-pointer px-4 py-3 flex items-center hover:bg-gray-50 font-medium text-purple-600" onclick="navigate('withdraw'); toggleCategorySidebar()"><i data-lucide="arrow-up-circle" class="w-4 h-4 mr-3"></i>ถอนเงิน / แจ้งถอน</li>
                     <li class="cursor-pointer px-4 py-3 flex items-center hover:bg-gray-50 font-medium text-blue-600" onclick="navigate('booking'); toggleCategorySidebar()"><i data-lucide="calendar-clock" class="w-4 h-4 mr-3"></i>จองคิวล่วงหน้า</li>
-                    <li class="cursor-pointer px-4 py-3 flex items-center hover:bg-gray-50 font-medium text-pink-600" onclick="window.open('affiliate.html', '_blank', 'noopener,noreferrer'); toggleCategorySidebar()"><i data-lucide="share-2" class="w-4 h-4 mr-3"></i>แนะนำเพื่อน</li>
+                    <li class="cursor-pointer px-4 py-3 flex items-center hover:bg-gray-50 font-medium text-pink-600" onclick="window.open('affiliate.html', '_blank'); toggleCategorySidebar()"><i data-lucide="share-2" class="w-4 h-4 mr-3"></i>แนะนำเพื่อน</li>
                 </ul>
             </div>
 
@@ -1222,7 +1229,7 @@
                 </div>
                 <span class="text-[10px] text-gray-500 font-bold tracking-wide">แชทสด</span>
             </button>
-            <a href="https://line.me/R/ti/p/@jpo3470r" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-1 hover:scale-110 transition-transform">
+            <a href="https://line.me/R/ti/p/@jpo3470r" target="_blank" class="flex flex-col items-center gap-1 hover:scale-110 transition-transform">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/2/2e/LINE_New_App_Icon_%282020-12%29.png" alt="Line @Nextlive" class="w-10 h-10 rounded-xl shadow-sm bg-white p-1">
                 <span class="text-[10px] text-gray-500 font-bold tracking-wide">Line Offical</span>
             </a>
@@ -1233,7 +1240,7 @@
         // ⚠️ อย่าลืมแก้ไข GAS_WEBAPP_URL ให้เป็นของคุณเอง
         const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx8Zw7yc9QlPrU9PeaJ6koVbk9UqAZhRIDUSxKvqhQnyc5sp27V0rkxb5FbNKivIfhi/exec";
         
-        // --- ส่วนรายชื่อธนาคารแบบเต็ม (Bank List) ---
+        // --- ส่วนรายชื่อธนาคารแบบเต็ม (Bank List) ตามที่ร้องขอ ---
         const bankList = [
             { id: 'bank-bbl', name: 'Bangkok Bank', thName: 'ธนาคารกรุงเทพ' },
             { id: 'bank-kbank', name: 'Kasikorn Bank', thName: 'ธนาคารกสิกรไทย' },
@@ -1241,7 +1248,7 @@
             { id: 'bank-ktb', name: 'Krungthai Bank', thName: 'ธนาคารกรุงไทย' },
             { id: 'bank-jpm', name: 'J.P. Morgan', thName: 'เจ.พี. มอร์แกน' },
             { id: 'bank-mufg', name: 'Bank of Tokyo-Mitsubishi UFJ', thName: 'ธนาคารแห่งโตเกียว-มิตซูบิชิ ยูเอฟเจ' },
-            { id: 'bank-tmb', name: 'TMB Bank', thName: 'ธนาคารทหารไทย (ทีทีบี)' },
+            { id: 'bank-tmb', name: 'TMB Bank', thName: 'ธนาคารทหารไทย (ปัจจุบันคือทีทีบี)' },
             { id: 'bank-scb', name: 'Siam Commercial Bank', thName: 'ธนาคารไทยพาณิชย์' },
             { id: 'bank-citi', name: 'Citibank', thName: 'ธนาคารซิตี้แบงก์' },
             { id: 'bank-smbc', name: 'Sumitomo Mitsui Banking Corporation', thName: 'ธนาคารซูมิโตโม มิตซุย แบงกิ้ง คอร์ปอเรชั่น' },
@@ -1290,26 +1297,15 @@
             { img: "https://img2.pic.in.th/IMG_1086.png" }
         ];
 
-        // Security Utility
-        function escapeHtml(unsafe) {
-            if(typeof unsafe !== 'string') return unsafe;
-            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        }
-
-        function safeSetText(id, text) { const el = document.getElementById(id); if (el) el.innerText = escapeHtml(text); }
+        function safeSetText(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
         function safeSetHTML(id, htmlString) { const el = document.getElementById(id); if (el) el.innerHTML = htmlString; }
-        function safeSetValue(id, val) { const el = document.getElementById(id); if (el) el.value = escapeHtml(val); }
+        function safeSetValue(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
 
         // ============================================================================
-        // ฟังก์ชันหลังบ้าน (Backend Connection) ปลอดภัยด้วย Token 100%
+        // ฟังก์ชันหลังบ้าน (Backend Connection)
         // ============================================================================
         async function callBackend(payload) {
             try {
-                // แนบ Token ยืนยันตัวตนทุกครั้งที่มีการเรียก API
-                if (currentUser && currentUser.token) {
-                    payload.token = currentUser.token;
-                }
-
                 let savedAffId = localStorage.getItem('saved_affiliate_id');
                 if (savedAffId) {
                     if (payload.action === 'register') payload.inviterUID = savedAffId;
@@ -1322,16 +1318,7 @@
                     body: JSON.stringify(payload) 
                 });
                 const text = await response.text();
-                const jsonRes = JSON.parse(text);
-                
-                // ตรวจจับกรณี Token หมดอายุหรือไม่ถูกต้อง
-                if (jsonRes.message && jsonRes.message.includes("Unauthorized")) {
-                    logout();
-                    showCustomPopup("เซสชันหมดอายุ", "เพื่อความปลอดภัย กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
-                    throw new Error("Unauthorized");
-                }
-                
-                return jsonRes; 
+                return JSON.parse(text); 
             } catch (err) { 
                 throw new Error(err.message || "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้"); 
             }
@@ -1364,15 +1351,12 @@
         });
 
         // ============================================================================
-        // Live Chat Fullscreen (แท็บ Iframe) แก้ลิงก์ตามที่ต้องการ
+        // Live Chat Fullscreen (แท็บ Iframe)
         // ============================================================================
         function openLiveChat() {
             const overlay = document.getElementById('live-chat-overlay');
             const iframe = document.getElementById('live-chat-iframe');
-            
-            // ลิงก์ที่ถูกต้องสำหรับระบบแชท
             iframe.src = "https://nextlive-app.github.io/Store/live-chat";
-            
             overlay.classList.remove('hidden');
             overlay.classList.add('flex');
             setTimeout(() => overlay.classList.remove('opacity-0'), 10);
@@ -1462,12 +1446,7 @@
             if(!currentUser) return;
             callBackend({action: 'getUserData', email: currentUser.email, phone: currentUser.phone}).then(res => {
                 if(res.status === 'success') {
-                    // เก็บ Token เดิมไว้ และอัปเดตเฉพาะข้อมูล User Profile
-                    let savedToken = currentUser.token;
-                    currentUser = res.user; 
-                    currentUser.token = savedToken;
-                    localStorage.setItem('nextLiveUser', JSON.stringify(currentUser)); 
-                    checkLoginState(); 
+                    currentUser = res.user; localStorage.setItem('nextLiveUser', JSON.stringify(currentUser)); checkLoginState(); 
                 }
             }).catch(e => console.error("Refresh User Error"));
         }
@@ -1478,7 +1457,7 @@
             safeSetText('nav-logo-text1', nameParts[0] || "NEXT"); safeSetText('nav-logo-text2', nameParts.slice(1).join(" ") || "LIVE");
             safeSetText('footer-logo1', nameParts[0] || "NEXT"); safeSetText('footer-logo2', nameParts.slice(1).join(" ") || "LIVE");
             safeSetText('slip-admin-name', siteSettings.AdminName); 
-            safeSetHTML('footer-copy', `&copy; 2026 ${escapeHtml(siteSettings.SiteName)}. All Rights Reserved.`);
+            safeSetHTML('footer-copy', `&copy; 2026 ${siteSettings.SiteName}. All Rights Reserved.`);
             safeSetText('f-phone', siteSettings.AdminPhone || "000"); safeSetText('f-email', siteSettings.AdminEmail || "email");
             const fb = document.getElementById('f-fb'); if(fb) fb.href = siteSettings.FacebookLink || "#";
             const ln = document.getElementById('f-line'); if(ln) ln.href = siteSettings.LineLink || "#";
@@ -1487,6 +1466,7 @@
             if(cleanAcc.length >= 10) { let masked = cleanAcc.substring(0,3) + "-XXX-" + cleanAcc.substring(cleanAcc.length - 4); safeSetText('slip-admin-acc', masked); } 
             else { safeSetText('slip-admin-acc', acc); }
 
+            // ส่วนของโบนัสเติมเงิน
             let bonusPct = parseFloat(siteSettings.DepositBonusPercent) || 0;
             if (bonusPct > 0) {
                 safeSetText('deposit-bonus-label', `ระบุจำนวนเงินที่ต้องการฝาก (โบนัส ${bonusPct}%) ขั้นต่ำ 100 บาท`);
@@ -1607,7 +1587,7 @@
         }
 
         // ============================================================================
-        // Address Management ปรับปรุง Auto-switch Card View
+        // Address Management
         // ============================================================================
         function toggleAddressForm(showForm) {
             const cardView = document.getElementById('address-card-view');
@@ -1653,7 +1633,6 @@
                 safeSetValue('addr-province', addr.province);
                 safeSetValue('addr-zip', addr.zip);
 
-                // สลับไปแสดงแบบการ์ดทันที
                 toggleAddressForm(false);
                 const btnUseAddr = document.getElementById('btn-use-saved-addr');
                 if (btnUseAddr) btnUseAddr.classList.remove('hidden');
@@ -1699,17 +1678,7 @@
                 btn.disabled = false;
                 if(res.status === 'success') {
                     showCustomPopup("สำเร็จ", "บันทึกที่อยู่จัดส่งเรียบร้อยแล้ว");
-                    
-                    // อัปเดตข้อมูลผู้ใช้ในหน่วยความจำทันทีและบันทึกลง LocalStorage
-                    currentUser.fname = document.getElementById('addr-fname').value;
-                    currentUser.lname = document.getElementById('addr-lname').value;
-                    currentUser.email = document.getElementById('addr-email').value;
-                    currentUser.phone = document.getElementById('addr-phone').value;
-                    currentUser.address = payload.address;
-                    localStorage.setItem('nextLiveUser', JSON.stringify(currentUser));
-                    
-                    // เปลี่ยนหน้ากลับไปที่ Card View ทันที (Auto-Switch)
-                    renderAddressView(); 
+                    refreshUserData(); 
                 } else { showCustomPopup("ข้อผิดพลาด", res.message); }
                 lucide.createIcons();
             }).catch(e => {
@@ -1758,12 +1727,17 @@
 
         function formatShortStatusHistory(status) {
             if(!status || status === "-") return "Unsuccess";
+            
+            // Check specific success messages
             if(status === "สำเร็จ" || status.includes("การชำระเงินถูกต้อง") || status.includes("สำเร็จ (ฟรี)") || status.includes("โอนแล้ว") || status.includes("เข้ารับบริการแล้ว")) {
                 return "Success";
             }
+            // Check for pending
             if(status.includes("รอ") || status.includes("Pending") || status.includes("รอดำเนินการ")) {
                 return "Pending";
             }
+            
+            // Unsuccess fallback (errors, cancellations, timeouts, duplicates)
             return "Unsuccess";
         }
 
@@ -1795,14 +1769,14 @@
                 else if(statusEng === 'Unsuccess') iconStr = '<i data-lucide="x-circle" class="w-4 h-4 inline mr-1 -mt-1"></i>';
                 else iconStr = '<i data-lucide="clock" class="w-4 h-4 inline mr-1 -mt-1"></i>';
 
-                let itemsStr = escapeHtml(o.items).replace(/\n/g, '<br>');
+                let itemsStr = o.items.replace(/\n/g, '<br>');
                 let amt = parseFloat(o.amount) || 0;
 
                 let actionHtml = '';
                 if(statusEng === 'Success') {
                     actionHtml = `
                         <div class="flex gap-2 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                            <button onclick="openStatementSingle('${escapeHtml(o.ref)}')" class="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 py-2.5 rounded text-xs font-bold transition-colors flex items-center justify-center border border-gray-300 dark:border-gray-600"><i data-lucide="file-text" class="w-3.5 h-3.5 mr-1.5"></i> ดูใบเสร็จ</button>
+                            <button onclick="openStatementSingle('${o.ref}')" class="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 py-2.5 rounded text-xs font-bold transition-colors flex items-center justify-center border border-gray-300 dark:border-gray-600"><i data-lucide="file-text" class="w-3.5 h-3.5 mr-1.5"></i> ดูใบเสร็จ</button>
                             <button onclick="showCustomPopup('ไฟล์สินค้า', 'กรุณาตรวจสอบลิงก์ดาวน์โหลดที่ระบบจัดส่งให้ในอีเมลของท่านค่ะ')" class="flex-1 bg-primary/10 hover:bg-primary/20 text-primary py-2.5 rounded text-xs font-bold transition-colors flex items-center justify-center border border-primary/20"><i data-lucide="download" class="w-3.5 h-3.5 mr-1.5"></i> ไฟล์สินค้า</button>
                             <button onclick="showCustomPopup('คู่มือ', 'กรุณาตรวจสอบลิงก์คู่มือที่ระบบจัดส่งให้ในอีเมลของท่านค่ะ')" class="flex-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 py-2.5 rounded text-xs font-bold transition-colors flex items-center justify-center border border-blue-500/20"><i data-lucide="book-open" class="w-3.5 h-3.5 mr-1.5"></i> คู่มือ</button>
                         </div>
@@ -1811,7 +1785,7 @@
                     actionHtml = `
                         <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
                             <p class="text-xs text-red-500 font-semibold mb-1">สถานะ / สาเหตุ:</p>
-                            <p class="text-xs text-red-500 whitespace-pre-wrap">${escapeHtml(o.status)}</p>
+                            <p class="text-xs text-red-500 whitespace-pre-wrap">${o.status}</p>
                         </div>
                     `;
                 }
@@ -1821,8 +1795,8 @@
                 div.innerHTML = `
                     <div class="p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" onclick="toggleAccordion('history-order-content-${idx}', 'history-order-icon-${idx}')">
                         <div>
-                            <h3 class="font-bold text-sm text-gray-800 dark:text-white">Order: ${escapeHtml(o.ref).replace(/'/g,'')} <span class="${colorClass} ml-2 font-bold">${iconStr}${statusEng}</span></h3>
-                            <p class="text-xs text-gray-500 mt-1">${escapeHtml(o.date)}</p>
+                            <h3 class="font-bold text-sm text-gray-800 dark:text-white">Order: ${o.ref.replace(/'/g,'')} <span class="${colorClass} ml-2 font-bold">${iconStr}${statusEng}</span></h3>
+                            <p class="text-xs text-gray-500 mt-1">${o.date}</p>
                         </div>
                         <i data-lucide="chevron-down" id="history-order-icon-${idx}" class="w-5 h-5 text-gray-400 transition-transform duration-300"></i>
                     </div>
@@ -1860,7 +1834,7 @@
 
                 let slipButtonHtml = (d.slipUrl && d.slipUrl !== "" && d.slipUrl !== "-") ? `
                     <div class="mt-3">
-                        <button onclick="window.open('${escapeHtml(d.slipUrl)}', '_blank', 'noopener,noreferrer')" class="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 py-2 rounded text-xs font-bold transition-colors flex items-center justify-center border border-gray-300 dark:border-gray-600">
+                        <button onclick="window.open('${d.slipUrl}', '_blank')" class="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 py-2 rounded text-xs font-bold transition-colors flex items-center justify-center border border-gray-300 dark:border-gray-600">
                             <i data-lucide="image" class="w-3.5 h-3.5 mr-1.5"></i> ดูสลิปที่แนบ
                         </button>
                     </div>` : '';
@@ -1871,7 +1845,7 @@
                     <div class="p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" onclick="toggleAccordion('history-dep-content-${idx}', 'history-dep-icon-${idx}')">
                         <div>
                             <h3 class="font-bold text-sm text-gray-800 dark:text-white">Deposit <span class="${colorClass} ml-2 font-bold">${iconStr}${statusEng}</span></h3>
-                            <p class="text-xs text-gray-500 mt-1">${escapeHtml(d.date)}</p>
+                            <p class="text-xs text-gray-500 mt-1">${d.date}</p>
                         </div>
                         <i data-lucide="chevron-down" id="history-dep-icon-${idx}" class="w-5 h-5 text-gray-400 transition-transform duration-300"></i>
                     </div>
@@ -1883,7 +1857,7 @@
                             </div>
                             <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                                 <p class="text-xs text-gray-500 font-semibold mb-1">สถานะ / สาเหตุ:</p>
-                                <p class="text-xs ${colorClass} font-semibold">${escapeHtml(d.status)}</p>
+                                <p class="text-xs ${colorClass} font-semibold">${d.status}</p>
                             </div>
                             ${slipButtonHtml}
                         </div>
@@ -1913,7 +1887,7 @@
                     <div class="p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" onclick="toggleAccordion('history-wit-content-${idx}', 'history-wit-icon-${idx}')">
                         <div>
                             <h3 class="font-bold text-sm text-gray-800 dark:text-white">Withdraw <span class="${colorClass} ml-2 font-bold">${iconStr}${statusEng}</span></h3>
-                            <p class="text-xs text-gray-500 mt-1">${escapeHtml(w.date)}</p>
+                            <p class="text-xs text-gray-500 mt-1">${w.date}</p>
                         </div>
                         <i data-lucide="chevron-down" id="history-wit-icon-${idx}" class="w-5 h-5 text-gray-400 transition-transform duration-300"></i>
                     </div>
@@ -1925,11 +1899,11 @@
                             </div>
                             <div class="mb-2">
                                 <span class="text-gray-500 text-xs font-semibold uppercase">รายละเอียดบัญชี</span>
-                                <p class="text-gray-800 dark:text-gray-300 font-semibold">${escapeHtml(w.items)}</p>
+                                <p class="text-gray-800 dark:text-gray-300 font-semibold">${w.items}</p>
                             </div>
                             <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                                 <p class="text-xs text-gray-500 font-semibold mb-1">สถานะ / สาเหตุ:</p>
-                                <p class="text-xs ${colorClass} font-semibold">${escapeHtml(w.status)}</p>
+                                <p class="text-xs ${colorClass} font-semibold">${w.status}</p>
                             </div>
                         </div>
                     </div>
@@ -1966,7 +1940,7 @@
                 
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="py-3 px-4 border-b border-gray-200 text-gray-800">${escapeHtml(line)}</td>
+                    <td class="py-3 px-4 border-b border-gray-200 text-gray-800">${line}</td>
                     <td class="text-center py-3 px-4 border-b border-gray-200 text-gray-800">1</td>
                     <td class="text-right py-3 px-4 border-b border-gray-200 text-gray-800">${isLast && disc > 0 ? '-' + disc.toLocaleString('en-US',{minimumFractionDigits:2}) : '-'}</td>
                     <td class="text-right py-3 px-4 border-b border-gray-200 text-gray-800 font-bold">${priceDisplay}</td>
@@ -2009,7 +1983,7 @@
         }
 
         // ============================================================================
-        // Order / Upload Slips logic 
+        // Order / Upload Slips logic (With Failure Text Formatting)
         // ============================================================================
         function handleQRTimeout() {
             const upl = document.getElementById('upload-section');
@@ -2036,12 +2010,6 @@
         function handleSlipUpload(event) {
             const file = event.target.files[0];
             if (file) {
-                if (file.size > 5 * 1024 * 1024) {
-                    showCustomPopup("แจ้งเตือน", "ไฟล์มีขนาดใหญ่เกิน 5MB กรุณาเลือกไฟล์ใหม่");
-                    event.target.value = '';
-                    return;
-                }
-
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const qrImg = document.getElementById('promptpay-qr-img'); if(qrImg) qrImg.src = e.target.result;
@@ -2234,11 +2202,7 @@
             callBackend(payload).then(res => {
                 if(btn) { btn.innerText = "ลงชื่อเข้าใช้งาน"; btn.disabled = false; }
                 if(res.status === 'success') {
-                    // อัปเดต User พร้อม Token
-                    let loginUser = res.user;
-                    loginUser.token = res.token;
-                    localStorage.setItem('nextLiveUser', JSON.stringify(loginUser)); 
-                    checkLoginState(); showCustomPopup("ยินดีต้อนรับ", "เข้าสู่ระบบสำเร็จ"); navigate('home');
+                    localStorage.setItem('nextLiveUser', JSON.stringify(res.user)); checkLoginState(); showCustomPopup("ยินดีต้อนรับ", "เข้าสู่ระบบสำเร็จ"); navigate('home');
                 } else { showCustomPopup("ข้อผิดพลาด", res.message); }
             }).catch(e => { if(btn) { btn.innerText = "ลงชื่อเข้าใช้งาน"; btn.disabled = false; } showCustomPopup("ข้อผิดพลาด", e.message); });
         }
@@ -2290,9 +2254,9 @@
                     ${stockBadge}
                     <div class="p-4 flex-grow flex flex-col items-center text-center">
                         <div class="w-full h-32 mb-4 flex items-center justify-center overflow-hidden bg-white p-2 rounded">
-                            <img src="${escapeHtml(product.image)}" class="max-w-full max-h-full object-contain transition-transform group-hover:scale-105">
+                            <img src="${product.image}" class="max-w-full max-h-full object-contain transition-transform group-hover:scale-105">
                         </div>
-                        <h3 class="font-medium text-sm text-gray-800 dark:text-gray-200 group-hover:text-primary mb-1 line-clamp-2">${escapeHtml(product.name)}</h3>
+                        <h3 class="font-medium text-sm text-gray-800 dark:text-gray-200 group-hover:text-primary mb-1 line-clamp-2">${product.name}</h3>
                         <div class="mt-auto font-bold text-primary">${formatPrice(product.price)}</div>
                     </div>`;
                 grid.appendChild(card);
@@ -2327,7 +2291,7 @@
                         div.innerHTML = `
                             <div class="flex items-center">
                                 <input type="checkbox" class="w-4 h-4 text-primary" onchange="toggleOption('${opt.id}', this.checked)">
-                                <span class="ml-3 text-sm dark:text-gray-300">${escapeHtml(opt.name)}</span>
+                                <span class="ml-3 text-sm dark:text-gray-300">${opt.name}</span>
                             </div>
                             <span class="text-sm text-gray-500">+${formatPrice(opt.price)}</span>`; 
                         optsContainer.appendChild(div);
@@ -2409,9 +2373,9 @@
                 const div = document.createElement('div'); div.className = "flex gap-3 mb-4 border-b border-gray-100 dark:border-gray-800 pb-4 items-center";
                 div.innerHTML = `
                     <input type="checkbox" class="w-5 h-5 text-primary rounded cursor-pointer accent-primary" ${item.selected !== false ? 'checked' : ''} onchange="toggleCartItemSelection('${item.id}', this.checked)">
-                    <div class="w-16 h-16 border p-1 bg-white flex-shrink-0 rounded"><img src="${escapeHtml(item.product.image)}" class="w-full h-full object-contain"></div>
+                    <div class="w-16 h-16 border p-1 bg-white flex-shrink-0 rounded"><img src="${item.product.image}" class="w-full h-full object-contain"></div>
                     <div class="flex-grow">
-                        <h4 class="font-semibold text-sm line-clamp-1 dark:text-gray-200">${escapeHtml(item.product.name)}</h4>
+                        <h4 class="font-semibold text-sm line-clamp-1 dark:text-gray-200">${item.product.name}</h4>
                         <div class="text-primary font-bold text-sm">${formatPrice(itemPrice)}</div>
                     </div>
                     <div class="flex flex-col items-end gap-2">
@@ -2528,9 +2492,9 @@
             if(sCart.length === 0) { container.innerHTML = '<p class="text-gray-500 text-sm">ไม่มีสินค้าที่เลือกชำระเงิน</p>'; return;}
 
             sCart.forEach(item => {
-                let itemPrice = item.product.price; let optHtml = ''; item.options.forEach(o => { itemPrice += o.price; optHtml += `<div class="text-xs text-gray-500">+ ${escapeHtml(o.name)}</div>`; });
+                let itemPrice = item.product.price; let optHtml = ''; item.options.forEach(o => { itemPrice += o.price; optHtml += `<div class="text-xs text-gray-500">+ ${o.name}</div>`; });
                 const div = document.createElement('div'); div.className = "flex items-start py-3 border-b border-gray-100 dark:border-gray-800 last:border-0";
-                div.innerHTML = `<div class="w-12 h-12 bg-white border p-1 flex-shrink-0 mr-3 rounded"><img src="${escapeHtml(item.product.image)}" class="w-full h-full object-contain"></div><div class="flex-grow"><div class="flex justify-between"><span class="text-sm font-semibold dark:text-gray-200">${escapeHtml(item.product.name)}</span><span class="font-bold text-sm dark:text-gray-200">${formatPrice(itemPrice * item.qty)}</span></div><div class="text-xs text-gray-500">จำนวน: ${item.qty}</div>${optHtml}</div>`; container.appendChild(div);
+                div.innerHTML = `<div class="w-12 h-12 bg-white border p-1 flex-shrink-0 mr-3 rounded"><img src="${item.product.image}" class="w-full h-full object-contain"></div><div class="flex-grow"><div class="flex justify-between"><span class="text-sm font-semibold dark:text-gray-200">${item.product.name}</span><span class="font-bold text-sm dark:text-gray-200">${formatPrice(itemPrice * item.qty)}</span></div><div class="text-xs text-gray-500">จำนวน: ${item.qty}</div>${optHtml}</div>`; container.appendChild(div);
             });
             toggleCreditInput(); refreshUserData();
         }
@@ -2546,7 +2510,7 @@
                 safeSetText('wd-card-balance', `฿${(currentUser.balance || 0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`);
                 
                 let bankInfo = bankList.find(b => b.id === currentUser.bankName);
-                let engName = bankInfo ? (bankInfo.thName || bankInfo.name) : currentUser.bankName;
+                let engName = bankInfo ? bankInfo.name : currentUser.bankName;
                 safeSetText('wd-card-bank-name', engName);
                 const iconCont = document.getElementById('wd-card-icon');
                 if(iconCont) iconCont.innerHTML = `<i class="bank ${currentUser.bankName} l round shadow"></i>`;
@@ -2676,10 +2640,10 @@
                 header.innerHTML = `
                     <div class="flex flex-col">
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="font-bold text-primary">${escapeHtml(b.queueNo).replace(/'/g, '')}</span>
-                            <span class="${badgeClass} px-2 py-0.5 text-[10px] font-bold rounded-sm">${escapeHtml(b.status)}</span>
+                            <span class="font-bold text-primary">${b.queueNo.replace(/'/g, '')}</span>
+                            <span class="${badgeClass} px-2 py-0.5 text-[10px] font-bold rounded-sm">${b.status}</span>
                         </div>
-                        <span class="font-bold text-sm text-gray-800 dark:text-gray-200">${escapeHtml(b.topic)}</span>
+                        <span class="font-bold text-sm text-gray-800 dark:text-gray-200">${b.topic}</span>
                         <span class="text-xs text-gray-500">${displayBookDateTime}</span>
                     </div>
                     <i data-lucide="chevron-down" id="booking-icon-${idx}" class="w-5 h-5 text-gray-400 transition-transform duration-300"></i>
@@ -2692,9 +2656,9 @@
                     <div class="grid grid-cols-2 gap-y-3 gap-x-4">
                         <div><p class="text-xs text-gray-500 mb-1">วันที่ทำรายการ</p><p class="font-semibold">${displayCreateDate.split('|')[0]}</p></div>
                         <div><p class="text-xs text-gray-500 mb-1">ลำดับคิว</p><p class="font-semibold">${b.sequence}</p></div>
-                        <div class="col-span-2"><p class="text-xs text-gray-500 mb-1">รายละเอียด</p><p class="font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 p-2 rounded border dark:border-gray-700">${escapeHtml(b.detail)}</p></div>
+                        <div class="col-span-2"><p class="text-xs text-gray-500 mb-1">รายละเอียด</p><p class="font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 p-2 rounded border dark:border-gray-700">${b.detail}</p></div>
                         <div><p class="text-xs text-gray-500 mb-1">จำนวนคิวรอก่อนหน้า</p><p class="font-bold text-yellow-600">${b.waitCount}</p></div>
-                        <div class="col-span-2"><p class="text-xs text-gray-500 mb-1">หมายเหตุ</p><p class="text-xs text-red-500">${escapeHtml(b.note || '-')}</p></div>
+                        <div class="col-span-2"><p class="text-xs text-gray-500 mb-1">หมายเหตุ</p><p class="text-xs text-red-500">${b.note || '-'}</p></div>
                     </div>
                 `;
                 div.appendChild(header); div.appendChild(content); container.appendChild(div);
@@ -2712,7 +2676,7 @@
                 let badgeClass = getStatusBadgeClass(b.status);
                 let displayBookDateTime = formatBookingDisplay(b.bookDate, b.bookTime);
 
-                // เช็คเวลาหน้าบ้านว่าเกิน 3 ชม. แล้วหรือยัง
+                // เช็คเวลาหน้าบ้านว่าเกิน 3 ชม. แล้วหรือยัง ป้องกันลูกค้ายกเลิกคิวใกล้เวลา
                 let parts = b.bookDate.split(/[-/]/);
                 let y = parts[2].length === 4 ? parseInt(parts[2]) : parseInt(parts[0]);
                 if (y > 2500) y -= 543;
@@ -2736,9 +2700,9 @@
                 div.innerHTML = `
                     <div class="flex flex-col">
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="font-bold text-primary">${escapeHtml(b.queueNo).replace(/'/g, '')}</span><span class="${badgeClass} px-2 py-0.5 text-[10px] font-bold rounded-sm">${escapeHtml(b.status)}</span>
+                            <span class="font-bold text-primary">${b.queueNo.replace(/'/g, '')}</span><span class="${badgeClass} px-2 py-0.5 text-[10px] font-bold rounded-sm">${b.status}</span>
                         </div>
-                        <span class="font-bold text-sm text-gray-800 dark:text-gray-200">${escapeHtml(b.topic)}</span><span class="text-xs text-gray-500">${displayBookDateTime}</span>
+                        <span class="font-bold text-sm text-gray-800 dark:text-gray-200">${b.topic}</span><span class="text-xs text-gray-500">${displayBookDateTime}</span>
                     </div>
                     ${cancelBtnHtml}
                 `;
