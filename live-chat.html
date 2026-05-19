@@ -157,76 +157,125 @@
         </footer>
     </div>
 
-    <!-- Script Logic -->
-    <script>
-        // ⚠️ อย่าลืมใส่ URL ของ GAS ของคุณตรงนี้
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbx8Zw7yc9QlPrU9PeaJ6koVbk9UqAZhRIDUSxKvqhQnyc5sp27V0rkxb5FbNKivIfhi/exec";
+    <!-- Script Logic (มี Firebase SDK ฝังอยู่) -->
+    <script type="module">
+        // นำเข้า Firebase Web SDK โดยตรงจาก Google
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        let chatUser = null;
-        let messagesArray = []; 
-        let isUploading = false;
-        let uploadingType = ''; 
+        // ⚠️ ไม่ต้องใช้ Firebase API Key เต็มรูปแบบสำหรับ Realtime Database ที่เปิดอ่านได้
+        // วาง URL Firebase ของคุณตรงนี้
+        const firebaseConfig = {
+            databaseURL: "https://shop-991-default-rtdb.asia-southeast1.firebasedatabase.app"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // ==========================================
+        // ⚠️ อย่าลืมใส่ URL ของ GAS ของคุณตรงนี้ (ใช้สำหรับการส่งข้อความและอัปโหลดไฟล์)
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbx8Zw7yc9QlPrU9PeaJ6koVbk9UqAZhRIDUSxKvqhQnyc5sp27V0rkxb5FbNKivIfhi/exec";
+        // ==========================================
+
+        window.chatUser = null;
+        window.messagesArray = []; 
+        window.isUploading = false;
+        window.uploadingType = ''; 
 
         document.addEventListener('DOMContentLoaded', () => {
             const savedUser = localStorage.getItem('nextLiveUser');
             if (savedUser) {
-                chatUser = JSON.parse(savedUser);
-                startSession();
+                window.chatUser = JSON.parse(savedUser);
+                window.startSession();
             } else {
                 document.getElementById('guest-screen').classList.remove('hidden');
             }
 
             document.getElementById('message-input').addEventListener('keydown', (e) => {
-                if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+                if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); window.sendMessage(); }
             });
-            document.getElementById('message-input').addEventListener('input', updateSendButton);
+            document.getElementById('message-input').addEventListener('input', window.updateSendButton);
         });
 
-        function startGuestChat(e) {
+        window.startGuestChat = function(e) {
             e.preventDefault();
             const name = document.getElementById('guest-name').value;
             const phone = document.getElementById('guest-phone').value;
             if(!name || !phone) return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
             
             document.getElementById('btn-start-chat').innerHTML = `<i class="ph ph-spinner animate-spin text-lg"></i> กำลังเข้าสู่ระบบ...`;
-            chatUser = { uid: 'GUEST_' + Date.now().toString().slice(-4), fname: name, phone: phone };
-            setTimeout(startSession, 500);
+            window.chatUser = { uid: 'GUEST_' + Date.now().toString().slice(-4), fname: name, phone: phone };
+            setTimeout(window.startSession, 500);
         }
 
-        function startSession() {
+        window.startSession = function() {
             document.getElementById('guest-screen').classList.add('hidden');
             document.getElementById('chat-room').classList.remove('hidden');
-            fetchMessages();
-            setInterval(fetchMessages, 3000); 
+            
+            // 🚀 นี่คือส่วนที่เปลี่ยนไปใช้ Firebase SDK (เลิกใช้ setInterval)
+            // ติดตามการเปลี่ยนแปลงที่ Sheet 'LiveChat' ตลอดเวลา
+            const chatRef = ref(db, 'LiveChat');
+            onValue(chatRef, (snapshot) => {
+                const data = snapshot.val();
+                if (!data) return;
+                
+                let newMessages = [];
+                // Firebase อาจส่งมาเป็น Object หรือ Array
+                const keys = Object.keys(data);
+                keys.forEach(key => {
+                    const row = data[key];
+                    // คัดกรองเฉพาะข้อความของ User ปัจจุบัน (UID อยู่ใน Index ที่ 2 ของ Array)
+                    if (row && row.length > 0 && row[2] === window.chatUser.uid) {
+                        newMessages.push({
+                            date: row[0], time: row[1], uid: row[2], phone: row[3],
+                            userMsg: row[4], adminMsg: row[5], timestamp: row[6]
+                        });
+                    }
+                });
+
+                // เรียงลำดับตามเวลา
+                newMessages.sort((a, b) => a.timestamp - b.timestamp);
+                
+                // หากมีข้อความใหม่ ให้ซ่อนสถานะพิมพ์ และแสดงผล
+                if (newMessages.length !== window.messagesArray.length || window.isUploading) {
+                    window.messagesArray = newMessages;
+                    window.renderAllMessages();
+                    window.showTyping(false);
+                }
+            }, (error) => {
+                console.error("Firebase Read Error:", error);
+            });
         }
 
-        function autoResize(el) {
+        window.autoResize = function(el) {
             el.style.height = 'auto'; el.style.height = (el.scrollHeight < 96 ? el.scrollHeight : 96) + 'px';
-            updateSendButton();
+            window.updateSendButton();
         }
 
-        function updateSendButton() {
+        window.updateSendButton = function() {
             const val = document.getElementById('message-input').value.trim();
             const icon = document.getElementById('send-icon');
             if(val.length > 0) { icon.classList.remove('text-gray-300'); icon.classList.add('text-[#e43a3d]'); } 
             else { icon.classList.add('text-gray-300'); icon.classList.remove('text-[#e43a3d]'); }
         }
 
-        function scrollToBottom() { document.getElementById('chat-bottom-anchor').scrollIntoView({ behavior: 'smooth' }); }
+        window.scrollToBottom = function() { document.getElementById('chat-bottom-anchor').scrollIntoView({ behavior: 'smooth' }); }
 
-        function toggleEmojiPanel() {
+        window.toggleEmojiPanel = function() {
             const panel = document.getElementById('emoji-panel');
             if (panel.classList.contains('opacity-0')) {
                 panel.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
                 panel.classList.add('opacity-100', 'scale-100');
-            } else { closePanels(); }
+            } else { window.closePanels(); }
         }
-        function closePanels() {
+        
+        window.closePanels = function() {
             const panel = document.getElementById('emoji-panel');
             panel.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
             panel.classList.remove('opacity-100', 'scale-100');
         }
-        function switchTab(tab) {
+        
+        window.switchTab = function(tab) {
             if(tab === 'emoji') {
                 document.getElementById('tab-emoji').className = "flex-1 py-2 text-sm font-bold text-[#e43a3d] border-b-2 border-[#e43a3d]";
                 document.getElementById('tab-sticker').className = "flex-1 py-2 text-sm font-bold text-gray-400 hover:text-gray-600";
@@ -237,34 +286,28 @@
                 document.getElementById('grid-sticker').classList.remove('hidden'); document.getElementById('grid-emoji').classList.add('hidden');
             }
         }
-        function insertEmoji(emoji) {
+        
+        window.insertEmoji = function(emoji) {
             const inp = document.getElementById('message-input');
-            inp.value += emoji; inp.focus(); updateSendButton();
+            inp.value += emoji; inp.focus(); window.updateSendButton();
         }
 
-        // =======================
-        // ฟังก์ชันช่วยแปลง URL ของ Google Drive
-        // =======================
-        function getDirectImageUrl(url) {
+        window.getDirectImageUrl = function(url) {
             if (!url) return url;
             const driveMatch = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=|file\/d\/))([-\w]{25,})/);
-            if (driveMatch && driveMatch[1]) {
-                return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w800`;
-            }
+            if (driveMatch && driveMatch[1]) { return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w800`; }
             return url;
         }
 
-        // =======================
-        // ระบบ Render ข้อความ UI 
-        // =======================
-        function renderAdminAvatar() {
+        window.renderAdminAvatar = function() {
             return `<div class="w-8 h-8 rounded-full avatar-left bg-red-100 text-[#e43a3d] shadow-sm flex items-center justify-center"><i class="ph-fill ph-headset text-lg"></i></div>`;
         }
-        function renderClientAvatar() {
-            return `<img src="https://ui-avatars.com/api/?name=${chatUser ? chatUser.fname : 'U'}&background=random" class="w-8 h-8 rounded-full avatar-right object-cover shadow-sm">`;
+        
+        window.renderClientAvatar = function() {
+            return `<img src="https://ui-avatars.com/api/?name=${window.chatUser ? window.chatUser.fname : 'U'}&background=random" class="w-8 h-8 rounded-full avatar-right object-cover shadow-sm">`;
         }
 
-        function renderBubble(type, content, time) {
+        window.renderBubble = function(type, content, time) {
             const isUser = type === 'user';
             const timeStr = time || new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
             
@@ -273,7 +316,7 @@
 
             if (content.startsWith('[IMG]')) {
                 let rawUrl = content.replace('[IMG]', '');
-                let previewUrl = getDirectImageUrl(rawUrl); 
+                let previewUrl = window.getDirectImageUrl(rawUrl); 
                 contentHtml = `<img src="${previewUrl}" class="w-40 h-40 sm:w-48 sm:h-48 object-cover rounded-2xl shadow-sm cursor-pointer border border-gray-200" onclick="window.open('${rawUrl}')" onerror="this.onerror=null; this.src='https://via.placeholder.com/150?text=Image+Error';">`;
                 isMediaBox = true;
             } else if (content.startsWith('[VID]')) {
@@ -302,7 +345,7 @@
                     </div>`;
             } else if (content.startsWith('http') && content.includes('iconify')) {
                 contentHtml = `<img src="${content}" class="w-24 h-24 object-contain">`;
-                return `<div class="flex flex-col ${isUser ? 'items-end' : 'items-start'} mt-2 mb-1"><div class="sticker-bubble">${isUser ? renderClientAvatar() : renderAdminAvatar()}${contentHtml}</div></div>`;
+                return `<div class="flex flex-col ${isUser ? 'items-end' : 'items-start'} mt-2 mb-1"><div class="sticker-bubble">${isUser ? window.renderClientAvatar() : window.renderAdminAvatar()}${contentHtml}</div></div>`;
             } else {
                 contentHtml = content.replace(/\n/g, '<br>');
                 contentHtml = contentHtml.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="underline hover:opacity-80">$1</a>');
@@ -313,7 +356,7 @@
                     return `
                     <div class="flex flex-col items-end mt-2 mb-1">
                         <div class="relative max-w-[75%]">
-                            ${renderClientAvatar()}
+                            ${window.renderClientAvatar()}
                             ${contentHtml}
                         </div>
                         <span class="text-[10px] text-gray-400 mt-1">${timeStr}</span>
@@ -322,7 +365,7 @@
                     return `
                     <div class="flex flex-col items-end mt-2 mb-1">
                         <div class="msg-bubble bg-[#5a8ce0] text-white py-2.5 px-4 pr-5 rounded-2xl rounded-tr-sm text-sm shadow-sm">
-                            ${renderClientAvatar()}
+                            ${window.renderClientAvatar()}
                             ${contentHtml}
                         </div>
                         <span class="text-[10px] text-gray-400 mt-1">${timeStr}</span>
@@ -333,7 +376,7 @@
                     return `
                     <div class="flex flex-col items-start mt-2 mb-1">
                         <div class="relative max-w-[75%]">
-                            ${renderAdminAvatar()}
+                            ${window.renderAdminAvatar()}
                             ${contentHtml}
                         </div>
                         <span class="text-[10px] text-gray-400 mt-1">${timeStr}</span>
@@ -342,7 +385,7 @@
                     return `
                     <div class="flex flex-col items-start mt-2 mb-1">
                         <div class="msg-bubble bg-white text-gray-800 border border-gray-100 py-2.5 px-4 pr-3 rounded-2xl rounded-tl-sm text-sm shadow-sm">
-                            ${renderAdminAvatar()}
+                            ${window.renderAdminAvatar()}
                             ${contentHtml}
                         </div>
                         <span class="text-[10px] text-gray-400 mt-1">${timeStr}</span>
@@ -351,16 +394,16 @@
             }
         }
 
-        function getUploadingBubbleHtml() {
+        window.getUploadingBubbleHtml = function() {
             let text = 'กำลังส่ง...';
-            if(uploadingType === 'image') text = 'กำลังส่งรูปภาพ...';
-            if(uploadingType === 'video') text = 'กำลังส่งวิดีโอ...';
-            if(uploadingType === 'file') text = 'กำลังส่งเอกสาร...';
+            if(window.uploadingType === 'image') text = 'กำลังส่งรูปภาพ...';
+            if(window.uploadingType === 'video') text = 'กำลังส่งวิดีโอ...';
+            if(window.uploadingType === 'file') text = 'กำลังส่งเอกสาร...';
 
             return `
             <div class="flex flex-col items-end mt-2 mb-1">
                 <div class="msg-bubble bg-[#5a8ce0] text-white py-2 px-3 pr-4 rounded-2xl rounded-tr-sm text-sm shadow-sm flex items-center gap-3">
-                    ${renderClientAvatar()}
+                    ${window.renderClientAvatar()}
                     <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center shrink-0">
                         <i class="ph ph-spinner animate-spin text-xl text-white"></i>
                     </div>
@@ -369,94 +412,82 @@
             </div>`;
         }
 
-        function renderAllMessages() {
+        window.renderAllMessages = function() {
             const list = document.getElementById('messages-list');
             list.innerHTML = ''; 
             
-            messagesArray.forEach(msg => {
-                if (msg.userMsg) list.innerHTML += renderBubble('user', msg.userMsg, msg.time);
-                if (msg.adminMsg) list.innerHTML += renderBubble('admin', msg.adminMsg, msg.time);
+            window.messagesArray.forEach(msg => {
+                if (msg.userMsg) list.innerHTML += window.renderBubble('user', msg.userMsg, msg.time);
+                if (msg.adminMsg) list.innerHTML += window.renderBubble('admin', msg.adminMsg, msg.time);
             });
 
-            if (isUploading) {
-                list.innerHTML += getUploadingBubbleHtml();
+            if (window.isUploading) {
+                list.innerHTML += window.getUploadingBubbleHtml();
             }
 
-            scrollToBottom();
+            window.scrollToBottom();
         }
 
-        function showTyping(show) {
+        window.showTyping = function(show) {
             document.getElementById('typing-indicator').style.display = show ? 'flex' : 'none';
-            if(show) scrollToBottom();
+            if(show) window.scrollToBottom();
         }
 
-        // === การส่งข้อมูลไป Backend ===
-        function sendMessage() {
+        // ==========================================
+        // การส่งข้อมูล (เขียนข้อมูล) ยังคงต้องส่งผ่าน GAS 
+        // เพื่อให้เก็บลง Sheet และแจ้งเตือนแอดมินได้ถูกต้อง
+        // ==========================================
+        window.sendMessage = function() {
             const inp = document.getElementById('message-input');
             const text = inp.value.trim();
             if(!text) return;
 
-            messagesArray.push({ userMsg: text, time: new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) });
-            renderAllMessages();
+            // แสดงหลอกๆ ให้หน้าบ้านก่อน (จะหายไปเมื่อ Firebase อัปเดตข้อมูลจริงกลับมา)
+            window.messagesArray.push({ userMsg: text, time: new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) });
+            window.renderAllMessages();
 
-            inp.value = ''; inp.style.height = 'auto'; updateSendButton(); closePanels(); showTyping(true);
-
-            fetch(GAS_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'sendChatMessage', uid: chatUser.uid, phone: chatUser.phone || chatUser.fname, message: text, type: 'user' })
-            }).then(() => { setTimeout(fetchMessages, 1000); }).catch(() => { showTyping(false); });
-        }
-
-        function sendSticker(url) {
-            messagesArray.push({ userMsg: url, time: new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) });
-            renderAllMessages();
-            closePanels(); showTyping(true);
+            inp.value = ''; inp.style.height = 'auto'; window.updateSendButton(); window.closePanels(); window.showTyping(true);
 
             fetch(GAS_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action: 'sendChatMessage', uid: chatUser.uid, phone: chatUser.phone || chatUser.fname, message: url, type: 'user' })
-            }).then(() => setTimeout(fetchMessages, 1000));
+                body: JSON.stringify({ action: 'sendChatMessage', uid: window.chatUser.uid, phone: window.chatUser.phone || window.chatUser.fname, message: text, type: 'user' })
+            }).catch(() => { window.showTyping(false); });
         }
 
-        function uploadFile(e) {
+        window.sendSticker = function(url) {
+            window.messagesArray.push({ userMsg: url, time: new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) });
+            window.renderAllMessages();
+            window.closePanels(); window.showTyping(true);
+
+            fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'sendChatMessage', uid: window.chatUser.uid, phone: window.chatUser.phone || window.chatUser.fname, message: url, type: 'user' })
+            });
+        }
+
+        window.uploadFile = function(e) {
             const file = e.target.files[0]; if(!file) return;
             
             let mime = file.type;
             const ext = file.name.split('.').pop().toLowerCase();
-            if (['jpg','jpeg','png','gif','webp','heic'].includes(ext)) { mime = 'image/'+ext; uploadingType = 'image'; }
-            else if (['mp4','mov','avi','mkv'].includes(ext)) { mime = 'video/'+ext; uploadingType = 'video'; }
-            else { uploadingType = 'file'; }
+            if (['jpg','jpeg','png','gif','webp','heic'].includes(ext)) { mime = 'image/'+ext; window.uploadingType = 'image'; }
+            else if (['mp4','mov','avi','mkv'].includes(ext)) { mime = 'video/'+ext; window.uploadingType = 'video'; }
+            else { window.uploadingType = 'file'; }
 
-            isUploading = true;
-            renderAllMessages();
+            window.isUploading = true;
+            window.renderAllMessages();
 
             const reader = new FileReader();
             reader.onload = function(evt) {
                 const base64 = evt.target.result.split(',')[1];
                 fetch(GAS_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ action: 'uploadChatFile', filename: file.name, mimeType: mime, base64: base64, uid: chatUser.uid, phone: chatUser.phone || chatUser.fname, type: 'user' })
+                    body: JSON.stringify({ action: 'uploadChatFile', filename: file.name, mimeType: mime, base64: base64, uid: window.chatUser.uid, phone: window.chatUser.phone || window.chatUser.fname, type: 'user' })
                 }).then(() => {
-                    isUploading = false;
-                    fetchMessages();
+                    window.isUploading = false;
                 });
             };
             reader.readAsDataURL(file);
-        }
-
-        function fetchMessages() {
-            fetch(GAS_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'getChatMessages', uid: chatUser.uid, phone: chatUser.phone || chatUser.fname })
-            }).then(r=>r.json()).then(res => {
-                if(res.status === 'success' && res.messages) {
-                    if (res.messages.length !== messagesArray.length || isUploading) {
-                        messagesArray = res.messages;
-                        renderAllMessages();
-                        showTyping(false);
-                    }
-                }
-            });
         }
     </script>
 </body>
