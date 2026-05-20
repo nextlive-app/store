@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NextLive Admin Dashboard</title>
+    <title>Admin Dashboard</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Firebase SDK v8 (Compat) สำหรับ Realtime DB -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -197,7 +202,6 @@
                     <i data-lucide="calendar" class="w-5 h-5 mr-3"></i> Booking
                     <span id="nav-badge-booking" class="ml-auto text-[10px] bg-[#FFC107] text-black px-2 py-0.5 rounded-full font-bold hidden">0</span>
                 </a>
-                <!-- อัปเดตไอคอน Affiliate เป็น share-2 ตามที่ลูกค้าต้องการให้ถูกต้อง ไม่หาย -->
                 <a href="#" data-target="affiliate" class="menu-btn flex items-center px-4 py-3 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors">
                     <i data-lucide="share-2" class="w-5 h-5 mr-3"></i> Affiliate
                 </a>
@@ -239,7 +243,7 @@
                 <button onclick="toggleSidebar()" class="lg:hidden text-gray-400 hover:text-white"><i data-lucide="menu" class="w-6 h-6"></i></button>
                 <div>
                     <h2 class="text-xl font-bold" id="top-greeting">Good to see you, Admin!</h2>
-                    <p class="text-xs text-textMuted hidden sm:block">Improve your management. <span class="text-primary font-bold">(Auto-Sync Active)</span></p>
+                    <p class="text-xs text-textMuted hidden sm:block">Improve your management. <span class="text-primary font-bold">(Realtime SDK Active)</span></p>
                 </div>
             </div>
             <div class="flex items-center gap-4">
@@ -541,7 +545,6 @@
                     <button id="btn-add-setting" onclick="openAddModal('settings')" class="bg-primary hover:bg-primaryDark text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg transition-colors flex items-center gap-1"><i data-lucide="plus" class="w-4 h-4"></i> Add Setting</button>
                 </div>
                 
-                <!-- กล่องข้อความแนะนำการใส่โบนัส -->
                 <div id="bonus-instruction" class="mb-4 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg text-sm text-gray-300 hidden">
                     <h4 class="text-blue-400 font-bold mb-1 flex items-center"><i data-lucide="info" class="w-4 h-4 mr-1"></i> คำแนะนำการตั้งค่าโบนัสเติมเงิน</h4>
                     กรุณากดปุ่ม <b>Add Setting</b> ด้านบนและกรอกข้อมูลดังนี้:<br>
@@ -578,64 +581,47 @@
     </main>
 
     <script>
-        // ⚠️ แก้ไขให้เป็น URL GAS ของคุณ
+        // ⚠️ แทนที่ด้วย URL ของ Web App จาก Google Apps Script ของคุณ
         const GAS_URL = "https://script.google.com/macros/s/AKfycbx8Zw7yc9QlPrU9PeaJ6koVbk9UqAZhRIDUSxKvqhQnyc5sp27V0rkxb5FbNKivIfhi/exec";
         
-        // --- Bank Mapping สำหรับแสดงผลเป็นภาษาไทยแบบสวยงาม ---
+        // ⚠️ การตั้งค่า Firebase Realtime Database (เอามาจาก Firebase Console ของคุณ)
+        const firebaseConfig = {
+            databaseURL: "https://shop-991-default-rtdb.asia-southeast1.firebasedatabase.app"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        // --- Bank Mapping สำหรับแสดงผลภาษาไทย ---
         const bankMap = {
-            'bank-bbl': 'ธนาคารกรุงเทพ',
-            'bank-kbank': 'ธนาคารกสิกรไทย',
-            'bank-rbs': 'ธนาคารรอยัลแบงก์ออฟสก็อตแลนด์',
-            'bank-ktb': 'ธนาคารกรุงไทย',
-            'bank-jpm': 'เจ.พี. มอร์แกน',
-            'bank-mufg': 'ธนาคารแห่งโตเกียว-มิตซูบิชิ ยูเอฟเจ',
-            'bank-tmb': 'ธนาคารทหารไทย (ทีทีบี)',
-            'bank-scb': 'ธนาคารไทยพาณิชย์',
-            'bank-citi': 'ธนาคารซิตี้แบงก์',
-            'bank-smbc': 'ธนาคารซูมิโตโม มิตซุย แบงกิ้ง คอร์ปอเรชั่น',
-            'bank-sc': 'ธนาคารสแตนดาร์ดชาร์เตอร์ด (ไทย)',
-            'bank-cimb': 'ธนาคารซีไอเอ็มบี ไทย',
-            'bank-uob': 'ธนาคารยูโอบี',
-            'bank-bay': 'ธนาคารกรุงศรีอยุธยา',
-            'bank-mega': 'ธนาคารเมกะ สากลพาณิชย์',
-            'bank-boa': 'ธนาคารแบงก์ออฟอเมริกา',
-            'bank-cacib': 'เครดิต อะกริโคล',
-            'bank-gsb': 'ธนาคารออมสิน',
-            'bank-hsbc': 'ธนาคารฮ่องกงและเซี่ยงไฮ้แบงกิ้งคอร์ปอเรชั่น',
-            'bank-db': 'ธนาคารดอยซ์แบงก์',
-            'bank-ghb': 'ธนาคารอาคารสงเคราะห์',
-            'bank-baac': 'ธนาคารเพื่อการเกษตรและสหกรณ์การเกษตร',
-            'bank-mb': 'ธนาคารมิซูโฮ',
-            'bank-bnp': 'บีเอ็นพี พารีบาส์',
-            'bank-tbank': 'ธนาคารธนชาต',
-            'bank-ibank': 'ธนาคารอิสลามแห่งประเทศไทย',
-            'bank-tisco': 'ธนาคารทิสโก้',
-            'bank-kk': 'ธนาคารเกียรตินาคินภัทร',
-            'bank-icbc': 'ธนาคารไอซีบีซี (ไทย)',
-            'bank-tcrb': 'ธนาคารไทยเครดิต',
-            'bank-lhb': 'ธนาคารแลนด์ แอนด์ เฮ้าส์',
-            'bank-tmn': 'ทรูมันนี่ วอลเล็ท',
-            'bank-pp': 'พร้อมเพย์'
+            'bank-bbl': 'ธนาคารกรุงเทพ', 'bank-kbank': 'ธนาคารกสิกรไทย', 'bank-rbs': 'ธนาคารรอยัลแบงก์ออฟสก็อตแลนด์',
+            'bank-ktb': 'ธนาคารกรุงไทย', 'bank-jpm': 'เจ.พี. มอร์แกน', 'bank-mufg': 'ธนาคารแห่งโตเกียว-มิตซูบิชิ ยูเอฟเจ',
+            'bank-tmb': 'ธนาคารทหารไทย (ทีทีบี)', 'bank-scb': 'ธนาคารไทยพาณิชย์', 'bank-citi': 'ธนาคารซิตี้แบงก์',
+            'bank-smbc': 'ธนาคารซูมิโตโม มิตซุย แบงกิ้ง คอร์ปอเรชั่น', 'bank-sc': 'ธนาคารสแตนดาร์ดชาร์เตอร์ด (ไทย)',
+            'bank-cimb': 'ธนาคารซีไอเอ็มบี ไทย', 'bank-uob': 'ธนาคารยูโอบี', 'bank-bay': 'ธนาคารกรุงศรีอยุธยา',
+            'bank-mega': 'ธนาคารเมกะ สากลพาณิชย์', 'bank-boa': 'ธนาคารแบงก์ออฟอเมริกา', 'bank-cacib': 'เครดิต อะกริโคล',
+            'bank-gsb': 'ธนาคารออมสิน', 'bank-hsbc': 'ธนาคารฮ่องกงและเซี่ยงไฮ้แบงกิ้งคอร์ปอเรชั่น', 'bank-db': 'ธนาคารดอยซ์แบงก์',
+            'bank-ghb': 'ธนาคารอาคารสงเคราะห์', 'bank-baac': 'ธนาคารเพื่อการเกษตรและสหกรณ์การเกษตร', 'bank-mb': 'ธนาคารมิซูโฮ',
+            'bank-bnp': 'บีเอ็นพี พารีบาส์', 'bank-tbank': 'ธนาคารธนชาต', 'bank-ibank': 'ธนาคารอิสลามแห่งประเทศไทย',
+            'bank-tisco': 'ธนาคารทิสโก้', 'bank-kk': 'ธนาคารเกียรตินาคินภัทร', 'bank-icbc': 'ธนาคารไอซีบีซี (ไทย)',
+            'bank-tcrb': 'ธนาคารไทยเครดิต', 'bank-lhb': 'ธนาคารแลนด์ แอนด์ เฮ้าส์', 'bank-tmn': 'ทรูมันนี่ วอลเล็ท', 'bank-pp': 'พร้อมเพย์'
         };
 
         let state = { users: [], orders: [], deposits: [], withdraws: [], booking: [], products: [], options: [], settings: [], affiliate: [], movies: [], movie_downloads: [], network: [] };
-        let chartInstanceStat = null;
-        let chartInstanceTrend = null;
-        let chartInstanceAffiliate = null; 
-        let chartInstanceMovie = null; 
-        
+        let chartInstanceStat = null, chartInstanceTrend = null, chartInstanceAffiliate = null, chartInstanceMovie = null;
         let isEditing = false;
         let previousCounts = { orders: -1, deposits: -1, withdraws: -1, booking: -1 };
         let unreadNotifications = 0;
 
-        // Chat Admin Variables
+        // --- Variables สำหรับระบบ Chat Realtime ---
         let adminChatList = [];
         let activeChatUID = null;
         let activeChatPhone = null;
         let activeChatMsgs = [];
-        let chatLoopInterval = null;
+        let currentFirebaseData = null;
+        let lastMsgCount = 0;
 
-        // Security Token
         let adminToken = localStorage.getItem('nextLiveAdminToken') || '';
 
         lucide.createIcons();
@@ -779,7 +765,6 @@
             showLoader(false);
         }
 
-
         function toggleSidebar() {
             const sb = document.getElementById('sidebar'); const overlay = document.getElementById('mobile-overlay');
             if (sb.classList.contains('-translate-x-full')) { sb.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); } 
@@ -800,14 +785,89 @@
             });
         });
 
+        // ================== FIREBASE CHAT LISTENER ==================
+        function initFirebaseChatListener() {
+            const dbRef = firebase.database().ref('LiveChat');
+            dbRef.on('value', (snapshot) => {
+                currentFirebaseData = snapshot.val();
+                processFirebaseChatData(currentFirebaseData);
+            });
+        }
+
+        function processFirebaseChatData(data) {
+            if (!data) return;
+            
+            let chatMap = {}; 
+            let totalUnread = 0;
+            let messagesForActiveUser = [];
+
+            // แปลงข้อมูลที่ได้จาก Firebase เป็น Array เพื่อวนลูป
+            const rows = Array.isArray(data) ? data : Object.keys(data).reduce((arr, key) => {
+                arr[key] = data[key];
+                return arr;
+            }, []);
+            
+            for (let i = 1; i < rows.length; i++) {
+                let row = rows[i];
+                if (!row || row.length === 0) continue;
+                
+                let dateStr = row[0];
+                let timeStr = row[1];
+                let uid = row[2];
+                let info = row[3];
+                let isUserMsg = row[4] !== "";
+                let adminMsg = row[5];
+                let ts = parseFloat(row[6]);
+                let isRead = parseInt(row[7]) === 1;
+
+                if (!chatMap[uid]) {
+                    chatMap[uid] = { uid: uid, info: info, latestMsg: '', timestamp: 0, unreadCount: 0 };
+                }
+                
+                if (ts > chatMap[uid].timestamp) {
+                    chatMap[uid].timestamp = ts;
+                    chatMap[uid].latestMsg = isUserMsg ? row[4] : adminMsg;
+                    chatMap[uid].info = info; 
+                }
+                
+                if (isUserMsg && !isRead) {
+                    chatMap[uid].unreadCount++;
+                    totalUnread++;
+                }
+
+                if (activeChatUID && uid === activeChatUID) {
+                    messagesForActiveUser.push({
+                        date: dateStr, time: timeStr, uid: uid, phone: info,
+                        userMsg: row[4], adminMsg: adminMsg, timestamp: ts,
+                        firebaseIndex: i
+                    });
+                }
+            }
+
+            adminChatList = Object.values(chatMap).sort((a, b) => b.timestamp - a.timestamp);
+            updateNavBadge('badge-chat', totalUnread);
+            renderAdminChatList();
+
+            if (activeChatUID) {
+                activeChatMsgs = messagesForActiveUser;
+                renderAdminMessages();
+                // เลื่อนลงล่างสุดเฉพาะเวลามีข้อความใหม่เพิ่มขึ้น
+                if (activeChatMsgs.length !== lastMsgCount) {
+                    const box = document.getElementById('admin-chat-messages'); 
+                    box.scrollTop = box.scrollHeight;
+                    lastMsgCount = activeChatMsgs.length;
+                }
+            }
+        }
+
         window.onload = () => {
             const isLogged = localStorage.getItem('nextLiveAdmin');
             if(isLogged) {
                 document.getElementById('login-overlay').style.display = 'none';
                 fetchData();
                 document.body.addEventListener('click', () => { window.audioInit = true; }, {once:true});
-                setInterval(fetchDataSilent, 15000);
-                chatLoopInterval = setInterval(fetchAdminChatListSilent, 5000); 
+                setInterval(fetchDataSilent, 15000); // ดึงข้อมูลแดชบอร์ด
+                initFirebaseChatListener(); // ดึงข้อมูลแชท Realtime
             }
         };
 
@@ -823,27 +883,18 @@
                     localStorage.setItem('nextLiveAdminToken', data.adminToken);
                     adminToken = data.adminToken;
                     document.getElementById('login-overlay').style.display = 'none'; window.audioInit = true;
-                    showPopup("Welcome", "เข้าสู่ระบบสำเร็จ"); fetchData(); setInterval(fetchDataSilent, 15000); chatLoopInterval = setInterval(fetchAdminChatListSilent, 5000);
+                    showPopup("Welcome", "เข้าสู่ระบบสำเร็จ"); 
+                    fetchData(); 
+                    setInterval(fetchDataSilent, 15000); 
+                    initFirebaseChatListener();
                 } else { showPopup("Error", data.message); }
             } catch(err) { showPopup("Error", "Connection failed."); }
             showLoader(false);
         }
+
         function logout() { localStorage.removeItem('nextLiveAdmin'); localStorage.removeItem('nextLiveAdminToken'); location.reload(); }
 
-        // ================== CHAT SYSTEM ==================
-        async function fetchAdminChatListSilent() {
-            try {
-                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: 'adminGetChatList', adminToken: adminToken}) });
-                const data = await res.json();
-                if(data.status === 'success') {
-                    adminChatList = data.chatList;
-                    updateNavBadge('badge-chat', data.totalUnread);
-                    renderAdminChatList();
-                    if (activeChatUID) fetchAdminChatMessagesSilent();
-                }
-            } catch(e) {}
-        }
-
+        // ================== CHAT SYSTEM UI ==================
         function filterAdminChatList() { renderAdminChatList(); }
 
         function renderAdminChatList() {
@@ -901,13 +952,25 @@
                 document.getElementById('chat-room-panel').classList.add('flex');
             }
             
-            // Mark as read immediately
-            let chatObj = adminChatList.find(c => c.uid === uid);
-            if(chatObj && chatObj.unreadCount > 0) {
-                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: 'adminMarkChatRead', uid: uid, adminToken: adminToken}) }).then(()=>fetchAdminChatListSilent());
+            // Mark as read in Firebase
+            if(currentFirebaseData) {
+                let updates = {};
+                let changed = false;
+                for(let key in currentFirebaseData) {
+                    let row = currentFirebaseData[key];
+                    if(row && row[2] === uid && row[4] !== "") {
+                        if(parseInt(row[7]) !== 1) {
+                            updates[key + '/7'] = 1;
+                            changed = true;
+                        }
+                    }
+                }
+                if(changed) {
+                    firebase.database().ref('LiveChat').update(updates);
+                }
             }
 
-            fetchAdminChatMessages();
+            processFirebaseChatData(currentFirebaseData);
         }
 
         function closeAdminChatRoom() {
@@ -916,29 +979,6 @@
             document.getElementById('chat-room-panel').classList.add('hidden');
             document.getElementById('chat-room-panel').classList.remove('flex');
             renderAdminChatList();
-        }
-
-        function fetchAdminChatMessages() {
-            if(!activeChatUID) return;
-            document.getElementById('admin-chat-messages').innerHTML = '<div class="flex items-center justify-center h-full"><i class="ph ph-spinner animate-spin text-2xl text-primary"></i></div>';
-            fetchAdminChatMessagesSilent(true);
-        }
-
-        async function fetchAdminChatMessagesSilent(forceScroll = false) {
-            if(!activeChatUID) return;
-            try {
-                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getChatMessages', uid: activeChatUID }) });
-                const data = await res.json();
-                if(data.status === 'success') {
-                    if (data.messages.length !== activeChatMsgs.length || forceScroll) {
-                        activeChatMsgs = data.messages;
-                        renderAdminMessages();
-                        if(forceScroll || data.messages.length > activeChatMsgs.length) {
-                            const box = document.getElementById('admin-chat-messages'); box.scrollTop = box.scrollHeight;
-                        }
-                    }
-                }
-            } catch(e) {}
         }
 
         function renderAdminMessages() {
@@ -992,15 +1032,23 @@
 
         function sendAdminMessage() {
             const inp = document.getElementById('admin-chat-input');
-            const text = inp.value.trim(); if(!text || !activeChatUID) return;
+            const text = inp.value.trim(); 
+            if(!text || !activeChatUID) return;
             
             inp.value = '';
-            activeChatMsgs.push({ adminMsg: text, time: 'กำลังส่ง...', timestamp: Date.now() });
-            renderAdminMessages();
-            const box = document.getElementById('admin-chat-messages'); box.scrollTop = box.scrollHeight;
-
-            fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'sendChatMessage', uid: activeChatUID, phone: activeChatPhone, message: text, type: 'admin' }) })
-            .then(() => fetchAdminChatMessagesSilent(true));
+            
+            let d = new Date(); 
+            let dateStr = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) + "/" + d.getFullYear();
+            let timeStr = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2) + ":" + ("0" + d.getSeconds()).slice(-2);
+            let timestamp = d.getTime();
+            
+            // Push directly to Firebase array
+            let data = currentFirebaseData || [];
+            let nextIndex = Array.isArray(data) ? data.length : Object.keys(data).length;
+            if (nextIndex === 0) nextIndex = 1;
+            
+            let newRow = [dateStr, timeStr, activeChatUID, activeChatPhone, "", text, timestamp, 1];
+            firebase.database().ref('LiveChat/' + nextIndex).set(newRow);
         }
 
         function uploadAdminChatFile(e) {
@@ -1013,21 +1061,30 @@
             const reader = new FileReader();
             reader.onload = function(evt) {
                 const base64 = evt.target.result.split(',')[1];
-                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'uploadChatFile', filename: file.name, mimeType: mime, base64: base64, uid: activeChatUID, phone: activeChatPhone, type: 'admin' }) })
-                .then(() => fetchAdminChatMessagesSilent(true));
+                // แนบไฟล์ผ่าน GAS
+                fetch(GAS_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: 'uploadChatFile', filename: file.name, mimeType: mime, base64: base64, uid: activeChatUID, phone: activeChatPhone, type: 'admin' }) 
+                });
             };
             reader.readAsDataURL(file);
         }
 
         function deleteChatMessage(timestamp) {
             showPopup("ยืนยัน", "ต้องการลบข้อความนี้?", () => {
-                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: 'adminDeleteChatMessage', uid: activeChatUID, timestamp: timestamp, adminToken: adminToken}) })
-                .then(()=> fetchAdminChatMessagesSilent());
+                if(!currentFirebaseData) return;
+                for(let key in currentFirebaseData) {
+                    let row = currentFirebaseData[key];
+                    if(row && row[2] === activeChatUID && parseFloat(row[6]) === timestamp) {
+                        firebase.database().ref('LiveChat/' + key).set([]);
+                        break;
+                    }
+                }
             }, true);
         }
 
 
-        // ================== DATA LOGIC ==================
+        // ================== DASHBOARD DATA LOGIC ==================
         async function fetchData() {
             showLoader(true);
             try {
@@ -1037,7 +1094,6 @@
                 else if(data.message.includes('Token')) { logout(); }
             } catch(err) { }
             showLoader(false);
-            fetchAdminChatListSilent();
         }
 
         async function fetchDataSilent() {
@@ -1067,11 +1123,10 @@
 
             if(!isEditing) {
                 renderAllTables(); updateSummaryBoxes(); updateDashboard();
-                updateSettingsUI(); // เพิ่มตรงนี้เพื่อเช็คการซ่อนปุ่มโบนัส
+                updateSettingsUI(); 
             }
         }
 
-        // --- ส่วนควบคุม UI หน้า Settings ---
         function updateSettingsUI() {
             if (!state.settings) return;
             const hasBonus = state.settings.some(s => s.cols[0] === 'DepositBonusPercent');
@@ -1135,7 +1190,6 @@
                     let val = item.cols[origIdx] === undefined ? '' : item.cols[origIdx]; 
                     let displayVal = val;
                     
-                    // แปลงชื่อธนาคารจาก bank-xxx เป็นภาษาไทยให้แอดมินอ่านง่าย
                     if (typeof displayVal === 'string') {
                         Object.keys(bankMap).forEach(key => {
                             if (displayVal.includes(key)) {
