@@ -17,9 +17,9 @@
                 extend: {
                     fontFamily: { sans: ['Kanit', 'sans-serif'] },
                     colors: { 
-                        primary: '#6b3fd1', // โทนสีม่วงตามรูป
+                        primary: '#6b3fd1',
                         primaryHover: '#562fba', 
-                        accent: '#ffd700', // สีทอง
+                        accent: '#ffd700',
                         bgDark: '#0f0b1c',
                         cardDark: '#1a1432',
                         cardLight: '#261c4a',
@@ -37,8 +37,8 @@
         body { 
             background-color: #0f0b1c; 
             color: #e5e7eb; 
-            touch-action: manipulation; /* ป้องกันการ Double-tap เพื่อซูมบนมือถือ/แท็บเล็ต */
-            -webkit-text-size-adjust: 100%; /* ป้องกันการขยายฟอนต์อัตโนมัติแนวนอน */
+            touch-action: manipulation; 
+            -webkit-text-size-adjust: 100%; 
         }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         .hide-scroll::-webkit-scrollbar { display: none; }
@@ -80,7 +80,6 @@
         <p class="text-white text-sm">กำลังประมวลผล...</p>
     </div>
 
-    <!-- ปรับความกว้างจาก max-w-md เป็น max-w-5xl สำหรับ Desktop -->
     <div class="w-full max-w-5xl mx-auto min-h-screen flex flex-col relative bg-bgDark shadow-2xl">
         
         <!-- Header -->
@@ -117,7 +116,7 @@
                         <div class="flex-1 relative z-20">
                             <p class="text-[#a79ad1] text-sm md:text-base mb-2 font-medium">รายได้ที่ถอนได้ (บาท)</p>
                             <input type="number" id="wd-amount" placeholder="0.00" class="w-full bg-transparent text-white text-5xl md:text-6xl font-extrabold outline-none border-none p-0 m-0 tracking-tight" autocomplete="off">
-                            <button onclick="transferCredit()" class="mt-6 bg-[#562fba] hover:bg-primary text-white font-bold py-3 px-10 rounded-xl shadow-[0_0_15px_rgba(107,63,209,0.5)] transition-all text-sm w-fit flex items-center gap-2">
+                            <button id="btn-withdraw-action" onclick="transferCredit()" class="mt-6 bg-[#562fba] hover:bg-primary text-white font-bold py-3 px-10 rounded-xl shadow-[0_0_15px_rgba(107,63,209,0.5)] transition-all text-sm w-fit flex items-center gap-2">
                                 <i data-lucide="wallet" class="w-4 h-4"></i> ถอนรายได้
                             </button>
                             <p class="text-xs text-gray-400 mt-3" id="txt-max-avail">ขั้นต่ำ 100 บ. | ยอดที่ถอนได้: 0.00</p>
@@ -466,13 +465,19 @@
         let currentUser = null;
         let affiliateLink = "";
         let maxAvailable = 0; 
-        let pollingInterval = null; // สำหรับ Auto-refresh
+        let pollingInterval = null; 
 
         lucide.createIcons();
 
         function safeSetText(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
         function showLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
-        function formatNum(num) { return Number(num).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+        
+        // ป้องกันค่าแปลกๆตอนแปลงตัวเลข
+        function formatNum(num) { 
+            let parsed = Number(num);
+            if(isNaN(parsed)) parsed = 0;
+            return parsed.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}); 
+        }
 
         // --- Custom Popup Logic ---
         let popupCloseCallback = null;
@@ -564,43 +569,45 @@
         }
 
         function updateUIWithData(response) {
-            maxAvailable = response.stats.available;
+            if(!response || !response.stats) return; // Prevent Garbage Data Break
+
+            maxAvailable = response.stats.available || 0;
             document.getElementById('txt-max-avail').innerText = `ขั้นต่ำ 100 บ. | ยอดที่ถอนได้: ฿${formatNum(maxAvailable)}`;
             
-            document.getElementById('box-members').innerText = response.stats.totalMembers;
+            document.getElementById('box-members').innerText = response.stats.totalMembers || 0;
             document.getElementById('box-sales-today').innerText = formatNum(response.stats.todaySales);
             document.getElementById('box-comm-today').innerText = formatNum(response.stats.todayComm);
-            document.getElementById('box-comm-avail').innerText = formatNum(response.stats.available);
+            document.getElementById('box-comm-avail').innerText = formatNum(maxAvailable);
             
-            let tbl = response.stats.tables;
+            let tbl = response.stats.tables || {};
             
             // T1
-            document.getElementById('t1-c1').innerText = response.stats.uniqueNew;
-            document.getElementById('t1-c2').innerText = response.stats.uniqueOld;
-            document.getElementById('t1-c3').innerText = response.stats.uniqueDownline;
+            document.getElementById('t1-c1').innerText = response.stats.uniqueNew || 0;
+            document.getElementById('t1-c2').innerText = response.stats.uniqueOld || 0;
+            document.getElementById('t1-c3').innerText = response.stats.uniqueDownline || 0;
             
             // T2
             document.getElementById('t2-c1').innerText = formatNum(tbl.t1NewSales);
             document.getElementById('t2-c2').innerText = formatNum(tbl.t1OldSales);
-            document.getElementById('t2-c3').innerText = formatNum(tbl.t1NewComm + tbl.t1OldComm);
+            document.getElementById('t2-c3').innerText = formatNum((tbl.t1NewComm || 0) + (tbl.t1OldComm || 0));
             
             // T3
-            document.getElementById('t3-c1').innerText = response.stats.uniqueTier2;
+            document.getElementById('t3-c1').innerText = response.stats.uniqueTier2 || 0;
             document.getElementById('t3-c2').innerText = formatNum(tbl.t2Sales);
             document.getElementById('t3-c3').innerText = formatNum(tbl.t2Comm);
 
             // T4
-            document.getElementById('t4-c1').innerText = response.stats.uniqueTier3;
+            document.getElementById('t4-c1').innerText = response.stats.uniqueTier3 || 0;
             document.getElementById('t4-c2').innerText = formatNum(tbl.t3Sales);
             document.getElementById('t4-c3').innerText = formatNum(tbl.t3Comm);
 
             // T5 (Guest)
-            document.getElementById('t5-c1').innerText = response.stats.uniqueGuest;
+            document.getElementById('t5-c1').innerText = response.stats.uniqueGuest || 0;
             document.getElementById('t5-c2').innerText = formatNum(tbl.guestSales);
             document.getElementById('t5-c3').innerText = formatNum(tbl.guestComm);
 
             // T6 (Tier 4+)
-            document.getElementById('t6-c1').innerText = response.stats.uniqueTier4Plus;
+            document.getElementById('t6-c1').innerText = response.stats.uniqueTier4Plus || 0;
             document.getElementById('t6-c2').innerText = formatNum(tbl.t4PlusSales);
             document.getElementById('t6-c3').innerText = formatNum(tbl.t4PlusComm);
 
@@ -613,7 +620,7 @@
 
         function renderHistory(data) {
             const container = document.getElementById('history-container');
-            if(data.length === 0) {
+            if(!Array.isArray(data) || data.length === 0) {
                 container.innerHTML = `
                     <div class="text-center text-gray-500 py-12 border border-borderDark rounded-2xl border-dashed">
                         <i data-lucide="history" class="w-12 h-12 mx-auto mb-3 opacity-30"></i>
@@ -627,8 +634,10 @@
             let sumTotal = 0;
 
             data.forEach(item => {
+                if(!item || !item.type) return; // Prevent Null Items
+
                 let isWithdraw = item.type === 'ถอนรายได้';
-                let isReg = item.type.includes('สมัครบัญชี') || item.type.includes('สมัครสมาชิก'); // ดักจับทั้ง 2 คำ
+                let isReg = item.type.includes('สมัครบัญชี') || item.type.includes('สมัครสมาชิก');
                 
                 let color = isWithdraw ? 'text-red-400' : (isReg ? 'text-gray-400' : 'text-green-400');
                 let sign = isWithdraw ? '-' : (isReg ? '' : '+');
@@ -638,17 +647,18 @@
                     : (isReg ? '<i data-lucide="user-plus" class="w-4 h-4 inline mr-1 text-blue-400 -mt-0.5"></i>' 
                              : '<i data-lucide="check-circle" class="w-4 h-4 inline mr-1 text-green-400 -mt-0.5"></i>');
 
-                if(!isWithdraw && !isReg) sumTotal += item.amount; // คำนวณรายได้ทั้งหมด (ไม่รวมยอดสมัคร 0 บาท)
+                let amt = parseFloat(item.amount) || 0;
+                if(!isWithdraw && !isReg) sumTotal += amt;
 
                 container.innerHTML += `
                     <div class="bg-cardDark border border-borderDark p-5 md:p-6 rounded-2xl flex justify-between items-center shadow-sm hover:border-primary/30 transition-colors">
                         <div>
                             <p class="font-bold text-white text-base">${item.type}</p>
-                            <p class="text-sm text-[#a79ad1] mt-1.5">${item.date} | <span class="text-gray-400">User: ${item.buyer}</span></p>
+                            <p class="text-sm text-[#a79ad1] mt-1.5">${item.date || '-'} | <span class="text-gray-400">User: ${item.buyer || 'Unknown'}</span></p>
                             <p class="text-xs mt-2 flex items-center bg-[#110c22] w-fit px-2 py-1 rounded-md border border-borderDark">${iconStr} ${isReg ? 'เข้าสู่ระบบแล้ว' : 'สำเร็จ'}</p>
                         </div>
                         <div class="text-right">
-                            <p class="font-bold ${color} text-xl md:text-2xl">${sign}฿${formatNum(Math.abs(item.amount))}</p>
+                            <p class="font-bold ${color} text-xl md:text-2xl">${sign}฿${formatNum(Math.abs(amt))}</p>
                         </div>
                     </div>
                 `;
@@ -659,10 +669,13 @@
 
         function transferCredit() {
             let inputEl = document.getElementById('wd-amount');
+            let btnAction = document.getElementById('btn-withdraw-action');
             let withdrawAmount = parseFloat(inputEl.value);
             
-            if(isNaN(withdrawAmount) || withdrawAmount <= 0) { 
-                showCustomPopup("แจ้งเตือน", "กรุณาระบุตัวเลขจำนวนเงินที่ต้องการถอนในช่องรายได้"); 
+            // Security: Prevent NaN, Zero, and Negative Values completely
+            if(!isFinite(withdrawAmount) || withdrawAmount <= 0) { 
+                showCustomPopup("แจ้งเตือน", "กรุณาระบุตัวเลขจำนวนเงินให้ถูกต้อง (มากกว่า 0)"); 
+                inputEl.value = '';
                 return; 
             }
             
@@ -677,24 +690,35 @@
             }
             
             showConfirmPopup("ยืนยันการทำรายการ", "ระบบจะทำการถอนรายได้\nจำนวน ฿" + formatNum(withdrawAmount) + "\nเข้าสู่กระเป๋าเครดิตหลักของคุณ\n\nคุณแน่ใจหรือไม่?", async function() {
+                // Prevent Double Click
+                btnAction.disabled = true;
+                btnAction.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> กำลังดำเนินการ...`;
+                lucide.createIcons();
                 showLoader(true);
+
                 try {
                     const res = await fetch(GAS_URL, {
                         method: 'POST', body: JSON.stringify({ action: 'transferAffiliateCredit', uid: currentUser.uid, fname: currentUser.fname, email: currentUser.email, phone: currentUser.phone, amount: withdrawAmount })
                     });
                     const response = await res.json();
+                    
                     if(response.status === 'success') {
                         showCustomPopup("สำเร็จ", response.message);
                         currentUser.balance = response.newBalance;
                         localStorage.setItem('nextLiveUser', JSON.stringify(currentUser));
-                        inputEl.value = ''; // เคลียร์ช่อง
-                        loadDataSilent(); // Update UI
+                        inputEl.value = ''; 
+                        loadDataSilent(); 
                     } else {
                         showCustomPopup("ข้อผิดพลาด", response.message);
                     }
                 } catch(e) {
                     showCustomPopup("ข้อผิดพลาด", "การเชื่อมต่อล้มเหลว ไม่สามารถโอนเงินได้");
                 }
+                
+                // Reset Button
+                btnAction.disabled = false;
+                btnAction.innerHTML = `<i data-lucide="wallet" class="w-4 h-4"></i> ถอนรายได้`;
+                lucide.createIcons();
                 showLoader(false);
             });
         }
