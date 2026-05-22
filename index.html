@@ -16,7 +16,7 @@
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title id="page-title">test2</title>
+    <title id="page-title">test3</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1267,6 +1267,7 @@
         </div>
     </div>
 <!-- Application Logic (Optimized & Secured) -->
+   <!-- Application Logic (Optimized & Secured) -->
     <script>
         // ⚠️ อย่าลืมแก้ไข GAS_WEBAPP_URL ให้เป็นลิงก์ Apps Script ของคุณเอง
         const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx8Zw7yc9QlPrU9PeaJ6koVbk9UqAZhRIDUSxKvqhQnyc5sp27V0rkxb5FbNKivIfhi/exec";
@@ -1286,7 +1287,7 @@
         let currentFlow = 'order'; 
         let globalHistoryData = null; 
 
-        // 🏦 Map ชื่อธนาคารภาษาไทย เป็น ภาษาอังกฤษ (ครบ 33 ธนาคาร)
+        // 🏦 Map ชื่อธนาคารภาษาไทย เป็น ภาษาอังกฤษ (ครบ 33 ธนาคาร ทรูมันนี่และพร้อมเพย์อยู่ล่างสุดใน HTML)
         const bankNameEngMap = {
             'bank-bbl': 'BANGKOK BANK',
             'bank-kbank': 'KASIKORNBANK',
@@ -1338,7 +1339,6 @@
         // ============================================================================
         async function callBackend(payload) {
             try {
-                // ดึง UID คนแนะนำ ถ้ามีการคลิกลิงก์ Affiliate เข้ามา
                 let savedAffId = localStorage.getItem('saved_affiliate_id');
                 if (savedAffId) {
                     if (payload.action === 'register') payload.inviterUID = savedAffId;
@@ -1428,7 +1428,6 @@
         function init() {
             try { lucide.createIcons(); } catch(e) {}
             
-            // ดักจับ Affiliate Link อัตโนมัติ (เก็บลงเครื่อง)
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('Affiliate')) {
                 localStorage.setItem('saved_affiliate_id', urlParams.get('Affiliate'));
@@ -1471,7 +1470,6 @@
             });
         }
 
-        // จัดการไอคอนธนาคารแบบ Zero-Delay (อิงจากตัวเลือกที่ฝังใน HTML)
         function setupBankIconPreview() {
             const select = document.getElementById('wd-bank-name'); if(!select) return;
             select.addEventListener('change', function() {
@@ -1545,16 +1543,18 @@
             }
         }
 
+        // ปิดเมนูโปรไฟล์ออโต้เมื่อคลิกลิงก์ด้านใน
         function closeProfileMenu() {
             if (document.activeElement) {
                 document.activeElement.blur();
             }
         }
 
+        // ล็อกเอาท์แบบ 100% กดปุ๊บเคลียร์ปั๊บ
         function logout() {
             if(currentUser) { callBackend({action: 'logout', email: currentUser.email, phone: currentUser.phone}); }
             localStorage.removeItem('nextLiveUser'); 
-            localStorage.removeItem('nextLiveCart'); 
+            localStorage.removeItem('nextLiveCart');
             currentUser = null;
             showCustomPopup("สำเร็จ", "ออกจากระบบเรียบร้อยแล้ว", function() {
                 window.location.reload(true);
@@ -1631,7 +1631,7 @@
                 const ver = document.getElementById('verification-overlay'); if(ver) ver.classList.add('hidden');
                 const upl = document.getElementById('upload-section'); if(upl) upl.classList.remove('hidden');
             } else {
-                if(typeof qrTimerInterval !== 'undefined') clearInterval(qrTimerInterval); // ป้องกัน Memory Leak
+                if(typeof qrTimerInterval !== 'undefined') clearInterval(qrTimerInterval);
             }
         }
 
@@ -1730,7 +1730,7 @@
         }
 
         // ============================================================================
-        // History & Statement
+        // History & Statement (อัปเดตให้แสดงรายละเอียด Error ทุกบรรทัด)
         // ============================================================================
         function searchHistory() {
             const phoneEl = document.getElementById('history-phone-input'); const phone = phoneEl ? phoneEl.value.trim() : "";
@@ -1751,11 +1751,17 @@
             });
         }
 
+        // ฟังก์ชันช่วยดักจับความล้มเหลวที่เข้มงวด
         function formatShortStatusHistory(status) {
             if(!status || status === "-") return "Unsuccess";
-            if(status === "สำเร็จ" || status.includes("การชำระเงินถูกต้อง") || status.includes("สำเร็จ (ฟรี)") || status.includes("โอนแล้ว") || status.includes("เข้ารับบริการแล้ว")) return "Success";
+            
+            // เช็คเคสล้มเหลวทุกกรณีที่ระบุไว้ใน Backend ก่อนเสมอ เพื่อป้องกันการตรวจพลาด
+            if(status.includes("ไม่สำเร็จ") || status.includes("ซ้ำ") || status.includes("ไม่มีในระบบ") || status.includes("ขาด") || status.includes("เกิน")) return "Unsuccess";
+            
+            if(status.includes("สำเร็จ") || status.includes("การชำระเงินถูกต้อง") || status.includes("โอนแล้ว") || status.includes("เข้ารับบริการแล้ว")) return "Success";
             if(status.includes("รอ") || status.includes("Pending") || status.includes("รอดำเนินการ")) return "Pending";
-            return "Unsuccess";
+            
+            return "Unsuccess"; // กรณีอื่นๆ ถือว่าล้มเหลว
         }
 
         function toggleAccordion(contentId, iconId) {
@@ -1773,6 +1779,7 @@
                 let colorClass = statusEng === 'Success' ? 'text-green-500' : (statusEng === 'Pending' ? 'text-yellow-500' : 'text-red-500');
                 let iconStr = statusEng === 'Success' ? '<i data-lucide="check-circle" class="w-4 h-4 inline mr-1 -mt-1"></i>' : (statusEng === 'Unsuccess' ? '<i data-lucide="x-circle" class="w-4 h-4 inline mr-1 -mt-1"></i>' : '<i data-lucide="clock" class="w-4 h-4 inline mr-1 -mt-1"></i>');
                 let itemsStr = o.items.replace(/\n/g, '<br>'); let amt = parseFloat(o.amount) || 0;
+                let fullStatusText = o.status.replace(/\n/g, '<br>').replace(/\|/g, '<br>'); // แปลง \n และ | ให้เว้นบรรทัดสวยงาม
 
                 let actionHtml = '';
                 if(statusEng === 'Success') {
@@ -1783,7 +1790,7 @@
                         </div>
                     `;
                 } else {
-                    actionHtml = `<div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700"><p class="text-xs text-red-500 font-semibold mb-1">สถานะ / สาเหตุ:</p><p class="text-xs text-red-500 whitespace-pre-wrap">${o.status}</p></div>`;
+                    actionHtml = `<div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700"><p class="text-xs text-red-500 font-semibold mb-1">สถานะ / สาเหตุ:</p><p class="text-xs text-red-500 whitespace-pre-wrap">${fullStatusText}</p></div>`;
                 }
 
                 const div = document.createElement('div'); div.className = "bg-white dark:bg-[#121212] border dark:border-gray-800 rounded-sm shadow-sm overflow-hidden transition-all";
@@ -1795,7 +1802,7 @@
                     <div id="history-order-content-${idx}" class="accordion-content bg-gray-50 dark:bg-[#1a1a1a] border-t dark:border-gray-800">
                         <div class="text-sm">
                             <div class="flex justify-between mb-3 border-b border-gray-200 dark:border-gray-700 pb-2"><span class="text-gray-500 text-xs font-semibold uppercase">ยอดสุทธิ</span><span class="font-bold ${colorClass} text-base">${statusEng === 'Unsuccess' ? '+' : ''}฿${amt.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</span></div>
-                            <div class="mb-2"><span class="text-gray-500 text-xs font-semibold uppercase block mb-1">รายการสินค้า</span><div class="text-gray-800 dark:text-gray-300 font-semibold">${itemsStr}</div></div>
+                            <div class="mb-2"><span class="text-gray-500 text-xs font-semibold uppercase block mb-1">รายการสินค้า</span><div class="text-gray-800 dark:text-gray-300 font-semibold leading-relaxed">${itemsStr}</div></div>
                             ${actionHtml}
                         </div>
                     </div>`; container.appendChild(div);
@@ -1812,6 +1819,7 @@
                 let amtColor = statusEng === 'Success' ? 'text-green-600' : (statusEng === 'Pending' ? 'text-yellow-600' : 'text-red-500');
                 let iconStr = statusEng === 'Success' ? '<i data-lucide="check-circle" class="w-4 h-4 inline mr-1 -mt-1"></i>' : (statusEng === 'Unsuccess' ? '<i data-lucide="x-circle" class="w-4 h-4 inline mr-1 -mt-1"></i>' : '<i data-lucide="clock" class="w-4 h-4 inline mr-1 -mt-1"></i>');
                 let amt = parseFloat(d.amount) || 0;
+                let fullStatusText = d.status.replace(/\n/g, '<br>').replace(/\|/g, '<br>');
 
                 let slipButtonHtml = (d.slipUrl && d.slipUrl !== "" && d.slipUrl !== "-") ? `
                     <div class="mt-3"><button onclick="window.open('${d.slipUrl}', '_blank')" class="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 py-2 rounded text-xs font-bold transition-colors flex items-center justify-center border border-gray-300 dark:border-gray-600"><i data-lucide="image" class="w-3.5 h-3.5 mr-1.5"></i> ดูสลิปที่แนบ</button></div>` : '';
@@ -1824,7 +1832,7 @@
                     <div id="history-dep-content-${idx}" class="accordion-content bg-gray-50 dark:bg-[#1a1a1a] border-t dark:border-gray-800">
                         <div class="text-sm">
                             <div class="flex justify-between mb-2"><span class="text-gray-500 text-xs font-semibold uppercase">จำนวนเงิน</span><span class="font-bold ${amtColor}">+฿${amt.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</span></div>
-                            <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700"><p class="text-xs text-gray-500 font-semibold mb-1">สถานะ / สาเหตุ:</p><p class="text-xs ${colorClass} font-semibold">${d.status.replace(/\|/g, '<br>')}</p></div>
+                            <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700"><p class="text-xs text-gray-500 font-semibold mb-1">รายละเอียด / สาเหตุ:</p><p class="text-xs ${colorClass} font-semibold leading-relaxed">${fullStatusText}</p></div>
                             ${slipButtonHtml}
                         </div>
                     </div>`; container.appendChild(div);
@@ -2129,7 +2137,7 @@
             if(currentUser.bankName && currentUser.bankAcc) {
                 if(setupSec) setupSec.classList.add('hidden'); if(actSec) actSec.classList.remove('hidden');
                 
-                // รูปแบบการซ่อนเลขบัญชี XXX-X-X[4 ตัว]-X
+                // รูปแบบการซ่อนเลขบัญชี XXX-X-X8808-X ตามคำขอ
                 let acc = currentUser.bankAcc;
                 let maskedAcc = acc;
                 if(acc && acc.length >= 5) {
