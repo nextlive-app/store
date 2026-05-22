@@ -16,7 +16,7 @@
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title id="page-title">Live</title>
+    <title id="page-title">test1</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1266,7 +1266,8 @@
             </a>
         </div>
     </div>
-<script>
+<!-- Application Logic (Optimized & Secured) -->
+    <script>
         // ⚠️ อย่าลืมแก้ไข GAS_WEBAPP_URL ให้เป็นลิงก์ Apps Script ของคุณเอง
         const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx8Zw7yc9QlPrU9PeaJ6koVbk9UqAZhRIDUSxKvqhQnyc5sp27V0rkxb5FbNKivIfhi/exec";
         
@@ -1279,42 +1280,27 @@
             });
         }
 
-        // --- Date Time Formatter ---
-        function getFormattedDateTime() {
-            const now = new Date();
-            let y = now.getFullYear(); if (y < 2500) y += 543;
-            let m = ("0" + (now.getMonth() + 1)).slice(-2);
-            let d = ("0" + now.getDate()).slice(-2);
-            let h = ("0" + now.getHours()).slice(-2);
-            let min = ("0" + now.getMinutes()).slice(-2);
-            let sec = ("0" + now.getSeconds()).slice(-2);
-            return `${d}-${m}-${y} | ${h}:${min}:${sec} น.`;
-        }
-
         // --- Slip Error Formatter (คำนวณยอดเงินจริงที่โอนเข้ามา) ---
-        function formatSlipStatusText(statusText, expectedPrice) {
-            let res = statusText || "";
+        function parseSlipErrorMessage(msg, expectedPrice) {
+            if (!msg) return msg;
+            let formattedMsg = msg;
             try {
-                // กรณีขาด
-                let matchUnder = res.match(/ยอดชำระ \(\s*ตามสลิป\s*\) ขาด ([\d\.]+) บาท/);
-                if (matchUnder) {
+                // ดักจับกรณียอด "ขาด"
+                let matchUnder = formattedMsg.match(/ยอดชำระ \(\s*ตามสลิป\s*\) ขาด ([\d\.]+) บาท/);
+                if (matchUnder && matchUnder[1]) {
                     let diff = parseFloat(matchUnder[1]);
                     let actual = Math.max(0, expectedPrice - diff).toFixed(2);
-                    return `ยอดชำระ ${actual} บาท ยอดขาด ${diff.toFixed(2)} บาท`;
+                    formattedMsg = formattedMsg.replace(matchUnder[0], `ยอดชำระ ( ${actual} ) ขาด ${matchUnder[1]} บาท`);
                 }
-                // กรณีเกิน
-                let matchOver = res.match(/ยอดชำระ \(\s*ตามสลิป\s*\) เกิน ([\d\.]+) บาท/);
-                if (matchOver) {
+                // ดักจับกรณียอด "เกิน"
+                let matchOver = formattedMsg.match(/ยอดชำระ \(\s*ตามสลิป\s*\) เกิน ([\d\.]+) บาท/);
+                if (matchOver && matchOver[1]) {
                     let diff = parseFloat(matchOver[1]);
                     let actual = (expectedPrice + diff).toFixed(2);
-                    return `ยอดชำระ ${actual} บาท ยอดเกิน ${diff.toFixed(2)} บาท`;
-                }
-                // กรณีสลิปซ้ำ
-                if (res.includes('ซ้ำกับระบบ')) {
-                    return `ซ้ำกับรหัสชำระเงิน`;
+                    formattedMsg = formattedMsg.replace(matchOver[0], `ยอดชำระ ( ${actual} ) เกิน ${matchOver[1]} บาท`);
                 }
             } catch(e) { console.error("Parse Error:", e); }
-            return res;
+            return formattedMsg;
         }
 
         // --- Bot Spam Prevention Flags (ป้องกันบอทยิงรัวๆ) ---
@@ -1531,14 +1517,16 @@
                             dropdown.style.opacity = '1';
                             dropdown.style.visibility = 'visible';
                         } else {
-                            closeProfileMenu();
+                            dropdown.style.opacity = '0';
+                            dropdown.style.visibility = 'hidden';
                         }
                     });
                 }
             }
             document.addEventListener('click', (e) => {
                 if (profileMenuContainer && !profileMenuContainer.contains(e.target)) {
-                    closeProfileMenu();
+                    const dropdown = profileMenuContainer.querySelector('.absolute');
+                    if (dropdown) { dropdown.style.opacity = ''; dropdown.style.visibility = ''; }
                 }
             });
         }
@@ -1637,8 +1625,8 @@
             closeProfileMenu();
             
             showCustomPopup("สำเร็จ", "ออกจากระบบเรียบร้อยแล้ว", function() {
-                // บังคับรีเฟรชหน้าเพื่อเคลียร์ state ทุกอย่าง ป้องกันการค้าง 100%
-                window.location.href = window.location.pathname; 
+                // บังคับรีเฟรชหน้าเพื่อเคลียร์ state ทุกอย่าง
+                window.location.replace(window.location.pathname); 
             });
         };
 
@@ -1650,7 +1638,7 @@
         // Navigation / Routing
         // ============================================================================
         function navigate(view) {
-            closeProfileMenu(); 
+            closeProfileMenu();
             
             if ((view === 'deposit' || view === 'withdraw' || view === 'profile' || view === 'statement' || view === 'booking' || view === 'address') && !currentUser) {
                 showCustomPopup("แจ้งเตือน", "กรุณาเข้าสู่ระบบก่อนใช้งานฟังก์ชันนี้"); openAuth('login'); return;
@@ -1816,7 +1804,7 @@
         }
 
         // ============================================================================
-        // History & Statement (แก้ไขบั๊กแสดงประวัติทุกสถานะ + แปลงข้อความสลิป)
+        // History & Statement (แก้ไขบั๊กแสดงประวัติทุกสถานะ)
         // ============================================================================
         function searchHistory() {
             if(isProcessingFinance) return;
@@ -1870,8 +1858,8 @@
                     let amt = parseFloat(o.amount) || 0;
                     
                     let itemsStr = escapeHTML(o.items).replace(/\n/g, '<br>');
-                    // ใช้ฟังก์ชันแปลงยอดขาด/เกิน ให้เป็นรูปแบบที่ต้องการ
-                    let statusParsed = formatSlipStatusText(escapeHTML(o.status || ''), amt).replace(/\n/g, '<br>');
+                    // ประยุกต์ใช้ฟังก์ชันคำนวณยอดเงินจริง
+                    let statusParsed = parseSlipErrorMessage(escapeHTML(o.status || ''), amt).replace(/\n/g, '<br>');
 
                     let actionHtml = '';
                     if(statusEng === 'Success') {
@@ -1882,7 +1870,7 @@
                             </div>
                         `;
                     } else {
-                        actionHtml = `<div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700"><p class="text-xs text-red-500 font-semibold mb-1">สถานะ / สาเหตุ:</p><p class="text-sm text-red-500 whitespace-pre-wrap leading-relaxed">${statusParsed}</p></div>`;
+                        actionHtml = `<div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700"><p class="text-xs text-red-500 font-semibold mb-1">สถานะ / สาเหตุ:</p><p class="text-xs text-red-500 whitespace-pre-wrap leading-relaxed">${statusParsed}</p></div>`;
                     }
 
                     const div = document.createElement('div'); div.className = "bg-white dark:bg-[#121212] border dark:border-gray-800 rounded-sm shadow-sm overflow-hidden transition-all";
@@ -1914,8 +1902,8 @@
                     let iconStr = statusEng === 'Success' ? '<i data-lucide="check-circle" class="w-4 h-4 inline mr-1 -mt-1"></i>' : (statusEng === 'Unsuccess' ? '<i data-lucide="x-circle" class="w-4 h-4 inline mr-1 -mt-1"></i>' : '<i data-lucide="clock" class="w-4 h-4 inline mr-1 -mt-1"></i>');
                     let amt = parseFloat(d.amount) || 0;
                     
-                    let itemsDetail = formatSlipStatusText(escapeHTML(d.items || ''), amt).replace(/\n/g, '<br>');
-                    let statusParsed = formatSlipStatusText(escapeHTML(d.status || ''), amt).replace(/\n/g, '<br>');
+                    let itemsDetail = parseSlipErrorMessage(escapeHTML(d.items || ''), amt).replace(/\n/g, '<br>');
+                    let statusParsed = parseSlipErrorMessage(escapeHTML(d.status || ''), amt).replace(/\n/g, '<br>');
 
                     let slipButtonHtml = (d.slipUrl && d.slipUrl !== "" && d.slipUrl !== "-") ? `
                         <div class="mt-3"><button onclick="window.open('${escapeHTML(d.slipUrl)}', '_blank')" class="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 py-2 rounded text-xs font-bold transition-colors flex items-center justify-center border border-gray-300 dark:border-gray-600"><i data-lucide="image" class="w-3.5 h-3.5 mr-1.5"></i> ดูสลิปที่แนบ</button></div>` : '';
@@ -1929,7 +1917,7 @@
                             <div class="text-sm">
                                 <div class="flex justify-between mb-2 border-b border-gray-200 dark:border-gray-700 pb-2"><span class="text-gray-500 text-xs font-semibold uppercase">จำนวนเงิน</span><span class="font-bold ${amtColor}">+฿${amt.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</span></div>
                                 <div class="mb-2"><span class="text-gray-500 text-xs font-semibold uppercase block mb-1">รายละเอียด</span><div class="text-gray-800 dark:text-gray-300 font-semibold leading-relaxed">${itemsDetail}</div></div>
-                                <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700"><p class="text-xs text-gray-500 font-semibold mb-1">สถานะ / สาเหตุ:</p><p class="text-sm ${colorClass} font-semibold leading-relaxed">${statusParsed}</p></div>
+                                <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700"><p class="text-xs text-gray-500 font-semibold mb-1">สถานะ / สาเหตุ:</p><p class="text-xs ${colorClass} font-semibold leading-relaxed">${statusParsed}</p></div>
                                 ${slipButtonHtml}
                             </div>
                         </div>`; container.appendChild(div);
@@ -1958,7 +1946,7 @@
                             <div class="text-sm">
                                 <div class="flex justify-between mb-2"><span class="text-gray-500 text-xs font-semibold uppercase">จำนวนเงินถอน</span><span class="font-bold ${amtColor}">-฿${amt.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</span></div>
                                 <div class="mb-2"><span class="text-gray-500 text-xs font-semibold uppercase">รายละเอียดบัญชี</span><p class="text-gray-800 dark:text-gray-300 font-semibold leading-relaxed">${escapeHTML(w.items)}</p></div>
-                                <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700"><p class="text-xs text-gray-500 font-semibold mb-1">สถานะ / สาเหตุ:</p><p class="text-sm ${colorClass} font-semibold leading-relaxed">${escapeHTML(w.status).replace(/\n/g, '<br>')}</p></div>
+                                <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700"><p class="text-xs text-gray-500 font-semibold mb-1">สถานะ / สาเหตุ:</p><p class="text-xs ${colorClass} font-semibold leading-relaxed">${escapeHTML(w.status).replace(/\n/g, '<br>')}</p></div>
                             </div>
                         </div>`; container.appendChild(div);
                 } catch(err) { console.error(err); }
@@ -2056,40 +2044,19 @@
                     callBackend(payload).then(res => {
                         if(overlay) overlay.classList.add('hidden');
                         if (res.status === "success") {
-                            let dtStr = getFormattedDateTime();
                             if(currentFlow === 'deposit') {
                                 safeSetText('display-order-id', "DEP-" + Date.now().toString().slice(-6)); 
-                                // Format Success Text nicely for Deposit
-                                let rawMsg = res.message || `เติมเครดิต ${currentNetTotal.toFixed(2)} สำเร็จ`;
-                                let lines = rawMsg.split('\n');
-                                let titleHtml = `<span class="font-bold text-xl text-green-600">${escapeHTML(lines[0])}</span>`;
-                                if (lines.length > 1) titleHtml += `<br><span class="font-bold text-lg text-green-500">${escapeHTML(lines[1])}</span>`;
-                                
-                                let descHtml = `${titleHtml}<br><br><span class="text-gray-700 font-bold">รหัสชำระเงินถูกต้องปรับเครดิตสำเร็จ</span><br><span class="text-sm text-gray-500 mt-2 block">${dtStr}</span>`;
-                                safeSetHTML('success-desc', descHtml);
-                                safeSetText('success-title', '');
-                                document.getElementById('success-title').style.display = 'none'; // ซ่อน H2 เพราะเราสร้าง Title ให้ใหม่
+                                safeSetText('success-title', 'เติมเงินสำเร็จ ระบบกำลังเติมเครดิต'); safeSetText('success-ref-label', 'รหัสอ้างอิง (Ref)');
                             } else {
-                                safeSetText('display-order-id', res.orderRef); 
-                                safeSetText('success-title', 'ชำระเงินสำเร็จ ระบบกำลังจัดส่งสินค้า'); 
-                                safeSetText('success-ref-label', 'รหัสอ้างอิงออเดอร์ (Order Ref)'); 
+                                safeSetText('display-order-id', res.orderRef); safeSetText('success-title', 'ชำระเงินสำเร็จ ระบบกำลังจัดส่งสินค้า'); safeSetText('success-ref-label', 'รหัสอ้างอิงออเดอร์ (Order Ref)'); 
                                 cart = cart.filter(c => c.selected === false); saveCart();
                                 currentDiscount = 0; appliedDiscountCode = ""; currentCreditUsed = 0; updateCartBadge();
                             }
                             if(res.newBalance !== undefined && currentUser) { updateBalanceUI(res.newBalance); }
                             navigate('success');
                         } else { 
-                            let parsedMsg = parseSlipErrorMessage(res.message, currentNetTotal);
-                            let dtStr = getFormattedDateTime();
-                            let lines = parsedMsg.split('\n');
-                            let titleLine = lines[0];
-                            let restLines = lines.slice(1).join('<br>');
-                            
-                            let failHtml = `<span class="font-bold text-xl text-red-600">${escapeHTML(titleLine)}</span><br><br><span class="text-gray-700 leading-relaxed font-bold block">${escapeHTML(restLines).replace(/&lt;br&gt;/g, '<br>')}</span><br><span class="text-sm text-gray-500 mt-1 block">${dtStr}</span><br><span class="text-sm font-bold text-red-500 mt-3 block">กรุณาติดต่อแอดมิน พร้อม หลักฐาน</span>`;
-                            safeSetHTML('failure-desc', failHtml); 
-                            safeSetText('failure-title', '');
-                            document.getElementById('failure-title').style.display = 'none';
-                            
+                            let finalMsg = parseSlipErrorMessage(res.message, currentNetTotal);
+                            safeSetText('failure-desc', escapeHTML(finalMsg)); 
                             if(currentFlow === 'order') { cart = cart.filter(c => c.selected === false); saveCart(); currentDiscount = 0; appliedDiscountCode = ""; currentCreditUsed = 0; updateCartBadge(); }
                             if(res.newBalance !== undefined && currentUser) { updateBalanceUI(res.newBalance); }
                             if(upl) upl.classList.remove('hidden'); 
@@ -2145,24 +2112,12 @@
                 if(btn) { btn.innerText = "ยืนยันการสั่งซื้อ"; btn.disabled = false; }
                 if (res.status === "success") {
                     safeSetText('display-order-id', res.orderRef); safeSetText('success-title', 'สั่งซื้อสำเร็จ!'); safeSetText('success-ref-label', 'รหัสอ้างอิงออเดอร์ (Order Ref)');
-                    document.getElementById('success-title').style.display = 'block';
-                    safeSetText('success-desc', "ระบบได้ดำเนินการและส่งรายละเอียดไปยังอีเมลของคุณแล้ว");
-                    
                     cart = cart.filter(c => c.selected === false); saveCart();
                     currentDiscount = 0; appliedDiscountCode = ""; currentCreditUsed = 0; updateCartBadge(); 
                     if(res.newBalance !== undefined) updateBalanceUI(res.newBalance); navigate('success');
                 } else { 
-                    let parsedMsg = parseSlipErrorMessage(res.message, finalExpected);
-                    let dtStr = getFormattedDateTime();
-                    let lines = parsedMsg.split('\n');
-                    let titleLine = lines[0];
-                    let restLines = lines.slice(1).join('<br>');
-                    
-                    let failHtml = `<span class="font-bold text-xl text-red-600">${escapeHTML(titleLine)}</span><br><br><span class="text-gray-700 leading-relaxed font-bold block">${escapeHTML(restLines).replace(/&lt;br&gt;/g, '<br>')}</span><br><span class="text-sm text-gray-500 mt-1 block">${dtStr}</span><br><span class="text-sm font-bold text-red-500 mt-3 block">กรุณาติดต่อแอดมิน พร้อม หลักฐาน</span>`;
-                    safeSetHTML('failure-desc', failHtml); 
-                    safeSetText('failure-title', '');
-                    document.getElementById('failure-title').style.display = 'none';
-                    
+                    let finalMsg = parseSlipErrorMessage(res.message, finalExpected);
+                    safeSetText('failure-desc', escapeHTML(finalMsg)); 
                     navigate('failure'); 
                 }
             }).catch(e => { isProcessingOrder = false; if(btn) { btn.innerText = "ยืนยันการสั่งซื้อ"; btn.disabled = false; } showCustomPopup("ระบบมีปัญหา", "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์"); });
@@ -2276,7 +2231,7 @@
         }
 
         // ============================================================================
-        // Finance: Deposit & Withdraw (Secured & Fixed Button Color)
+        // Finance: Deposit & Withdraw (Secured)
         // ============================================================================
         window.selectDepositBtn = function(amount, btnEl) {
             try {
