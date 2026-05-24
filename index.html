@@ -1266,9 +1266,8 @@
             </a>
         </div>
     </div>
-    <!-- Application Logic (Optimized & Secured) -->
     <script>
-        // ⚠️ อย่าลืมแก้ไข GAS_WEBAPP_URL ให้เป็นลิงก์ Apps Script ของคุณเอง
+  // ⚠️ อย่าลืมแก้ไข GAS_WEBAPP_URL ให้เป็นลิงก์ Apps Script ของคุณเอง
         const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx8Zw7yc9QlPrU9PeaJ6koVbk9UqAZhRIDUSxKvqhQnyc5sp27V0rkxb5FbNKivIfhi/exec";
         
         // --- Security Utils (XSS Protection) ---
@@ -1280,27 +1279,76 @@
             });
         }
 
+        // --- Date Time Formatter ---
+        function getCurrentDateTimeStr() {
+            const now = new Date();
+            let y = now.getFullYear();
+            if (y < 2500) y += 543;
+            const d = String(now.getDate()).padStart(2, '0');
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const h = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            const sec = String(now.getSeconds()).padStart(2, '0');
+            return `${d}-${m}-${y} | ${h}:${min}:${sec} น.`;
+        }
+
         // --- Slip Error Formatter (คำนวณยอดเงินจริงที่โอนเข้ามา) ---
-        function parseSlipErrorMessage(msg, expectedPrice) {
+        function parseSlipErrorMessage(msg, expectedPrice, flowType = 'deposit') {
             if (!msg) return msg;
-            let formattedMsg = msg;
-            try {
-                // ดักจับกรณียอด "ขาด"
-                let matchUnder = formattedMsg.match(/ยอดชำระ \(\s*${actual}\s*\) ขาด ([\d\.]+) บาท/);
-                if (matchUnder && matchUnder[1]) {
-                    let diff = parseFloat(matchUnder[1]);
-                    let actual = Math.max(0, expectedPrice - diff).toFixed(2);
-                    formattedMsg = formattedMsg.replace(matchUnder[0], `ยอดชำระ ( ${actual} ) ขาด ${matchUnder[1]} บาท`);
+            let originalMsg = String(msg);
+            let expected = parseFloat(expectedPrice) || 0;
+            let actual = null;
+            let diff = null;
+            let isUnder = false;
+            let isOver = false;
+
+            // ดักจับคำว่า "โอนมา", "ยอดชำระ" หรือ "จำนวนเงิน" เผื่อระบบส่งมา
+            let actualMatch = originalMsg.match(/(?:โอนมา|ยอดชำระ|ยอดจริง|จำนวนเงิน|สลิปยอด)\s*([\d\.,]+)/);
+            if (actualMatch && actualMatch[1]) {
+                actual = parseFloat(actualMatch[1].replace(/,/g, ''));
+            }
+
+            // ดักจับคำว่า "ขาด" หรือ "น้อยกว่า"
+            let underMatch = originalMsg.match(/(?:ขาด|น้อยกว่า)\s*([\d\.,]+)/);
+            if (underMatch && underMatch[1]) {
+                diff = parseFloat(underMatch[1].replace(/,/g, ''));
+                isUnder = true;
+                if (actual === null) actual = Math.max(0, expected - diff);
+            }
+
+            // ดักจับคำว่า "เกิน" หรือ "มากกว่า"
+            let overMatch = originalMsg.match(/(?:เกิน|มากกว่า)\s*([\d\.,]+)/);
+            if (overMatch && overMatch[1]) {
+                diff = parseFloat(overMatch[1].replace(/,/g, ''));
+                isOver = true;
+                if (actual === null) actual = expected + diff;
+            }
+
+            // คำนวณส่วนต่างอัตโนมัติ ถ้าระบบส่งมาแค่ยอดโอนจริง
+            if (actual !== null && diff === null) {
+                if (actual < expected) {
+                    diff = expected - actual;
+                    isUnder = true;
+                } else if (actual > expected) {
+                    diff = actual - expected;
+                    isOver = true;
                 }
-                // ดักจับกรณียอด "เกิน"
-                let matchOver = formattedMsg.match(/ยอดชำระ \(\s*ตามสลิป\s*\) เกิน ([\d\.]+) บาท/);
-                if (matchOver && matchOver[1]) {
-                    let diff = parseFloat(matchOver[1]);
-                    let actual = (expectedPrice + diff).toFixed(2);
-                    formattedMsg = formattedMsg.replace(matchOver[0], `ยอดชำระ ( ${actual} ) เกิน ${matchOver[1]} บาท`);
-                }
-            } catch(e) { console.error("Parse Error:", e); }
-            return formattedMsg;
+            }
+
+            const dateTimeStr = getCurrentDateTimeStr();
+            let actionName = flowType === 'deposit' ? 'เติมเครดิต' : 'ชำระเงิน';
+
+            // กรณี ยอดขาด
+            if (isUnder && actual !== null) {
+                return `${actionName} ${expected.toFixed(2)} ไม่สำเร็จ\nยอดชำระ ${actual.toFixed(2)} บาท  ยอดขาด ${diff.toFixed(2)} บาท\n${dateTimeStr}\nกรุณาติดต่อแอดมิน พร้อม หลักฐาน`;
+            } 
+            // กรณี ยอดเกิน
+            else if (isOver && actual !== null) {
+                return `${actionName} ${expected.toFixed(2)} ไม่สำเร็จ\nยอดชำระ ${actual.toFixed(2)} บาท  ยอดเกิน ${diff.toFixed(2)} บาท\n${dateTimeStr}\nกรุณาติดต่อแอดมิน พร้อม หลักฐาน`;
+            }
+            
+            // กรณีไม่ตรงเงื่อนไขข้างบนเลย 
+            return `${actionName} ${expected.toFixed(2)} ไม่สำเร็จ\n${originalMsg}\n${dateTimeStr}\nกรุณาติดต่อแอดมิน พร้อม หลักฐาน`;
         }
 
         // --- Bot Spam Prevention Flags (ป้องกันบอทยิงรัวๆ) ---
@@ -1644,6 +1692,10 @@
                 showCustomPopup("แจ้งเตือน", "กรุณาเข้าสู่ระบบก่อนใช้งานฟังก์ชันนี้"); openAuth('login'); return;
             }
 
+            // Restore fail title generically, let specific fail processes hide it again if needed
+            const fTitle = document.getElementById('failure-title');
+            if(fTitle) fTitle.style.display = 'block';
+
             const views = ['view-home', 'view-checkout', 'view-payment', 'view-success', 'view-failure', 'view-privacy', 'view-return', 'view-history', 'view-auth', 'view-forgot-password', 'view-profile', 'view-deposit', 'view-withdraw', 'view-statement', 'view-booking', 'view-address'];
             views.forEach(v => { const el = document.getElementById(v); if(el) el.classList.add('hidden'); });
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1804,7 +1856,7 @@
         }
 
         // ============================================================================
-        // History & Statement (แก้ไขบั๊กแสดงประวัติทุกสถานะ)
+        // History & Statement
         // ============================================================================
         function searchHistory() {
             if(isProcessingFinance) return;
@@ -1859,7 +1911,7 @@
                     
                     let itemsStr = escapeHTML(o.items).replace(/\n/g, '<br>');
                     // ประยุกต์ใช้ฟังก์ชันคำนวณยอดเงินจริง
-                    let statusParsed = parseSlipErrorMessage(escapeHTML(o.status || ''), amt).replace(/\n/g, '<br>');
+                    let statusParsed = parseSlipErrorMessage(escapeHTML(o.status || ''), amt, 'order').replace(/\n/g, '<br>');
 
                     let actionHtml = '';
                     if(statusEng === 'Success') {
@@ -1902,8 +1954,8 @@
                     let iconStr = statusEng === 'Success' ? '<i data-lucide="check-circle" class="w-4 h-4 inline mr-1 -mt-1"></i>' : (statusEng === 'Unsuccess' ? '<i data-lucide="x-circle" class="w-4 h-4 inline mr-1 -mt-1"></i>' : '<i data-lucide="clock" class="w-4 h-4 inline mr-1 -mt-1"></i>');
                     let amt = parseFloat(d.amount) || 0;
                     
-                    let itemsDetail = parseSlipErrorMessage(escapeHTML(d.items || ''), amt).replace(/\n/g, '<br>');
-                    let statusParsed = parseSlipErrorMessage(escapeHTML(d.status || ''), amt).replace(/\n/g, '<br>');
+                    let itemsDetail = parseSlipErrorMessage(escapeHTML(d.items || ''), amt, 'deposit').replace(/\n/g, '<br>');
+                    let statusParsed = parseSlipErrorMessage(escapeHTML(d.status || ''), amt, 'deposit').replace(/\n/g, '<br>');
 
                     let slipButtonHtml = (d.slipUrl && d.slipUrl !== "" && d.slipUrl !== "-") ? `
                         <div class="mt-3"><button onclick="window.open('${escapeHTML(d.slipUrl)}', '_blank')" class="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 py-2 rounded text-xs font-bold transition-colors flex items-center justify-center border border-gray-300 dark:border-gray-600"><i data-lucide="image" class="w-3.5 h-3.5 mr-1.5"></i> ดูสลิปที่แนบ</button></div>` : '';
@@ -2009,7 +2061,11 @@
         // ============================================================================
         function handleQRTimeout() {
             const upl = document.getElementById('upload-section'); if(upl) upl.classList.add('hidden');
-            safeSetText('failure-desc', "หมดเวลาในการชำระเงิน กรุณาทำรายการใหม่ค่ะ");
+            
+            const failTitleEl = document.getElementById('failure-title');
+            if(failTitleEl) failTitleEl.style.display = 'none';
+
+            safeSetText('failure-desc', `หมดเวลาในการชำระเงิน กรุณาทำรายการใหม่ค่ะ\n${getCurrentDateTimeStr()}`);
             
             let payload = {};
             if(currentFlow === 'deposit') {
@@ -2046,17 +2102,44 @@
                         if (res.status === "success") {
                             if(currentFlow === 'deposit') {
                                 safeSetText('display-order-id', "DEP-" + Date.now().toString().slice(-6)); 
-                                safeSetText('success-title', 'เติมเงินสำเร็จ ระบบกำลังเติมเครดิต'); safeSetText('success-ref-label', 'รหัสอ้างอิง (Ref)');
+                                safeSetText('success-ref-label', 'รหัสอ้างอิง (Ref)');
+                                
+                                // คำนวณโบนัสและเตรียมข้อความสำเร็จ
+                                let bonusPct = parseFloat(siteSettings?.DepositBonusPercent) || 0;
+                                let expected = parseFloat(currentNetTotal) || 0;
+                                let bonusAmt = expected + (expected * (bonusPct / 100));
+                                
+                                safeSetText('success-title', `เติมเครดิต ${expected.toFixed(2)} โบนัส ${bonusAmt.toFixed(2)} บาท สำเร็จ`); 
+                                
+                                let successMsg = `รหัสชำระเงินถูกต้องปรับเครดิตสำเร็จ\n${getCurrentDateTimeStr()}`;
+                                safeSetText('success-desc', successMsg);
+                                
+                                document.getElementById('success-desc').classList.add('whitespace-pre-line', 'text-green-600', 'font-medium');
                             } else {
-                                safeSetText('display-order-id', res.orderRef); safeSetText('success-title', 'ชำระเงินสำเร็จ ระบบกำลังจัดส่งสินค้า'); safeSetText('success-ref-label', 'รหัสอ้างอิงออเดอร์ (Order Ref)'); 
+                                safeSetText('display-order-id', res.orderRef); 
+                                safeSetText('success-title', 'ชำระเงินสำเร็จ'); 
+                                safeSetText('success-ref-label', 'รหัสอ้างอิงออเดอร์ (Order Ref)'); 
+                                safeSetText('success-desc', `ระบบกำลังจัดส่งสินค้า\nรหัสชำระเงินถูกต้อง\n${getCurrentDateTimeStr()}`);
+                                
+                                document.getElementById('success-desc').classList.add('whitespace-pre-line', 'text-green-600', 'font-medium');
+
                                 cart = cart.filter(c => c.selected === false); saveCart();
                                 currentDiscount = 0; appliedDiscountCode = ""; currentCreditUsed = 0; updateCartBadge();
                             }
                             if(res.newBalance !== undefined && currentUser) { updateBalanceUI(res.newBalance); }
+                            
+                            const succTitleEl = document.getElementById('success-title');
+                            if(succTitleEl) succTitleEl.style.display = '';
+
                             navigate('success');
                         } else { 
-                            let finalMsg = parseSlipErrorMessage(res.message, currentNetTotal);
-                            safeSetText('failure-desc', escapeHTML(finalMsg)); 
+                            let finalMsg = parseSlipErrorMessage(res.message, currentNetTotal, currentFlow);
+                            
+                            const failTitleEl = document.getElementById('failure-title');
+                            if(failTitleEl) failTitleEl.style.display = 'none';
+                            
+                            safeSetText('failure-desc', finalMsg); 
+                            
                             if(currentFlow === 'order') { cart = cart.filter(c => c.selected === false); saveCart(); currentDiscount = 0; appliedDiscountCode = ""; currentCreditUsed = 0; updateCartBadge(); }
                             if(res.newBalance !== undefined && currentUser) { updateBalanceUI(res.newBalance); }
                             if(upl) upl.classList.remove('hidden'); 
@@ -2066,7 +2149,7 @@
                         if(overlay) overlay.classList.add('hidden'); showCustomPopup("ระบบมีปัญหา", "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์"); 
                         if(upl) upl.classList.remove('hidden'); 
                     });
-                }
+                };
                 reader.readAsDataURL(file);
             }
         }
@@ -2114,10 +2197,19 @@
                     safeSetText('display-order-id', res.orderRef); safeSetText('success-title', 'สั่งซื้อสำเร็จ!'); safeSetText('success-ref-label', 'รหัสอ้างอิงออเดอร์ (Order Ref)');
                     cart = cart.filter(c => c.selected === false); saveCart();
                     currentDiscount = 0; appliedDiscountCode = ""; currentCreditUsed = 0; updateCartBadge(); 
-                    if(res.newBalance !== undefined) updateBalanceUI(res.newBalance); navigate('success');
+                    if(res.newBalance !== undefined) updateBalanceUI(res.newBalance); 
+                    
+                    const succTitleEl = document.getElementById('success-title');
+                    if(succTitleEl) succTitleEl.style.display = '';
+
+                    navigate('success');
                 } else { 
-                    let finalMsg = parseSlipErrorMessage(res.message, finalExpected);
-                    safeSetText('failure-desc', escapeHTML(finalMsg)); 
+                    let finalMsg = parseSlipErrorMessage(res.message, finalExpected, currentFlow);
+                    
+                    const failTitleEl = document.getElementById('failure-title');
+                    if(failTitleEl) failTitleEl.style.display = 'none';
+                    
+                    safeSetText('failure-desc', finalMsg); 
                     navigate('failure'); 
                 }
             }).catch(e => { isProcessingOrder = false; if(btn) { btn.innerText = "ยืนยันการสั่งซื้อ"; btn.disabled = false; } showCustomPopup("ระบบมีปัญหา", "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์"); });
@@ -2882,6 +2974,6 @@
 
         // Initialize App on DOM Load
         document.addEventListener('DOMContentLoaded', init);
-    </script>
+</script>
 </body>
 </html>
