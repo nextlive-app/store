@@ -8,15 +8,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Next Live">
-    <link rel="apple-touch-icon" href="https://img1.pic.in.th/images/IMG_2092.jpeg">
+    <link rel="apple-touch-icon" href="https://img2.pic.in.th/IMG_21033c85c7da64d12581.jpeg">
     <meta name="mobile-web-app-capable" content="yes">
-    <link rel="icon" type="image/png" sizes="192x192" href="https://img1.pic.in.th/images/IMG_2092.jpeg">
-    <link rel="icon" type="image/png" sizes="512x512" href="https://img1.pic.in.th/images/IMG_2092.jpeg">
-    <link rel="shortcut icon" href="https://img1.pic.in.th/images/IMG_2092.jpeg">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://img2.pic.in.th/IMG_21033c85c7da64d12581.jpeg">
+    <link rel="icon" type="image/png" sizes="512x512" href="https://img2.pic.in.th/IMG_21033c85c7da64d12581.jpeg">
+    <link rel="shortcut icon" href="https://img2.pic.in.th/IMG_21033c85c7da64d12581.jpeg">
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title id="page-title">Store.api</title>
+    <title id="page-title">shop.api</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1266,7 +1266,7 @@
             </a>
         </div>
     </div>
-    <!-- Application Logic (Optimized & Secured) -->
+   <!-- Application Logic (Optimized & Secured) -->
     <script>
         // ⚠️ อย่าลืมแก้ไข GAS_WEBAPP_URL ให้เป็นลิงก์ Apps Script ของคุณเอง
         const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx8Zw7yc9QlPrU9PeaJ6koVbk9UqAZhRIDUSxKvqhQnyc5sp27V0rkxb5FbNKivIfhi/exec";
@@ -2168,6 +2168,7 @@
             }).catch(e => { isProcessingAuth = false; btn.innerText = "เปลี่ยนรหัสผ่าน"; btn.disabled = false; showCustomPopup("ข้อผิดพลาด", "การเชื่อมต่อล้มเหลว"); });
         }
 
+        // --- แก้ไขฟังก์ชัน submitChangePassword() เพื่อแนบค่า uid ไปด้วย ---
         function submitChangePassword() {
             if(isProcessingAuth || !currentUser) return;
             const oldPass = document.getElementById('cp-old').value; const newPass = document.getElementById('cp-new').value; const confirmPass = document.getElementById('cp-confirm').value;
@@ -2176,7 +2177,7 @@
 
             isProcessingAuth = true;
             const btn = document.getElementById('btn-submit-cp'); btn.innerText = "กำลังเปลี่ยน..."; btn.disabled = true;
-            callBackend({action: 'changePassword', email: currentUser.email, oldPass: oldPass, newPass: newPass}).then(res => {
+            callBackend({action: 'changePassword', uid: currentUser.uid, email: currentUser.email, phone: currentUser.phone, oldPass: oldPass, newPass: newPass}).then(res => {
                 isProcessingAuth = false;
                 btn.innerText = "เปลี่ยนรหัสผ่าน"; btn.disabled = false;
                 if(res.status === 'success') { showCustomPopup("สำเร็จ", res.message); document.getElementById('change-pass-form').reset(); } 
