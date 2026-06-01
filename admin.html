@@ -247,10 +247,26 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <div class="relative cursor-pointer w-10 h-10 rounded-full bg-[#1A1A1A] border border-[#333] flex items-center justify-center hover:bg-[#222] transition-colors" onclick="clearNotifications()">
-                    <i data-lucide="bell" id="bell-icon" class="w-4 h-4 text-gray-400"></i>
-                    <span id="notif-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+                
+                <!-- Notification Dropdown -->
+                <div class="relative">
+                    <div class="cursor-pointer w-10 h-10 rounded-full bg-[#1A1A1A] border border-[#333] flex items-center justify-center hover:bg-[#222] transition-colors" onclick="toggleNotifPanel()">
+                        <i data-lucide="bell" id="bell-icon" class="w-4 h-4 text-gray-400"></i>
+                        <span id="notif-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+                    </div>
+                    
+                    <!-- Panel แจ้งเตือน -->
+                    <div id="notif-panel" class="absolute top-12 right-0 w-80 max-h-[420px] bg-[#1A1A1A] border border-[#333] rounded-xl shadow-2xl overflow-hidden flex flex-col z-50 transform scale-95 opacity-0 pointer-events-none transition-all duration-200 origin-top-right">
+                        <div class="p-3 border-b border-[#222] bg-[#111] flex justify-between items-center shrink-0">
+                            <h3 class="font-bold text-white text-sm"><i data-lucide="bell-ring" class="w-4 h-4 inline mr-1 text-primary"></i> การแจ้งเตือนล่าสุด</h3>
+                            <button class="text-[11px] text-primary hover:text-white font-medium" onclick="clearNotifications()">ล้างตัวเลขแจ้งเตือน</button>
+                        </div>
+                        <div id="notif-list" class="flex-1 overflow-y-auto no-scrollbar p-0 bg-[#0A0A0A]">
+                            <!-- Render Notifs Here -->
+                        </div>
+                    </div>
                 </div>
+
                 <button onclick="fetchData()" class="w-10 h-10 rounded-full bg-[#1A1A1A] border border-[#333] flex items-center justify-center hover:bg-[#222] transition-colors" title="Refresh Data">
                     <i data-lucide="refresh-cw" class="w-4 h-4 text-gray-400"></i>
                 </button>
@@ -607,6 +623,8 @@
             'bank-tisco': 'ธนาคารทิสโก้', 'bank-kk': 'ธนาคารเกียรตินาคินภัทร', 'bank-icbc': 'ธนาคารไอซีบีซี (ไทย)',
             'bank-tcrb': 'ธนาคารไทยเครดิต', 'bank-lhb': 'ธนาคารแลนด์ แอนด์ เฮ้าส์', 'bank-tmn': 'ทรูมันนี่ วอลเล็ท', 'bank-pp': 'พร้อมเพย์'
         };
+        // เรียง key จากยาวไปสั้น เพื่อไม่ให้คำที่คล้ายกันเกิดทับซ้อนกันตอนแปลง
+        const sortedBankKeys = Object.keys(bankMap).sort((a,b) => b.length - a.length);
 
         let state = { users: [], orders: [], deposits: [], withdraws: [], booking: [], products: [], options: [], settings: [], affiliate: [], movies: [], movie_downloads: [], network: [] };
         let chartInstanceStat = null, chartInstanceTrend = null, chartInstanceAffiliate = null, chartInstanceMovie = null;
@@ -689,7 +707,125 @@
                 badge.classList.remove('hidden'); icon.classList.add('text-primary', 'animate-ring'); setTimeout(() => icon.classList.remove('animate-ring'), 1000);
             } else { badge.classList.add('hidden'); icon.classList.remove('text-primary', 'animate-ring'); icon.classList.add('text-gray-400'); }
         }
-        function clearNotifications() { unreadNotifications = 0; updateBellIcon(); }
+
+        // --- Notification Panel System ---
+        function toggleNotifPanel() {
+            const panel = document.getElementById('notif-panel');
+            if (panel.classList.contains('opacity-0')) {
+                buildNotifications();
+                panel.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                panel.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
+            } else {
+                panel.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                panel.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
+            }
+        }
+        
+        function clearNotifications() { 
+            unreadNotifications = 0; 
+            updateBellIcon(); 
+            toggleNotifPanel(); 
+        }
+        
+        document.addEventListener('click', (e) => {
+            const panel = document.getElementById('notif-panel');
+            const bellBtn = document.querySelector('[onclick="toggleNotifPanel()"]');
+            if(panel && !panel.classList.contains('opacity-0') && !panel.contains(e.target) && !bellBtn.contains(e.target)) {
+                toggleNotifPanel();
+            }
+        });
+
+        function parseThaiDate(dateStr) {
+            if (!dateStr) return 0;
+            let d = dateStr.replace(/\s+/g, '').replace(/\|/g, ' ').replace(/\//g, '-').trim();
+            let parts = d.split(' ');
+            if (parts.length === 0) return 0;
+            let dParts = parts[0].split('-');
+            if (dParts.length < 3) return 0;
+            let y = parseInt(dParts[2]);
+            let m = parseInt(dParts[1]) - 1;
+            let day = parseInt(dParts[0]);
+            let h = 0, min = 0, sec = 0;
+            if (parts[1]) {
+                let tParts = parts[1].split(':');
+                h = parseInt(tParts[0]) || 0;
+                min = parseInt(tParts[1]) || 0;
+                sec = parseInt(tParts[2]) || 0;
+            }
+            return new Date(y, m, day, h, min, sec).getTime();
+        }
+
+        function buildNotifications() {
+            let allNotifs = [];
+            
+            if(state.deposits) state.deposits.forEach(d => {
+                let amt = parseFloat(d.cols[6] || 0).toFixed(2);
+                let st = String(d.cols[7]);
+                allNotifs.push({
+                    type: 'ฝากเงิน', msg: `จำนวน ${amt} ${st}`, timeStr: d.cols[0], ts: parseThaiDate(d.cols[0]), status: st,
+                    icon: 'arrow-down-circle', iconColor: 'text-[#10B981]', bg: 'bg-[#10B981]/10',
+                    color: (st.includes('สำเร็จ') ? 'text-[#10B981]' : (st.includes('ยกเลิก') || st.includes('ไม่สำเร็จ') ? 'text-red-500' : 'text-yellow-500'))
+                });
+            });
+
+            if(state.withdraws) state.withdraws.forEach(w => {
+                let amt = parseFloat(w.cols[6] || 0).toFixed(2);
+                let st = String(w.cols[7]);
+                allNotifs.push({
+                    type: 'ถอนเงิน', msg: `จำนวน ${amt} ${st}`, timeStr: w.cols[0], ts: parseThaiDate(w.cols[0]), status: st,
+                    icon: 'arrow-up-circle', iconColor: 'text-red-500', bg: 'bg-red-500/10',
+                    color: (st.includes('สำเร็จ') || st.includes('โอนแล้ว') ? 'text-[#10B981]' : (st.includes('ยกเลิก') ? 'text-red-500' : 'text-yellow-500'))
+                });
+            });
+
+            if(state.orders) state.orders.forEach(o => {
+                let amt = parseFloat(o.cols[7] || 0).toFixed(2);
+                let st = String(o.cols[9]);
+                allNotifs.push({
+                    type: 'คำสั่งซื้อ', msg: `ยอดสุทธิ ${amt} ${st}`, timeStr: o.cols[0], ts: parseThaiDate(o.cols[0]), status: st,
+                    icon: 'shopping-cart', iconColor: 'text-primary', bg: 'bg-primary/10',
+                    color: (st.includes('สำเร็จ') || st.includes('ถูกต้อง') ? 'text-[#10B981]' : (st.includes('ยกเลิก') ? 'text-red-500' : 'text-yellow-500'))
+                });
+            });
+            
+            if(state.booking) state.booking.forEach(b => {
+                let st = String(b.cols[14]);
+                allNotifs.push({
+                    type: 'จองคิว', msg: `หัวข้อ: ${b.cols[7]} ${st}`, timeStr: b.cols[0], ts: parseThaiDate(b.cols[0]), status: st,
+                    icon: 'calendar', iconColor: 'text-[#FFC107]', bg: 'bg-[#FFC107]/10',
+                    color: (st.includes('เข้า') ? 'text-[#10B981]' : (st.includes('ยกเลิก') ? 'text-red-500' : 'text-yellow-500'))
+                });
+            });
+
+            allNotifs.sort((a, b) => b.ts - a.ts);
+            
+            const list = document.getElementById('notif-list');
+            list.innerHTML = '';
+            
+            if(allNotifs.length === 0) {
+                list.innerHTML = `<div class="p-6 text-center text-gray-500 text-sm">ไม่มีการแจ้งเตือนในระบบ</div>`;
+                return;
+            }
+            
+            allNotifs.slice(0, 20).forEach(n => {
+                list.innerHTML += `
+                <div class="flex items-start gap-3 p-3 border-b border-[#222] hover:bg-[#1A1A1A] transition-colors cursor-pointer">
+                    <div class="w-8 h-8 rounded-full ${n.bg} flex items-center justify-center shrink-0 mt-1 border border-[#333]">
+                        <i data-lucide="${n.icon}" class="w-4 h-4 ${n.iconColor}"></i>
+                    </div>
+                    <div class="flex-1 overflow-hidden">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">${n.type}</span>
+                            <span class="text-[10px] text-gray-500 whitespace-nowrap ml-2">${n.timeStr}</span>
+                        </div>
+                        <p class="text-sm font-medium ${n.color} truncate">${n.msg}</p>
+                    </div>
+                </div>
+                `;
+            });
+            
+            lucide.createIcons();
+        }
 
         let currentAddSheet = '';
         function openAddModal(sheet) {
@@ -801,7 +937,6 @@
             let totalUnread = 0;
             let messagesForActiveUser = [];
 
-            // แปลงข้อมูลที่ได้จาก Firebase เป็น Array เพื่อวนลูป
             const rows = Array.isArray(data) ? data : Object.keys(data).reduce((arr, key) => {
                 arr[key] = data[key];
                 return arr;
@@ -851,7 +986,6 @@
             if (activeChatUID) {
                 activeChatMsgs = messagesForActiveUser;
                 renderAdminMessages();
-                // เลื่อนลงล่างสุดเฉพาะเวลามีข้อความใหม่เพิ่มขึ้น
                 if (activeChatMsgs.length !== lastMsgCount) {
                     const box = document.getElementById('admin-chat-messages'); 
                     box.scrollTop = box.scrollHeight;
@@ -866,8 +1000,8 @@
                 document.getElementById('login-overlay').style.display = 'none';
                 fetchData();
                 document.body.addEventListener('click', () => { window.audioInit = true; }, {once:true});
-                setInterval(fetchDataSilent, 15000); // ดึงข้อมูลแดชบอร์ด
-                initFirebaseChatListener(); // ดึงข้อมูลแชท Realtime
+                setInterval(fetchDataSilent, 15000); 
+                initFirebaseChatListener(); 
             }
         };
 
@@ -901,7 +1035,6 @@
             const container = document.getElementById('admin-chat-list');
             const q = document.getElementById('chat-search').value.toLowerCase();
             
-            // รวมคนใน state.users ที่ไม่เคยแชทเข้ามาด้วย
             let mergedList = [...adminChatList];
             state.users.forEach(u => {
                 if(!mergedList.find(c => c.uid === u.cols[2])) {
@@ -952,7 +1085,6 @@
                 document.getElementById('chat-room-panel').classList.add('flex');
             }
             
-            // Mark as read in Firebase
             if(currentFirebaseData) {
                 let updates = {};
                 let changed = false;
@@ -1019,10 +1151,10 @@
                 return `<img src="${previewUrl}" class="chat-media-obj max-h-48" onclick="window.open('${rawUrl}')" onerror="this.src='https://via.placeholder.com/150?text=Error';">`;
             } else if (content.startsWith('[VID]')) {
                 let url = content.replace('[VID]', '');
-                return `<div class="flex items-center gap-2 cursor-pointer" onclick="window.open('${url}')"><div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><i class="ph-fill ph-video-camera"></i></div><span>คลิปวิดีโอ (เปิด)</span></div>`;
+                return `<div class="flex items-center gap-2 cursor-pointer" onclick="window.open('${url}')"><div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><i data-lucide="video" class="w-4 h-4"></i></div><span>คลิปวิดีโอ (เปิด)</span></div>`;
             } else if (content.startsWith('[FILE]')) {
                 let url = content.replace('[FILE]', '');
-                return `<div class="flex items-center gap-2 cursor-pointer" onclick="window.open('${url}')"><div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><i class="ph-fill ph-file-text"></i></div><span>ไฟล์เอกสาร (เปิด)</span></div>`;
+                return `<div class="flex items-center gap-2 cursor-pointer" onclick="window.open('${url}')"><div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><i data-lucide="file-text" class="w-4 h-4"></i></div><span>ไฟล์เอกสาร (เปิด)</span></div>`;
             } else if (content.startsWith('http') && content.includes('iconify')) {
                 return `<img src="${content}" class="w-20 h-20 object-contain">`;
             } else {
@@ -1042,7 +1174,6 @@
             let timeStr = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2) + ":" + ("0" + d.getSeconds()).slice(-2);
             let timestamp = d.getTime();
             
-            // Push directly to Firebase array
             let data = currentFirebaseData || [];
             let nextIndex = Array.isArray(data) ? data.length : Object.keys(data).length;
             if (nextIndex === 0) nextIndex = 1;
@@ -1061,7 +1192,6 @@
             const reader = new FileReader();
             reader.onload = function(evt) {
                 const base64 = evt.target.result.split(',')[1];
-                // แนบไฟล์ผ่าน GAS
                 fetch(GAS_URL, { 
                     method: 'POST', 
                     body: JSON.stringify({ action: 'uploadChatFile', filename: file.name, mimeType: mime, base64: base64, uid: activeChatUID, phone: activeChatPhone, type: 'admin' }) 
@@ -1082,7 +1212,6 @@
                 }
             }, true);
         }
-
 
         // ================== DASHBOARD DATA LOGIC ==================
         async function fetchData() {
@@ -1115,7 +1244,12 @@
                 if(newWitsCount > previousCounts.withdraws) newItems.push('รายการถอนเงิน');
                 if(newBooksCount > previousCounts.booking) newItems.push('จองคิวใหม่');
 
-                if(newItems.length > 0) { showToast(`มีการอัปเดต: ${newItems.join(', ')}`); unreadNotifications += newItems.length; updateBellIcon(); if(window.audioInit) { playNotificationSound(); } }
+                if(newItems.length > 0) { 
+                    showToast(`มีการอัปเดต: ${newItems.join(', ')}`); 
+                    unreadNotifications += newItems.length; 
+                    updateBellIcon(); 
+                    if(window.audioInit) { playNotificationSound(); } 
+                }
             }
 
             previousCounts = { orders: newOrdersCount, deposits: newDepsCount, withdraws: newWitsCount, booking: newBooksCount };
@@ -1190,20 +1324,28 @@
                     let val = item.cols[origIdx] === undefined ? '' : item.cols[origIdx]; 
                     let displayVal = val;
                     
+                    // Convert Bank Codes to Thai Names
                     if (typeof displayVal === 'string') {
-                        Object.keys(bankMap).forEach(key => {
+                        sortedBankKeys.forEach(key => {
                             if (displayVal.includes(key)) {
-                                displayVal = displayVal.replace(key, bankMap[key]);
+                                displayVal = displayVal.replace(new RegExp(key, 'g'), bankMap[key]);
                             }
                         });
                     }
                     
+                    let canEdit = editCols.includes(origIdx) && !isFinal;
+
                     if(typeof val === 'string' && val.startsWith('http')) {
-                        let isImage = val.match(/\.(jpeg|jpg|gif|png)$/i) != null || (sheet === 'products' && origIdx === 5) || (sheet === 'movies' && origIdx === 4) || origIdx === 8;
-                        if(isImage || val.includes('drive.google') || val.includes('slipok')) {
+                        let isImage = val.match(/\.(jpeg|jpg|gif|png)$/i) != null || (sheet === 'products' && origIdx === 5) || (sheet === 'movies' && origIdx === 4) || (sheet === 'deposits' && origIdx === 8) || (sheet === 'orders' && origIdx === 8);
+                        
+                        if(!canEdit && (isImage || val.includes('drive.google') || val.includes('slipok'))) {
                             displayVal = `<div class="cursor-pointer bg-[#222] hover:bg-primary/20 border border-[#333] hover:border-primary text-gray-400 hover:text-primary rounded-lg w-10 h-10 flex items-center justify-center transition-all shadow-sm mx-auto" onclick="openImagePreview('${val}')"><i data-lucide="image" class="w-5 h-5"></i></div>`;
                             html += `<td class="text-center w-20">${displayVal}</td>`; return; 
-                        } else { displayVal = `<a href="${val}" target="_blank" class="text-primary underline"><i data-lucide="link" class="w-4 h-4 inline"></i> Link</a>`; }
+                        } else if (!canEdit) { 
+                            displayVal = `<a href="${val}" target="_blank" class="text-primary underline"><i data-lucide="link" class="w-4 h-4 inline"></i> Link</a>`; 
+                            html += `<td class="max-w-[200px] truncate" title="${val}">${displayVal}</td>`; return;
+                        }
+                        // ถ้า canEdit ปล่อยให้ผ่านไป render เป็น input ด้านล่าง
                     }
 
                     if(currentMapIdx === mappedStatusColIndex) {
@@ -1217,7 +1359,6 @@
                             html += `<td><select id="input-${sheet}-${item.row}-${origIdx}" class="form-select bg-main" onchange="markDirty('${sheet}', ${item.row})">${optionsHtml}</select></td>`;
                         }
                     } else {
-                        let canEdit = editCols.includes(origIdx) && !isFinal;
                         html += `<td class="max-w-[200px] truncate" title="${displayVal}">`;
                         if(canEdit) { html += `<input type="text" id="input-${sheet}-${item.row}-${origIdx}" class="form-input bg-transparent border-transparent px-0 py-0 focus:bg-main focus:border-[#333] focus:px-2 focus:py-1 transition-all w-full" value="${val}" oninput="markDirty('${sheet}', ${item.row})">`; } 
                         else { html += displayVal; }
