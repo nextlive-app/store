@@ -33,6 +33,11 @@
         window.promptpayQr = promptpayQr
     </script>
 
+    <!-- Social Login SDKs -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -783,6 +788,33 @@
                             <div class="text-right"><button type="button" onclick="navigate('forgot-password')" class="text-sm text-primary hover:underline">ลืมรหัสผ่าน?</button></div>
                             <button type="button" onclick="submitLogin()" class="w-full bg-[#333333] hover:bg-black text-white font-bold py-3 mt-4 uppercase text-sm rounded-sm shadow-md" id="btn-submit-login">ลงชื่อเข้าใช้งาน</button>
                         </form>
+                        
+                        <!-- ปุ่ม Social Login -->
+                        <div class="mt-6">
+                            <div class="relative flex items-center py-2">
+                                <div class="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+                                <span class="flex-shrink-0 mx-4 text-gray-400 text-xs uppercase font-semibold">หรือเข้าสู่ระบบด้วย</span>
+                                <div class="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+                            </div>
+                            
+                            <div class="grid grid-cols-3 gap-3 mt-4">
+                                <!-- Google Button -->
+                                <button type="button" onclick="loginWithGoogle()" class="flex items-center justify-center p-2.5 border border-gray-200 dark:border-gray-700 rounded-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors bg-white dark:bg-[#121212] shadow-sm">
+                                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6 object-contain" alt="Google">
+                                </button>
+                                
+                                <!-- LINE Button -->
+                                <button type="button" onclick="loginWithLine()" class="flex items-center justify-center p-2.5 border border-gray-200 dark:border-gray-700 rounded-sm hover:bg-[#00B900]/10 transition-colors bg-white dark:bg-[#121212] shadow-sm">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" class="w-6 h-6 object-contain" alt="LINE">
+                                </button>
+                                
+                                <!-- Facebook Button -->
+                                <button type="button" onclick="loginWithFacebook()" class="flex items-center justify-center p-2.5 border border-gray-200 dark:border-gray-700 rounded-sm hover:bg-[#1877F2]/10 transition-colors bg-white dark:bg-[#121212] shadow-sm">
+                                    <img src="https://www.svgrepo.com/show/475647/facebook-color.svg" class="w-6 h-6 object-contain" alt="Facebook">
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="mt-6 text-center border-t pt-6">
                             <p class="text-sm text-gray-600 dark:text-gray-400">ยังไม่มีบัญชี? <button type="button" onclick="switchAuthTab('register')" class="text-primary font-bold hover:underline ml-1">สร้างบัญชีใหม่</button></p>
                         </div>
@@ -814,6 +846,33 @@
                             </div>
                             <button type="button" onclick="submitRegister()" class="w-full bg-[#333333] hover:bg-black text-white font-bold py-3 mt-4 uppercase text-sm rounded-sm shadow-md" id="btn-submit-register">สร้างบัญชี</button>
                         </form>
+
+                        <!-- ปุ่ม Social Login -->
+                        <div class="mt-6">
+                            <div class="relative flex items-center py-2">
+                                <div class="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+                                <span class="flex-shrink-0 mx-4 text-gray-400 text-xs uppercase font-semibold">หรือสมัครด้วย</span>
+                                <div class="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+                            </div>
+                            
+                            <div class="grid grid-cols-3 gap-3 mt-4">
+                                <!-- Google Button -->
+                                <button type="button" onclick="loginWithGoogle()" class="flex items-center justify-center p-2.5 border border-gray-200 dark:border-gray-700 rounded-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors bg-white dark:bg-[#121212] shadow-sm">
+                                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6 object-contain" alt="Google">
+                                </button>
+                                
+                                <!-- LINE Button -->
+                                <button type="button" onclick="loginWithLine()" class="flex items-center justify-center p-2.5 border border-gray-200 dark:border-gray-700 rounded-sm hover:bg-[#00B900]/10 transition-colors bg-white dark:bg-[#121212] shadow-sm">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" class="w-6 h-6 object-contain" alt="LINE">
+                                </button>
+                                
+                                <!-- Facebook Button -->
+                                <button type="button" onclick="loginWithFacebook()" class="flex items-center justify-center p-2.5 border border-gray-200 dark:border-gray-700 rounded-sm hover:bg-[#1877F2]/10 transition-colors bg-white dark:bg-[#121212] shadow-sm">
+                                    <img src="https://www.svgrepo.com/show/475647/facebook-color.svg" class="w-6 h-6 object-contain" alt="Facebook">
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="mt-6 text-center border-t pt-6">
                             <p class="text-sm text-gray-600 dark:text-gray-400">มีบัญชีอยู่แล้ว? <button type="button" onclick="switchAuthTab('login')" class="text-primary font-bold hover:underline ml-1">เข้าสู่ระบบ</button></p>
                         </div>
@@ -1262,11 +1321,15 @@
             </button>
             <a href="https://line.me/R/ti/p/@jpo3470r" target="_blank" class="flex flex-col items-center gap-1 hover:scale-110 transition-transform">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/2/2e/LINE_New_App_Icon_%282020-12%29.png" alt="Line @Nextlive" class="w-10 h-10 rounded-xl shadow-sm bg-white p-1">
-                <span class="text-[10px] text-gray-500 font-bold tracking-wide">Line Offical</span>
+                <span class="text-[10px] text-gray-500 font-bold tracking-wide">Line OA</span>
+            </a>
+            <!-- แก้ไขไอคอน Facebook โดยการเรียกใช้ภาพโลโก้โดยตรง -->
+            <a href="https://m.me/yourfacebookpage" target="_blank" class="flex flex-col items-center gap-1 hover:scale-110 transition-transform">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="Facebook Page" class="w-10 h-10 rounded-xl shadow-sm bg-white p-1">
+                <span class="text-[10px] text-gray-500 font-bold tracking-wide">Facebook</span>
             </a>
         </div>
-    </div>
-   <!-- Application Logic (Optimized & Secured) -->
+    </div><!-- Application Logic (Optimized & Secured) -->
     <script>
         // ⚠️ อย่าลืมแก้ไข GAS_WEBAPP_URL ให้เป็นลิงก์ Apps Script ของคุณเอง
         const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx8Zw7yc9QlPrU9PeaJ6koVbk9UqAZhRIDUSxKvqhQnyc5sp27V0rkxb5FbNKivIfhi/exec";
@@ -1359,6 +1422,21 @@
                 return `XXX-X-X${fourDigits}-${lastDigit}`;
             }
             return cleanAcc;
+        }
+
+        // ============================================================================
+        // LINE Notification System (ส่งข้อความเข้าแชทผู้ใช้โดยตรงผ่าน LIFF)
+        // ============================================================================
+        function notifyUserViaLine(messageText) {
+            try {
+                // เช็คว่าโหลดผ่าน LINE LIFF และล็อกอินอยู่
+                if (typeof liff !== 'undefined' && liff.isLoggedIn() && liff.isInClient()) {
+                    liff.sendMessages([{
+                        type: 'text',
+                        text: messageText
+                    }]).catch(err => console.error('LIFF send message error', err));
+                }
+            } catch (e) { console.error('Notify Error:', e); }
         }
 
         // ============================================================================
@@ -1804,7 +1882,7 @@
         }
 
         // ============================================================================
-        // History & Statement (แก้ไขบั๊กแสดงประวัติทุกสถานะ)
+        // History & Statement
         // ============================================================================
         function searchHistory() {
             if(isProcessingFinance) return;
@@ -1858,7 +1936,6 @@
                     let amt = parseFloat(o.amount) || 0;
                     
                     let itemsStr = escapeHTML(o.items).replace(/\n/g, '<br>');
-                    // ประยุกต์ใช้ฟังก์ชันคำนวณยอดเงินจริง
                     let statusParsed = parseSlipErrorMessage(escapeHTML(o.status || ''), amt).replace(/\n/g, '<br>');
 
                     let actionHtml = '';
@@ -2047,10 +2124,12 @@
                             if(currentFlow === 'deposit') {
                                 safeSetText('display-order-id', "DEP-" + Date.now().toString().slice(-6)); 
                                 safeSetText('success-title', 'เติมเงินสำเร็จ ระบบกำลังเติมเครดิต'); safeSetText('success-ref-label', 'รหัสอ้างอิง (Ref)');
+                                notifyUserViaLine("✅ เติมเงินสำเร็จ ยอดเครดิตใหม่ของคุณคือ ฿" + res.newBalance);
                             } else {
                                 safeSetText('display-order-id', res.orderRef); safeSetText('success-title', 'ชำระเงินสำเร็จ ระบบกำลังจัดส่งสินค้า'); safeSetText('success-ref-label', 'รหัสอ้างอิงออเดอร์ (Order Ref)'); 
                                 cart = cart.filter(c => c.selected === false); saveCart();
                                 currentDiscount = 0; appliedDiscountCode = ""; currentCreditUsed = 0; updateCartBadge();
+                                notifyUserViaLine("✅ ชำระเงินสำเร็จ! ออเดอร์ของคุณคือ " + res.orderRef);
                             }
                             if(res.newBalance !== undefined && currentUser) { updateBalanceUI(res.newBalance); }
                             navigate('success');
@@ -2115,6 +2194,7 @@
                     cart = cart.filter(c => c.selected === false); saveCart();
                     currentDiscount = 0; appliedDiscountCode = ""; currentCreditUsed = 0; updateCartBadge(); 
                     if(res.newBalance !== undefined) updateBalanceUI(res.newBalance); navigate('success');
+                    notifyUserViaLine("✅ สั่งซื้อสินค้าสำเร็จ! ออเดอร์ของคุณคือ " + res.orderRef);
                 } else { 
                     let finalMsg = parseSlipErrorMessage(res.message, finalExpected);
                     safeSetText('failure-desc', escapeHTML(finalMsg)); 
@@ -2168,7 +2248,6 @@
             }).catch(e => { isProcessingAuth = false; btn.innerText = "เปลี่ยนรหัสผ่าน"; btn.disabled = false; showCustomPopup("ข้อผิดพลาด", "การเชื่อมต่อล้มเหลว"); });
         }
 
-        // --- แก้ไขฟังก์ชัน submitChangePassword() เพื่อแนบค่า uid ไปด้วย ---
         function submitChangePassword() {
             if(isProcessingAuth || !currentUser) return;
             const oldPass = document.getElementById('cp-old').value; const newPass = document.getElementById('cp-new').value; const confirmPass = document.getElementById('cp-confirm').value;
@@ -2321,6 +2400,7 @@
                 if(btn) { btn.innerText = "ถอนเงิน"; btn.disabled = false; }
                 if(res.status === 'success') {
                     inputEl.value = ''; updateBalanceUI(res.newBalance); showCustomPopup("แจ้งเตือน", res.message); checkWithdrawalState(); 
+                    notifyUserViaLine("⏳ ระบบได้รับคำขอถอนเงินของคุณแล้ว (รอดำเนินการ)");
                 } else { showCustomPopup("ข้อผิดพลาด", escapeHTML(res.message)); }
             }).catch(e => { isProcessingFinance = false; if(btn) { btn.innerText = "ถอนเงิน"; btn.disabled = false; } showCustomPopup("ข้อผิดพลาด", "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์"); });
         }
@@ -2832,6 +2912,7 @@
                     safeSetText('succ-qno', res.queueNo.replace(/'/g, '')); safeSetText('succ-seq', res.sequence);
                     safeSetText('succ-wait', res.waitCount); safeSetText('succ-note', `กรุณามาเข้ารับบริการภายในวันที่ ${displayBookDateTime}`);
                     document.getElementById('bk-topic').value = ''; document.getElementById('bk-detail').value = ''; currentBookingDate = null; currentBookingTime = null;
+                    notifyUserViaLine("🗓️ จองคิวสำเร็จ! หมายเลขคิวของคุณคือ: " + res.queueNo.replace(/'/g, ''));
                 } else { showCustomPopup("ข้อผิดพลาด", escapeHTML(res.message)); }
             }).catch(e => { btn.innerText = "ยืนยันการจองคิว"; btn.disabled = false; showCustomPopup("ระบบมีปัญหา", "การเชื่อมต่อล้มเหลว"); });
         }
@@ -2879,6 +2960,129 @@
         function closePaymentSteps() {
             const overlay = document.getElementById('payment-steps-overlay'); const modal = document.getElementById('payment-steps-modal');
             if(modal) modal.classList.add('opacity-0', 'scale-95'); if(overlay) overlay.classList.remove('overlay-enter-active');
+        }
+
+        // ============================================================================
+        // Social Login Integrations
+        // ============================================================================
+        
+        // --- 1. CONFIGURATION (ต้องนำ API Key ของคุณมาใส่ตรงนี้) ---
+        const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
+        const LINE_LIFF_ID = "YOUR_LINE_LIFF_ID";
+        const FACEBOOK_APP_ID = "YOUR_FACEBOOK_APP_ID";
+
+        // Initialize Facebook SDK
+        window.fbAsyncInit = function() {
+            if (typeof FB !== 'undefined') {
+                FB.init({ appId: FACEBOOK_APP_ID, cookie: true, xfbml: true, version: 'v18.0' });
+            }
+        };
+
+        // --- Core Backend Caller for Social ---
+        function processSocialLogin(provider, socialData) {
+            if(isProcessingAuth) return;
+            isProcessingAuth = true;
+            
+            showCustomPopup("กำลังเข้าสู่ระบบ", "รอสักครู่ ระบบกำลังดึงข้อมูล...");
+            
+            let payload = {
+                action: 'socialLogin',
+                provider: provider,
+                socialId: socialData.id,
+                email: socialData.email || (socialData.id + "@" + provider + ".com"), // Fallback if no email
+                fname: socialData.fname || "User",
+                lname: socialData.lname || "",
+                avatar: socialData.avatar || "",
+                inviterUID: localStorage.getItem('saved_affiliate_id') || ""
+            };
+
+            callBackend(payload).then(res => {
+                isProcessingAuth = false;
+                if(res.status === 'success') {
+                    localStorage.setItem('nextLiveUser', JSON.stringify(res.user)); 
+                    checkLoginState(); 
+                    showCustomPopup("ยินดีต้อนรับ", res.message); 
+                    navigate('home');
+                    notifyUserViaLine("✅ ยินดีต้อนรับ! คุณเข้าสู่ระบบด้วย " + provider + " สำเร็จ");
+                } else { showCustomPopup("ข้อผิดพลาด", escapeHTML(res.message)); }
+            }).catch(e => { 
+                isProcessingAuth = false; 
+                showCustomPopup("ข้อผิดพลาด", "การเชื่อมต่อล้มเหลว"); 
+            });
+        }
+
+        // --- Google Login Flow ---
+        function loginWithGoogle() {
+            try {
+                const client = google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+                    callback: (response) => {
+                        if (response.error) { showCustomPopup("ยกเลิก", "ยกเลิกการเชื่อมต่อ Google"); return; }
+                        fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${response.access_token}` } })
+                        .then(res => res.json())
+                        .then(data => {
+                            processSocialLogin('google', {
+                                id: data.sub,
+                                email: data.email,
+                                fname: data.given_name,
+                                lname: data.family_name,
+                                avatar: data.picture
+                            });
+                        });
+                    }
+                });
+                client.requestAccessToken();
+            } catch(e) { showCustomPopup("แจ้งเตือน", "ไม่ได้ตั้งค่า Google Client ID"); }
+        }
+
+        // --- Facebook Login Flow ---
+        function loginWithFacebook() {
+            if (typeof FB === 'undefined') { showCustomPopup("แจ้งเตือน", "ระบบ Facebook ยังไม่พร้อมใช้งาน"); return; }
+            FB.login(function(response) {
+                if (response.authResponse) {
+                    FB.api('/me', {fields: 'id,name,email,first_name,last_name,picture'}, function(data) {
+                        processSocialLogin('facebook', {
+                            id: data.id,
+                            email: data.email,
+                            fname: data.first_name || data.name,
+                            lname: data.last_name || "",
+                            avatar: data.picture?.data?.url || ""
+                        });
+                    });
+                } else {
+                    showCustomPopup("ยกเลิก", "ผู้ใช้ยกเลิกการเชื่อมต่อ Facebook");
+                }
+            }, {scope: 'public_profile,email'});
+        }
+
+        // --- LINE Login Flow (Using LIFF) ---
+        function loginWithLine() {
+            if (typeof liff === 'undefined') { showCustomPopup("แจ้งเตือน", "ไม่ได้โหลด LINE SDK"); return; }
+            showCustomPopup("เชื่อมต่อ LINE", "กำลังเปิดหน้าต่างเชื่อมต่อ...");
+            liff.init({ liffId: LINE_LIFF_ID }).then(() => {
+                if (!liff.isLoggedIn()) {
+                    liff.login(); 
+                } else {
+                    liff.getProfile().then(profile => {
+                        let email = "";
+                        let decodedToken = liff.getDecodedIDToken();
+                        if (decodedToken && decodedToken.email) { email = decodedToken.email; }
+
+                        processSocialLogin('line', {
+                            id: profile.userId,
+                            email: email,
+                            fname: profile.displayName,
+                            lname: "",
+                            avatar: profile.pictureUrl
+                        });
+                    }).catch((err) => {
+                        showCustomPopup("ข้อผิดพลาด", "ไม่สามารถดึงข้อมูล LINE Profile ได้");
+                    });
+                }
+            }).catch((err) => {
+                showCustomPopup("ข้อผิดพลาด", "LINE LIFF Initialization Failed: ตรวจสอบ LIFF ID");
+            });
         }
 
         // Initialize App on DOM Load
